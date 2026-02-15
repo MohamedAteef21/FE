@@ -1,0 +1,63 @@
+/* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+@import 'bootstrap/scss/bootstrap';
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* RTL Support */
+body.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+body.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* RTL specific adjustments */
+.rtl .mat-toolbar {
+  flex-direction: row-reverse;
+}
+
+.rtl .nav-links {
+  flex-direction: row-reverse;
+}
+
+.rtl .spacer {
+  order: -1;
+}
+
+.rtl .footer-content {
+  flex-direction: row-reverse;
+}
+
+.rtl .footer-links {
+  flex-direction: row-reverse;
+}
+
+/* RTL Material adjustments */
+.rtl .mat-form-field {
+  text-align: right;
+}
+
+.rtl .mat-button {
+  text-align: right;
+}
+
+.rtl .mat-card {
+  text-align: right;
+}
+
