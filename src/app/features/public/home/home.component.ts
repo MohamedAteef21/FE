@@ -1,11 +1,13 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule, ViewportScroller } from '@angular/common';
 import { Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { Observable, of, Subscription } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared/shared.module';
 import { MenuItem, Offer } from '../../../models/menu-item.model';
 import { TranslationService } from '../../../core/services/translation.service';
+import { CategoryService } from '../../../core/services/category.service';
+import { Category, CategoryWithProducts } from '../../../models/category.model';
 import { addLanguageProperty } from '../../../core/utils/item-translation.util';
 
 @Component({
@@ -41,85 +43,25 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
       <section class="categories-section py-5">
         <div class="container">
           <div class="section-header">
-            <a (click)="navigateToMenu()" class="view-all-link" style="cursor: pointer;">عرض الكل</a>
-            <h2 class="section-title">الاصناف</h2>
+            <a (click)="navigateToMenu()" class="view-all-link" style="cursor: pointer;">{{ 'HOME.VIEW_ALL' | translate }}</a>
+            <h2 class="section-title">{{ 'HOME.CATEGORIES' | translate }}</h2>
           </div>
           <div class="categories-grid">
-            <div class="category-item" (click)="navigateToCategory('الخضار')" style="cursor: pointer;">
+            <div class="category-item" *ngFor="let category of displayCategories" (click)="navigateToCategory(category.nameAr)" style="cursor: pointer;">
               <div class="category-image-wrapper">
-                <img src="assets/itmes/الخضار.png" alt="الخضار" class="category-image" />
+                <img [src]="category.imageUrl" [alt]="currentLang === 'ar' ? category.nameAr : category.nameEn" class="category-image" />
                 <span class="category-circle"></span>
               </div>
-              <div class="category-label">الخضار</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('الساندوشات')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/الساندوشات.png" alt="الساندوشات" class="category-image" />
-                <span class="category-circle"></span>
+              <div class="category-label">
+                <span *ngIf="currentLang === 'ar'">{{ category.nameAr }}</span>
+                <span *ngIf="currentLang === 'en'">{{ category.nameEn }}</span>
               </div>
-              <div class="category-label">الساندوشات</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('الباستا')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/الباستا.png" alt="الباستا" class="category-image" />
-                <span class="category-circle"></span>
-              </div>
-              <div class="category-label">الباستا</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('المقبلات')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/المقبلات.png" alt="المقبلات" class="category-image" />
-                <span class="category-circle"></span>
-              </div>
-              <div class="category-label">المقبلات</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('الفطار')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/الفطار.png" alt="الفطار" class="category-image" />
-                <span class="category-circle"></span>
-              </div>
-              <div class="category-label">الفطار</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('الحلويات')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/الحلويات.png" alt="الحلويات" class="category-image" />
-                <span class="category-circle"></span>
-              </div>
-              <div class="category-label">الحلويات</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('الصواني')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/الصوانى.png" alt="الصواني" class="category-image" />
-                <span class="category-circle"></span>
-              </div>
-              <div class="category-label">الصواني</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('الأطباق الرئيسة')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/الأطباق الرئيسة.png" alt="الأطباق الرئيسة" class="category-image" />
-                <span class="category-circle"></span>
-              </div>
-              <div class="category-label">الأطباق الرئيسة</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('المشاوي')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/المشاوى.png" alt="المشاوي" class="category-image" />
-                <span class="category-circle"></span>
-              </div>
-              <div class="category-label">المشاوي</div>
-            </div>
-            <div class="category-item" (click)="navigateToCategory('الشوربة')" style="cursor: pointer;">
-              <div class="category-image-wrapper">
-                <img src="assets/itmes/الشوربةز.png" alt="الشوربة" class="category-image" />
-                <span class="category-circle"></span>
-              </div>
-              <div class="category-label">الشوربة</div>
             </div>
           </div>
         </div>
       </section>
     </div>
-<div class="container-fluid px-0">
+<!-- <div class="container-fluid px-0">
       <section class="most-requested-section py-5">
         <div class="container">
           <div class="section-header">
@@ -136,7 +78,7 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
                 <p class="card-description">نص فرخة+قطعتين صدور+صبعين گفته+ارز+سلطة طحينه+عيش</p>
                 <div class="card-action-row">
                   <div class="card-price">82 ريال</div>
-                  <button class="order-button">
+                  <button class="order-button" (click)="navigateToOffer('1')">
                     <span class="plus-icon">+</span>
                     <span>أطلب</span>
                   </button>
@@ -152,7 +94,7 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
                 <p class="card-description">نص فرخة+قطعتين صدور+صبعين گفته+ارز+سلطة طحينه+عيش</p>
                 <div class="card-action-row">
                   <div class="card-price">89 ريال</div>
-                  <button class="order-button">
+                  <button class="order-button" (click)="navigateToOffer('2')">
                     <span class="plus-icon">+</span>
                     <span>أطلب</span>
                   </button>
@@ -168,7 +110,7 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
                 <p class="card-description">نص فرخة+قطعتين صدور+صبعين گفته+ارز+سلطة طحينه+عيش</p>
                 <div class="card-action-row">
                   <div class="card-price">82 ريال</div>
-                  <button class="order-button">
+                  <button class="order-button" (click)="navigateToOffer('3')">
                     <span class="plus-icon">+</span>
                     <span>أطلب</span>
                   </button>
@@ -184,7 +126,7 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
                 <p class="card-description">نص فرخة+قطعتين صدور+صبعين گفته+ارز+سلطة طحينه+عيش</p>
                 <div class="card-action-row">
                   <div class="card-price">299 ريال</div>
-                  <button class="order-button">
+                  <button class="order-button" (click)="navigateToOffer('4')">
                     <span class="plus-icon">+</span>
                     <span>أطلب</span>
                   </button>
@@ -194,99 +136,29 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
           </div>
         </div>
       </section>
-    </div>
-    <div class="container-fluid px-0">
+    </div> -->
+    <!-- <div class="container-fluid px-0">
       <section class="offers-section mb-5" [style.background-image]="'url(assets/OfferBackground.png)'">
         <div class="container">
           <div class="offers-grid">
-            <div class="offer-item">
-              <img src="assets/offerPhoto/Rectangle_4603.png" alt="Offer" class="offer-photo" />
+            <div class="offer-item" *ngFor="let product of offerProducts">
+              <img
+                [src]="product.imageUrl || 'assets/offerPhoto/Rectangle_4603.png'"
+                [alt]="currentLang === 'ar' ? product.nameAr : product.nameEn"
+                class="offer-photo"
+                (error)="$any($event.target).src = 'assets/offerPhoto/Rectangle_4603.png'" />
               <div class="offer-content">
                 <img src="assets/Subtract.png" alt="Offer" class="offer-shape" />
                 <div class="offer-details">
                   <div class="offer-price-section">
-                    <div class="offer-price">500 ريال</div>
-                    <div class="offer-original-price">
-                      <span class="offer-label">بدلا من</span>
-                      <span class="offer-strikethrough">1000 ريال</span>
-                    </div>
+                    <div class="offer-price">{{ product.basePrice }} ريال</div>
                   </div>
-                  <div class="offer-title">صنية الملوك</div>
-                  <div class="offer-description" data-full-text="8 حمام محشي، وطلب ريش، ونصف كيلو كفتة، وطلب طرب، وطلب كباب، ونصف كيلو ممبار، بالإضافة إلى اختيارك من الأرز المصري أو البخاري.">
-                    <span class="offer-description-text">8 حمام محشي، وطلب ريش، ونصف كيلو كفتة، وطلب طرب، وطلب كباب، ونصف كيلو ممبار، بالإضافة إلى اختيارك من الأرز المصري أو البخاري.</span>
+                  <div class="offer-title">{{ currentLang === 'ar' ? product.nameAr : product.nameEn }}</div>
+                  <div class="offer-description">
+                    <span class="offer-description-text">{{ currentLang === 'ar' ? (product.descriptionAr || product.descriptionEn) : (product.descriptionEn || product.descriptionAr) }}</span>
                   </div>
                   <div class="offer-action">
-                    <button class="offer-button" (click)="navigateToOffer('1')">أطلب +</button>
-                    <span class="offer-discount">50% خصم</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="offer-item">
-              <img src="assets/offerPhoto/Rectangle_4604.png" alt="Offer" class="offer-photo" />
-              <div class="offer-content">
-                <img src="assets/Subtract.png" alt="Offer" class="offer-shape" />
-                <div class="offer-details">
-                  <div class="offer-price-section">
-                    <div class="offer-price">500 ريال</div>
-                    <div class="offer-original-price">
-                      <span class="offer-label">بدلا من</span>
-                      <span class="offer-strikethrough">1000 ريال</span>
-                    </div>
-                  </div>
-                  <div class="offer-title">صنية الملوك</div>
-                  <div class="offer-description" data-full-text="8 حمام محشي، وطلب ريش، ونصف كيلو كفتة، وطلب طرب، وطلب كباب، ونصف كيلو ممبار، بالإضافة إلى اختيارك من الأرز المصري أو البخاري.">
-                    <span class="offer-description-text">8 حمام محشي، وطلب ريش، ونصف كيلو كفتة، وطلب طرب، وطلب كباب، ونصف كيلو ممبار، بالإضافة إلى اختيارك من الأرز المصري أو البخاري.</span>
-                  </div>
-                  <div class="offer-action">
-                    <button class="offer-button" (click)="navigateToOffer('2')">أطلب +</button>
-                    <span class="offer-discount">50% خصم</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="offer-item">
-              <img src="assets/offerPhoto/Rectangle_4605.png" alt="Offer" class="offer-photo" />
-              <div class="offer-content">
-                <img src="assets/Subtract.png" alt="Offer" class="offer-shape" />
-                <div class="offer-details">
-                  <div class="offer-price-section">
-                    <div class="offer-price">500 ريال</div>
-                    <div class="offer-original-price">
-                      <span class="offer-label">بدلا من</span>
-                      <span class="offer-strikethrough">1000 ريال</span>
-                    </div>
-                  </div>
-                  <div class="offer-title">صنية الملوك</div>
-                  <div class="offer-description" data-full-text="8 حمام محشي، وطلب ريش، ونصف كيلو كفتة، وطلب طرب، وطلب كباب، ونصف كيلو ممبار، بالإضافة إلى اختيارك من الأرز المصري أو البخاري.">
-                    <span class="offer-description-text">8 حمام محشي، وطلب ريش، ونصف كيلو كفتة، وطلب طرب، وطلب كباب، ونصف كيلو ممبار، بالإضافة إلى اختيارك من الأرز المصري أو البخاري.</span>
-                  </div>
-                  <div class="offer-action">
-                    <button class="offer-button" (click)="navigateToOffer('3')">أطلب +</button>
-                    <span class="offer-discount">50% خصم</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="offer-item">
-              <img src="assets/offerPhoto/Rectangle_4606.png" alt="Offer" class="offer-photo" />
-              <div class="offer-content">
-                <img src="assets/Subtract.png" alt="Offer" class="offer-shape" />
-                <div class="offer-details">
-                  <div class="offer-price-section">
-                    <div class="offer-price">500 ريال</div>
-                    <div class="offer-original-price">
-                      <span class="offer-label">بدلا من</span>
-                      <span class="offer-strikethrough">1000 ريال</span>
-                    </div>
-                  </div>
-                  <div class="offer-title">صنية الملوك</div>
-                  <div class="offer-description" data-full-text="8 حمام محشي، وطلب ريش، ونصف كيلو كفتة، وطلب طرب، وطلب كباب، ونصف كيلو ممبار، بالإضافة إلى اختيارك من الأرز المصري أو البخاري.">
-                    <span class="offer-description-text">8 حمام محشي، وطلب ريش، ونصف كيلو كفتة، وطلب طرب، وطلب كباب، ونصف كيلو ممبار، بالإضافة إلى اختيارك من الأرز المصري أو البخاري.</span>
-                  </div>
-                  <div class="offer-action">
-                    <button class="offer-button" (click)="navigateToOffer('4')">أطلب +</button>
-                    <span class="offer-discount">50% خصم</span>
+                    <button class="offer-button" (click)="navigateToOffer(product.id.toString())">أطلب +</button>
                   </div>
                 </div>
               </div>
@@ -294,7 +166,7 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
           </div>
         </div>
       </section>
-    </div>
+    </div> -->
     <div class="container-fluid px-0">
       <section class="we-chose-section py-5">
         <div class="container">
@@ -310,115 +182,23 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
             <h2 class="section-title">اخترنا لك</h2>
           </div>
           <div class="we-chose-cards" #weChoseCarousel>
-            <div class="we-chose-card">
+            <div class="we-chose-card" *ngFor="let product of weChoseProducts">
               <div class="we-chose-card-bg">
                 <img src="assets/Bashwat-logo.png" alt="Logo" class="we-chose-logo" />
               </div>
               <div class="we-chose-image-wrapper">
-                <img src="assets/1.png" alt="ورق عنب يغير مودك" class="we-chose-image" />
-                <!-- <div class="we-chose-price-tag">82 ريال</div> -->
+                <img
+                  [src]="product.imageUrl || 'assets/1.png'"
+                  [alt]="currentLang === 'ar' ? product.nameAr : product.nameEn"
+                  class="we-chose-image"
+                  (error)="$any($event.target).src = 'assets/1.png'" />
               </div>
               <div class="we-chose-content">
-                <h3 class="we-chose-title">ورق عنب يغير مودك</h3>
-                <p class="we-chose-description">نص فرخة+قطعتين صدور+صبعين گفته+ارز+سلطة طحينه+عيش 500 جرام فراخ فيليه تشويه يقدم مع ارز بسمته وسلطه</p>
+                <h3 class="we-chose-title">{{ currentLang === 'ar' ? product.nameAr : product.nameEn }}</h3>
+                <p class="we-chose-description">{{ currentLang === 'ar' ? (product.descriptionAr || product.descriptionEn) : (product.descriptionEn || product.descriptionAr) }}</p>
                 <div class="we-chose-action-row">
-                  <div class="we-chose-price">82 ريال</div>
-                  <button class="we-chose-order-button">
-                    <span>أطلب +</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="we-chose-card">
-              <div class="we-chose-card-bg">
-                <img src="assets/Bashwat-logo.png" alt="Logo" class="we-chose-logo" />
-              </div>
-              <div class="we-chose-image-wrapper">
-                <img src="assets/1.png" alt="أفندينا" class="we-chose-image" />
-                <!-- <div class="we-chose-price-tag">89 ريال</div> -->
-              </div>
-              <div class="we-chose-content">
-                <h3 class="we-chose-title">أفندينا</h3>
-                <p class="we-chose-description">نص فرخة+قطعتين صدور+صبعين گفته+ارز+سلطة طحينه+عيش 500 جرام فراخ فيليه تشويه يقدم مع ارز بسمتة وسلطه</p>
-                <div class="we-chose-action-row">
-                  <div class="we-chose-price">82 ريال</div>
-                  <button class="we-chose-order-button">
-                    <span>أطلب +</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="we-chose-card">
-              <div class="we-chose-card-bg">
-                <img src="assets/Bashwat-logo.png" alt="Logo" class="we-chose-logo" />
-              </div>
-              <div class="we-chose-image-wrapper">
-                <img src="assets/1.png" alt="صينية المزاجنجية" class="we-chose-image" />
-                <!-- <div class="we-chose-price-tag">299 ريال</div> -->
-              </div>
-              <div class="we-chose-content">
-                <h3 class="we-chose-title">صينية المزاجنجية</h3>
-                <p class="we-chose-description">نص فرخة+قطعتين صدور+صبعين گفته+ارز+سلطة طحينه+عيش 500 جرام فراخ فيليه تشويه يقدم مع ارز بسمتة وسلطه</p>
-                <div class="we-chose-action-row">
-                  <div class="we-chose-price">82 ريال</div>
-                  <button class="we-chose-order-button">
-                    <span>أطلب +</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="we-chose-card">
-              <div class="we-chose-card-bg">
-                <img src="assets/Bashwat-logo.png" alt="Logo" class="we-chose-logo" />
-              </div>
-              <div class="we-chose-image-wrapper">
-                <img src="assets/1.png" alt="وجبة الأفندية" class="we-chose-image" />
-                <!-- <div class="we-chose-price-tag">82 ريال</div> -->
-              </div>
-              <div class="we-chose-content">
-                <h3 class="we-chose-title">وجبة الأفندية</h3>
-                <p class="we-chose-description">نص فرخة+قطعتين صدور+صبعين گفته+ارز+سلطة طحينه+عيش 500 جرام فراخ فيليه تشويه يقدم مع ارز بسمته وسلطة</p>
-                <div class="we-chose-action-row">
-                  <div class="we-chose-price">82 ريال</div>
-                  <button class="we-chose-order-button">
-                    <span>أطلب +</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="we-chose-card">
-              <div class="we-chose-card-bg">
-                <img src="assets/Bashwat-logo.png" alt="Logo" class="we-chose-logo" />
-              </div>
-              <div class="we-chose-image-wrapper">
-                <img src="assets/1.png" alt="صينية المشاوي المختلطة" class="we-chose-image" />
-                <!-- <div class="we-chose-price-tag">150 ريال</div> -->
-              </div>
-              <div class="we-chose-content">
-                <h3 class="we-chose-title">صينية المشاوي المختلطة</h3>
-                <p class="we-chose-description">كيلو مشكل مشاوي+ارز+سلطة+طحينة+مقبلات+عيش 500 جرام فراخ فيليه تشويه يقدم مع ارز بسمتة وسلطه</p>
-                <div class="we-chose-action-row">
-                  <div class="we-chose-price">150 ريال</div>
-                  <button class="we-chose-order-button">
-                    <span>أطلب +</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="we-chose-card">
-              <div class="we-chose-card-bg">
-                <img src="assets/Bashwat-logo.png" alt="Logo" class="we-chose-logo" />
-              </div>
-              <div class="we-chose-image-wrapper">
-                <img src="assets/1.png" alt="وجبة الكباب" class="we-chose-image" />
-                <!-- <div class="we-chose-price-tag">95 ريال</div> -->
-              </div>
-              <div class="we-chose-content">
-                <h3 class="we-chose-title">وجبة الكباب</h3>
-                <p class="we-chose-description">نصف كيلو كباب+ارز+سلطة+طحينة+مقبلات+عيش 500 جرام فراخ فيليه تشويه يقدم مع ارز بسمته وسلطة</p>
-                <div class="we-chose-action-row">
-                  <div class="we-chose-price">95 ريال</div>
-                  <button class="we-chose-order-button">
+                  <div class="we-chose-price">{{ product.basePrice }} ريال</div>
+                  <button class="we-chose-order-button" (click)="navigateToOffer(product.id.toString())">
                     <span>أطلب +</span>
                   </button>
                 </div>
@@ -1183,20 +963,44 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
       .requested-card {
         flex: 0 0 calc(50% - 0.75rem);
       }
-    }
-    @media (max-width: 1200px) {
       .categories-grid {
         grid-template-columns: repeat(3, 1fr);
       }
+      .offers-grid {
+        justify-content: center;
+      }
+      .offer-item {
+        flex: 0 0 calc(50% - 0.75rem);
+      }
+    }
+    @media (max-width: 992px) {
+      .hero-section {
+        height: 500px;
+      }
+      .hero-year, .hero-slogan {
+        font-size: 28px;
+      }
+      .hero-logo img {
+        max-width: 150px;
+      }
     }
     @media (max-width: 768px) {
+      .hero-section {
+        height: 380px;
+      }
+      .hero-year, .hero-slogan {
+        font-size: 22px;
+      }
+      .hero-logo img {
+        max-width: 120px;
+      }
       .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
       }
       .section-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
         width: 100%;
       }
       .view-all-link {
@@ -1215,15 +1019,59 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
         justify-self: center;
       }
       .we-chose-card {
-        min-width: 280px;
+        min-width: 260px;
       }
       .categories-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
       }
       .category-image-wrapper {
-        width: 100px;
-        height: 100px;
+        width: 80px;
+        height: 80px;
+      }
+      .category-label {
+        font-size: 0.8rem;
+      }
+      .most-requested-cards {
+        gap: 1rem;
+      }
+      .requested-card {
+        flex: 0 0 calc(50% - 0.5rem);
+        min-width: unset;
+        max-width: unset;
+      }
+      /* Offers section mobile */
+      .offers-grid {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+      .offer-item {
+        flex: 0 0 100%;
+        width: 100%;
+        max-width: 400px;
+      }
+    }
+    @media (max-width: 480px) {
+      .hero-section {
+        height: 300px;
+      }
+      .hero-year, .hero-slogan {
+        font-size: 18px;
+      }
+      .hero-logo img {
+        max-width: 90px;
+      }
+      .categories-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+      }
+      .category-image-wrapper {
+        width: 70px;
+        height: 70px;
+      }
+      .category-label {
+        font-size: 0.7rem;
       }
       .most-requested-cards {
         flex-direction: column;
@@ -1232,19 +1080,36 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
       .requested-card {
         flex: 0 0 100%;
         max-width: 100%;
+        min-width: unset;
+      }
+      .section-title {
+        font-size: 1.5rem;
+      }
+      .we-chose-card {
+        min-width: 240px;
       }
     }
   `]
 })
-export class HomeComponent implements OnInit, AfterViewInit {
+export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('heroVideo', { static: false }) heroVideo!: ElementRef<HTMLVideoElement>;
   @ViewChild('weChoseCarousel', { static: false }) weChoseCarousel!: ElementRef<HTMLDivElement>;
   featuredItems$!: Observable<MenuItem[]>;
   offers$!: Observable<Offer[]>;
+  categories: Category[] = [];
+  displayCategories: CategoryWithProducts[] = [];
+  weChoseProducts: any[] = [];
+  offerProducts: any[] = [];
   isMuted: boolean = true;
+  isLoadingCategories: boolean = false;
+  currentLang: string = 'en';
+  private categoriesLoaded: boolean = false;
+  private langChangeSubscription?: Subscription;
 
   constructor(
     private translationService: TranslationService,
+    private translate: TranslateService,
+    private categoryService: CategoryService,
     private cdr: ChangeDetectorRef,
     private router: Router,
     private viewportScroller: ViewportScroller
@@ -1276,6 +1141,18 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
 
   ngOnInit(): void {
+    // Initialize current language
+    this.currentLang = this.translationService.getCurrentLanguage();
+
+    // Subscribe to language changes
+    this.langChangeSubscription = this.translate.onLangChange.subscribe(event => {
+      this.currentLang = event.lang;
+      this.cdr.detectChanges();
+    });
+
+    // Load categories with products from cached service data
+    this.loadCategoriesWithProducts();
+
     // Static mock data until backend is ready
     const items: MenuItem[] = [
       {
@@ -1336,6 +1213,73 @@ export class HomeComponent implements OnInit, AfterViewInit {
     ]);
   }
 
+  loadCategories(): void {
+    // Prevent reloading if categories are already loaded
+    if (this.categoriesLoaded && this.categories.length > 0) {
+      return;
+    }
+
+    this.isLoadingCategories = true;
+    // Use cached categories if available (service-level caching)
+    this.categoryService.getCategories(true, false).subscribe({
+      next: (categories) => {
+        this.categories = categories;
+        this.categoriesLoaded = true;
+        this.isLoadingCategories = false;
+        this.cdr.detectChanges();
+        console.log('Categories loaded:', categories);
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+        this.isLoadingCategories = false;
+        // Fallback to empty array on error
+        this.categories = [];
+      }
+    });
+  }
+
+  loadCategoriesWithProducts(): void {
+    this.isLoadingCategories = true;
+    // Use the cached observable - this will return cached data if available,
+    // or trigger a single HTTP request if not cached (which will be shared with other components)
+    this.categoryService.getCategoriesWithProducts().subscribe({
+      next: (categories) => {
+        if (categories.length > 0) {
+          // Take only the first 10 categories
+          this.displayCategories = categories.slice(0, 10);
+
+          // Collect all active products from all categories and pick 6 randomly
+          const allProducts = categories
+            .filter(cat => cat.isActive)
+            .flatMap(cat => (cat.products || []).filter((p: any) => p.isActive !== false));
+
+          this.weChoseProducts = this.pickRandom(allProducts, 6);
+
+          // First 4 products from category id = 8 for the offers section
+          const cat8 = categories.find(c => c.id === 8);
+          this.offerProducts = (cat8?.products || [])
+            .filter((p: any) => p.isActive !== false)
+            .slice(0, 4);
+
+          this.isLoadingCategories = false;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading categories with products:', error);
+        this.isLoadingCategories = false;
+        this.displayCategories = [];
+        this.weChoseProducts = [];
+        this.offerProducts = [];
+      }
+    });
+  }
+
+  private pickRandom<T>(arr: T[], count: number): T[] {
+    const shuffled = [...arr].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  }
+
   scrollCarousel(carouselName: string, direction: number): void {
     let carousel: ElementRef<HTMLDivElement> | null = null;
 
@@ -1385,6 +1329,13 @@ export class HomeComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/menu'], { queryParams: { category: 'الفطار' } }).then(() => {
       this.viewportScroller.scrollToPosition([0, 0]);
     });
+  }
+
+  ngOnDestroy(): void {
+    // Clean up subscription
+    if (this.langChangeSubscription) {
+      this.langChangeSubscription.unsubscribe();
+    }
   }
 }
 

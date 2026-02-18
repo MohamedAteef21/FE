@@ -1,19 +1,24 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, ViewportScroller } from '@angular/common';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { TranslateModule } from '@ngx-translate/core';
+import { map, catchError } from 'rxjs/operators';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared/shared.module';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { Category, MenuItem } from '../../../models/menu-item.model';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { CategoryService } from '../../../core/services/category.service';
+import { CategoryWithProducts } from '../../../models/category.model';
 import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../../../core/utils/item-translation.util';
+import { MatDialog } from '@angular/material/dialog';
+import { CartDialogComponent } from './cart-dialog.component';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [CommonModule, SharedModule, TranslateModule],
+  imports: [CommonModule, SharedModule, TranslateModule, LoadingSpinnerComponent],
   template: `
     <div class="container-fluid px-0">
       <!-- Breadcrumb Navigation -->
@@ -42,11 +47,48 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
                 </div>
               </section>
 
+              <!-- Mobile Category Chips (hidden on desktop, shown on mobile) -->
+              <div class="mobile-chips-bar">
+                <div class="mobile-chips-loading" *ngIf="isLoadingCategories">
+                  <app-loading-spinner></app-loading-spinner>
+                </div>
+                <ul class="mobile-chip-list" *ngIf="!isLoadingCategories">
+                  <li
+                    *ngFor="let category of categories$ | async"
+                    [class.active]="selectedCategoryId !== null && selectedCategoryId === +category.id"
+                    (click)="selectCategory(category.id)">
+                    <span class="mobile-chip-badge">{{ getCategoryItemCount(category.id) }}</span>
+                    <span class="mobile-chip-name-wrapper">
+                      <span class="category-arrow" *ngIf="selectedCategoryId !== null && selectedCategoryId === +category.id">
+                        <svg width="11" height="12" viewBox="0 0 11 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9.49981 10.5V1.49999C9.49952 1.40887 9.47439 1.31955 9.42712 1.24165C9.37985 1.16375 9.31223 1.10022 9.23153 1.05789C9.15084 1.01556 9.06013 0.996045 8.96917 1.00144C8.87821 1.00683 8.79044 1.03692 8.71531 1.08849L2.21531 5.58849C1.94581 5.77499 1.94581 6.22399 2.21531 6.41099L8.71531 10.911C8.79028 10.9631 8.87809 10.9936 8.96921 10.9993C9.06032 11.005 9.15125 10.9856 9.23211 10.9432C9.31298 10.9009 9.38069 10.8371 9.42788 10.759C9.47508 10.6809 9.49995 10.5913 9.49981 10.5Z" fill="#72767E"/>
+                        </svg>
+                      </span>
+                      <span class="mobile-chip-name">
+                        <span *ngIf="currentLang === 'ar'">{{ category.name }}</span>
+                        <span *ngIf="currentLang === 'en'">{{ category.nameEn || category.name }}</span>
+                      </span>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
               <div class="items-content" #itemsContent>
-                <h2 class="items-title" *ngIf="selectedCategoryName">{{ selectedCategoryName }}</h2>
-                <h2 class="items-title" *ngIf="!selectedCategoryName">الاصناف</h2>
+                <h2 class="items-title" *ngIf="selectedCategoryName">
+                  {{ selectedCategoryName }}
+                </h2>
+                <h2 class="items-title" *ngIf="!selectedCategoryName">
+                  <span *ngIf="currentLang === 'ar'">الاصناف</span>
+                  <span *ngIf="currentLang === 'en'">Categories</span>
+                </h2>
                 
-                <div class="items-grid" *ngIf="menuItems$ | async as items">
+                <!-- Loading Spinner -->
+                <div class="loading-wrapper" *ngIf="isLoading">
+                  <app-loading-spinner></app-loading-spinner>
+                </div>
+                
+                <!-- Items Grid -->
+                <div class="items-grid" *ngIf="!isLoading && (menuItems$ | async) as items">
                   <div class="item-card" *ngFor="let item of items">
                     <div class="item-image-wrapper">
                       <img [src]="item.imageUrl" [alt]="item.name" class="item-image" />
@@ -67,12 +109,29 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
                 </div>
 
                 <!-- Pagination -->
-                <div class="pagination-wrapper" *ngIf="(menuItems$ | async)?.length">
+                <div class="pagination-wrapper" *ngIf="totalPages > 1">
                   <div class="pagination">
-                    <button class="page-btn" [class.active]="currentPage === 1" (click)="goToPage(1)">1</button>
-                    <button class="page-btn" [class.active]="currentPage === 2" (click)="goToPage(2)">2</button>
-                    <button class="page-btn" [class.active]="currentPage === 3" (click)="goToPage(3)">3</button>
-                    <button class="page-btn next-btn" (click)="goToPage(currentPage + 1)">>></button>
+                    <button 
+                      class="page-btn prev-btn" 
+                      [class.disabled]="!hasPreviousPage()"
+                      (click)="goToPreviousPage()"
+                      [disabled]="!hasPreviousPage()">
+                      &lt;&lt;
+                    </button>
+                    <button 
+                      *ngFor="let page of getPageNumbers()"
+                      class="page-btn" 
+                      [class.active]="currentPage === page" 
+                      (click)="goToPage(page)">
+                      {{ page }}
+                    </button>
+                    <button 
+                      class="page-btn next-btn" 
+                      [class.disabled]="!hasNextPage()"
+                      (click)="goToNextPage()"
+                      [disabled]="!hasNextPage()">
+                      &gt;&gt;
+                    </button>
                   </div>
                 </div>
               </div>
@@ -82,14 +141,27 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
             <div class="col-12 col-md-3 sidebar-wrapper">
               <div class="sidebar-content">
                 <h3 class="sidebar-title">الاصناف</h3>
-                <ul class="category-list">
+                
+                <!-- Loading Spinner for Categories -->
+                <div class="loading-wrapper" *ngIf="isLoadingCategories">
+                  <app-loading-spinner></app-loading-spinner>
+                </div>
+                
+                <!-- Category List -->
+                <ul class="category-list" *ngIf="!isLoadingCategories">
                   <li 
                     *ngFor="let category of categories$ | async"
-                    [class.active]="selectedCategoryName === category.name"
-                    (click)="selectCategoryByName(category.name)">
+                    [class.active]="selectedCategoryId !== null && selectedCategoryId === +category.id"
+                    (click)="selectCategory(category.id)">
                     <span class="category-name-wrapper">
-                      <span class="category-arrow" *ngIf="selectedCategoryName === category.name">◀</span>
-                      <span class="category-name">{{ category.isArabicLang ? category.name : (category.nameEn || category.name) }}</span>
+                      <span class="category-arrow" *ngIf="selectedCategoryId !== null && selectedCategoryId === +category.id"><svg width="11" height="12" viewBox="0 0 11 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M9.49981 10.5V1.49999C9.49952 1.40887 9.47439 1.31955 9.42712 1.24165C9.37985 1.16375 9.31223 1.10022 9.23153 1.05789C9.15084 1.01556 9.06013 0.996045 8.96917 1.00144C8.87821 1.00683 8.79044 1.03692 8.71531 1.08849L2.21531 5.58849C1.94581 5.77499 1.94581 6.22399 2.21531 6.41099L8.71531 10.911C8.79028 10.9631 8.87809 10.9936 8.96921 10.9993C9.06032 11.005 9.15125 10.9856 9.23211 10.9432C9.31298 10.9009 9.38069 10.8371 9.42788 10.759C9.47508 10.6809 9.49995 10.5913 9.49981 10.5Z" fill="#72767E"/>
+</svg>
+</span>
+                      <span class="category-name">
+                        <span *ngIf="currentLang === 'ar'">{{ category.name }}</span>
+                        <span *ngIf="currentLang === 'en'">{{ category.nameEn || category.name }}</span>
+                      </span>
                     </span>
                     <span class="category-count-badge">{{ getCategoryItemCount(category.id) }}</span>
                   </li>
@@ -170,7 +242,7 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
     }
     .sidebar-wrapper {
       width: 268px;
-      height: 837.4270629882812px;
+      max-height: 837.4270629882812px;
       opacity: 1;
       gap: 10px;
       border-radius: 15px;
@@ -180,9 +252,16 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       padding-bottom: 28px;
       padding-left: 16px;
       background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
     .sidebar-content {
       direction: rtl;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
     }
     .sidebar-title {
       font-family: 'Almarai', sans-serif;
@@ -208,11 +287,31 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       list-style: none;
       padding: 0;
       margin: 0;
+      overflow-y: auto;
+      flex: 1;
+      padding-right: 4px;
+    }
+    
+    .category-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .category-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    .category-list::-webkit-scrollbar-thumb {
+      background: #d32f2f;
+      border-radius: 10px;
+    }
+    
+    .category-list::-webkit-scrollbar-thumb:hover {
+      background: #b71c1c;
     }
     .category-list li {
       width: 100%;
       height: 48px;
-      // transform: rotate(-180deg);
       opacity: 1;
       border-radius: 7474px;
       padding: 0.75rem 1rem;
@@ -286,15 +385,6 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       color: #d32f2f;
       position: relative;
     }
-    // .category-list li.active .category-name::after {
-    //   content: '';
-    //   position: absolute;
-    //   bottom: -2px;
-    //   right: -4px;
-    //   left: -4px;
-    //   height: 2px;
-    //   background-color: #FDC040;
-    // }
     .category-list li.active .category-arrow {
       color: #666;
     }
@@ -310,9 +400,7 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       font-weight: 700;
       font-size: 2rem;
       color: #d32f2f;
-      // margin-bottom: 2rem;
       padding-bottom: 0.5rem;
-      // border-bottom: 3px solid #FDC55E;
       display: flex;
     }
     .items-grid {
@@ -415,29 +503,179 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       color: white;
       border-color: #d32f2f;
     }
-    @media (max-width: 768px) {
-      .items-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-      }
+    .page-btn.disabled,
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .page-btn.prev-btn,
+    .page-btn.next-btn {
+      min-width: 50px;
+    }
+    .loading-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+      padding: 2rem;
+    }
+    /* ── Mobile chips bar: hidden on desktop ── */
+    .mobile-chips-bar {
+      display: none;
+    }
+
+    @media (max-width: 992px) {
       .sidebar-wrapper {
-        padding-top: 2rem;
+        width: 220px;
       }
       .items-wrapper {
-        padding-top: 2rem;
+        padding: 1rem;
+      }
+    }
+    @media (max-width: 768px) {
+      .breadcrumb-container {
+        padding: 0.75rem 1rem;
+      }
+
+      /* Hide the sidebar on mobile */
+      .sidebar-wrapper {
+        display: none;
+      }
+
+      /* Items wrapper takes full width */
+      .items-wrapper {
+        padding: 0.5rem 1rem 1rem;
+      }
+
+      .items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+      }
+
+      .menu-banner-section {
+        height: 200px;
+        margin-bottom: 0;
+        border-radius: 10px;
+      }
+      .banner-discount { font-size: 1.5rem; }
+      .banner-text { font-size: 0.9rem; }
+      .items-title { font-size: 1.5rem; }
+
+      /* ── Mobile chips bar ── */
+      .mobile-chips-bar {
+        display: block;
+        background: #ffffff;
+        padding: 10px 16px 4px;
+        margin-bottom: 1rem;
+      }
+
+      .mobile-chips-loading {
+        display: flex;
+        justify-content: center;
+        padding: 0.5rem;
+        min-height: 48px;
+      }
+
+      .mobile-chip-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 8px;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        padding-bottom: 6px;
+      }
+
+      .mobile-chip-list::-webkit-scrollbar {
+        display: none;
+      }
+
+      .mobile-chip-list li {
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        height: 48px;
+        border-radius: 7474px;
+        padding: 0.75rem 1rem;
+        background-color: #ffffff;
+        border: none;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.10);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        gap: 6px;
+      }
+
+      .mobile-chip-list li.active {
+        border-bottom: 2px solid #FDC040;
+        background-color: #ffffff;
+      }
+
+      .mobile-chip-list li.active .mobile-chip-name {
+        color: #d32f2f;
+        font-weight: 600;
+      }
+
+      .mobile-chip-name-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        direction: rtl;
+      }
+
+      .mobile-chip-name {
+        font-family: 'Almarai', sans-serif;
+        font-weight: 400;
+        font-size: 0.95rem;
+        color: #333;
+        white-space: nowrap;
+      }
+
+      .mobile-chip-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        height: 24px;
+        border-radius: 20px;
+        border: 1px solid #ECECEC;
+        padding: 0 6px;
+        background: #FFFFFF;
+        font-family: 'Alexandria', sans-serif;
+        font-weight: 600;
+        font-size: 12px;
+        color: #72767E;
+        flex-shrink: 0;
+      }
+    }
+    @media (max-width: 480px) {
+      .items-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      .item-image-wrapper {
+        height: 150px;
+      }
+      .item-name {
+        font-size: 0.9rem;
+      }
+      .item-price {
+        font-size: 1.1rem;
+      }
+      .order-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
       }
       .menu-banner-section {
-        height: 250px;
-        margin-bottom: 1.5rem;
-      }
-      .banner-overlay {
-        padding-right: 1rem;
+        height: 150px;
       }
       .banner-discount {
-        font-size: 1.8rem;
-      }
-      .banner-text {
-        font-size: 1rem;
+        font-size: 1.2rem;
       }
     }
   `]
@@ -446,541 +684,188 @@ export class MenuComponent implements OnInit {
   @ViewChild('itemsContent', { static: false }) itemsContent!: ElementRef;
   categories$!: Observable<Category[]>;
   menuItems$!: Observable<MenuItem[]>;
-  selectedCategoryId: string | null = null;
+  selectedCategoryId: number | null = null;
   selectedCategoryName: string | null = null;
   allMenuItems: MenuItem[] = [];
+  allCategoriesWithProducts: CategoryWithProducts[] = [];
   currentPage: number = 1;
   itemsPerPage: number = 12;
-
-  // Mapping Arabic category names to IDs
-  private categoryNameToIdMap: { [key: string]: string } = {
-    'الخضار': '1',
-    'الساندوشات': '2',
-    'الباستا': '3',
-    'المقبلات': '4',
-    'الفطار': '5',
-    'الحلويات': '6',
-    'الصواني': '7',
-    'الأطباق الرئيسة': '8',
-    'المشاوي': '9',
-    'الشوربة': '10'
-  };
+  currentLang: string = 'en';
+  totalPages: number = 1;
+  isLoading: boolean = false;
+  isLoadingCategories: boolean = false;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private cartService: CartService,
     private translationService: TranslationService,
-    private viewportScroller: ViewportScroller
-  ) { }
+    private categoryService: CategoryService,
+    private translate: TranslateService,
+    private viewportScroller: ViewportScroller,
+    private dialog: MatDialog
+  ) {
+    this.currentLang = this.translationService.getCurrentLanguage();
+    this.translate.onLangChange.subscribe(event => {
+      this.currentLang = event.lang;
+    });
+  }
 
   ngOnInit(): void {
-    // Static mock data until backend is ready
-    const categories: Category[] = [
-      {
-        id: '5',
-        name: 'الفطار',
-        nameEn: 'Breakfast',
-        description: 'وجبات الفطور اللذيذة',
-        descriptionEn: 'Delicious breakfast meals',
-        displayOrder: 1,
-        isActive: true
-      },
-      {
-        id: '4',
-        name: 'المقبلات',
-        nameEn: 'Appetizers',
-        description: 'ابدأ وجبتك مع مقبلاتنا اللذيذة',
-        descriptionEn: 'Start your meal with our delicious appetizers',
-        displayOrder: 2,
-        isActive: true
-      },
-      {
-        id: '3',
-        name: 'الباستا',
-        nameEn: 'Pasta',
-        description: 'أطباق الباستا المميزة',
-        descriptionEn: 'Signature pasta dishes',
-        displayOrder: 3,
-        isActive: true
-      },
-      {
-        id: '2',
-        name: 'الساندوشات',
-        nameEn: 'Sandwiches',
-        description: 'ساندوتشات لذيذة',
-        descriptionEn: 'Delicious sandwiches',
-        displayOrder: 4,
-        isActive: true
-      },
-      {
-        id: '1',
-        name: 'الخضار',
-        nameEn: 'Vegetables',
-        description: 'أطباق الخضار الطازجة',
-        descriptionEn: 'Fresh vegetable dishes',
-        displayOrder: 5,
-        isActive: true
-      },
-      {
-        id: '10',
-        name: 'الشوربة',
-        nameEn: 'Soup',
-        description: 'شوربات ساخنة',
-        descriptionEn: 'Hot soups',
-        displayOrder: 6,
-        isActive: true
-      },
-      {
-        id: '9',
-        name: 'المشاوي',
-        nameEn: 'Grills',
-        description: 'مشاوي مشكلة',
-        descriptionEn: 'Mixed grills',
-        displayOrder: 7,
-        isActive: true
-      },
-      {
-        id: '8',
-        name: 'الأطباق الرئيسة',
-        nameEn: 'Main Dishes',
-        description: 'أطباقنا الرئيسية المميزة',
-        descriptionEn: 'Our signature main dishes',
-        displayOrder: 8,
-        isActive: true
-      },
-      {
-        id: '7',
-        name: 'الصواني',
-        nameEn: 'Trays',
-        description: 'صواني مميزة',
-        descriptionEn: 'Special trays',
-        displayOrder: 9,
-        isActive: true
-      },
-      {
-        id: '11',
-        name: 'المشروبات',
-        nameEn: 'Beverages',
-        description: 'مشروبات منعشة',
-        descriptionEn: 'Refreshing drinks',
-        displayOrder: 10,
-        isActive: true
-      },
-      {
-        id: '6',
-        name: 'الحلويات',
-        nameEn: 'Desserts',
-        description: 'نهاية حلوة لوجبتك',
-        descriptionEn: 'Sweet endings to your meal',
-        displayOrder: 11,
-        isActive: true
-      }
-    ];
-    this.categories$ = of(addLanguageProperty(categories, this.translationService));
+    // Load categories with products from API
+    this.loadCategoriesWithProducts();
 
-    // Check for category query parameter
+    // Check for category query parameter (now expects ID)
     this.route.queryParams.subscribe(params => {
       if (params['category']) {
-        const categoryName = params['category'];
-        this.selectCategoryByName(categoryName);
+        const categoryId = parseInt(params['category'], 10);
+        if (!isNaN(categoryId)) {
+          this.selectCategory(categoryId.toString());
+        }
       } else {
         this.loadMenuItems();
       }
     });
+  }
 
-    this.allMenuItems = [
-      {
-        id: '1',
-        name: 'سلطة قيصر',
-        nameEn: 'Caesar Salad',
-        description: 'خس روماني طازج مع صلصة قيصر',
-        descriptionEn: 'Fresh romaine lettuce with Caesar dressing',
-        price: 12.99,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '1',
-        isAvailable: true
-      },
-      {
-        id: '2',
-        name: 'دجاج مشوي',
-        nameEn: 'Grilled Chicken',
-        description: 'صدر دجاج مشوي طري مع خضار',
-        descriptionEn: 'Tender grilled chicken breast with vegetables',
-        price: 18.99,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '2',
-        isAvailable: true
-      },
-      {
-        id: '3',
-        name: 'كيك الشوكولاتة',
-        nameEn: 'Chocolate Cake',
-        description: 'كيك شوكولاتة غني مع آيس كريم الفانيليا',
-        descriptionEn: 'Rich chocolate cake with vanilla ice cream',
-        price: 8.99,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '3',
-        isAvailable: true
-      },
-      {
-        id: '4',
-        name: 'بطاطس مقلية',
-        nameEn: 'French Fries',
-        description: 'بطاطس مقلية مقرمشة ذهبية',
-        descriptionEn: 'Crispy golden fries',
-        price: 6.99,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '1',
-        isAvailable: true
-      },
-      {
-        id: '5',
-        name: 'ستيك لحم',
-        nameEn: 'Beef Steak',
-        description: 'ستيك لحم عصير مع بطاطس مهروسة',
-        descriptionEn: 'Juicy beef steak with mashed potatoes',
-        price: 24.99,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '2',
-        isAvailable: true
-      },
-      {
-        id: '6',
-        name: 'آيس كريم',
-        nameEn: 'Ice Cream',
-        description: 'آيس كريم فانيليا مع صلصة الشوكولاتة',
-        descriptionEn: 'Vanilla ice cream with chocolate sauce',
-        price: 7.99,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '3',
-        isAvailable: true
-      },
-      // Adding many items to الفطار category (categoryId: '5') to show pagination
-      {
-        id: '7',
-        name: 'ساندوتش فلافل رويال ميكس',
-        nameEn: 'Falafel Royal Mix Sandwich',
-        description: 'ساندوتش فلافل رويال ميكس لذيذ',
-        descriptionEn: 'Delicious falafel royal mix sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '8',
-        name: 'ساندوتش فلافل محشية',
-        nameEn: 'Stuffed Falafel Sandwich',
-        description: 'ساندوتش فلافل محشية',
-        descriptionEn: 'Stuffed falafel sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '9',
-        name: 'ساندوتش فلافل',
-        nameEn: 'Falafel Sandwich',
-        description: 'ساندوتش فلافل تقليدي',
-        descriptionEn: 'Traditional falafel sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '10',
-        name: 'ساندوتش بيض مسلوق',
-        nameEn: 'Boiled Egg Sandwich',
-        description: 'ساندوتش بيض مسلوق',
-        descriptionEn: 'Boiled egg sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '11',
-        name: 'ساندوتش فول اسكندراني',
-        nameEn: 'Alexandrian Foul Sandwich',
-        description: 'ساندوتش فول اسكندراني',
-        descriptionEn: 'Alexandrian foul sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '12',
-        name: 'ساندوتش فول بالبيض',
-        nameEn: 'Foul with Egg Sandwich',
-        description: 'ساندوتش فول بالبيض',
-        descriptionEn: 'Foul with egg sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '13',
-        name: 'ساندوتش فول',
-        nameEn: 'Foul Sandwich',
-        description: 'ساندوتش فول',
-        descriptionEn: 'Foul sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '14',
-        name: 'ساندوتش جبنة بيضاء',
-        nameEn: 'White Cheese Sandwich',
-        description: 'ساندوتش جبنة بيضاء',
-        descriptionEn: 'White cheese sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '15',
-        name: 'ساندوتش جبنة صفراء',
-        nameEn: 'Yellow Cheese Sandwich',
-        description: 'ساندوتش جبنة صفراء',
-        descriptionEn: 'Yellow cheese sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '16',
-        name: 'ساندوتش زعتر وزيت',
-        nameEn: 'Zaatar and Oil Sandwich',
-        description: 'ساندوتش زعتر وزيت',
-        descriptionEn: 'Zaatar and oil sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '17',
-        name: 'ساندوتش لبنة',
-        nameEn: 'Labneh Sandwich',
-        description: 'ساندوتش لبنة',
-        descriptionEn: 'Labneh sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '18',
-        name: 'ساندوتش طماطم',
-        nameEn: 'Tomato Sandwich',
-        description: 'ساندوتش طماطم',
-        descriptionEn: 'Tomato sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '19',
-        name: 'ساندوتش خيار',
-        nameEn: 'Cucumber Sandwich',
-        description: 'ساندوتش خيار',
-        descriptionEn: 'Cucumber sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '20',
-        name: 'ساندوتش بيض مقلي',
-        nameEn: 'Fried Egg Sandwich',
-        description: 'ساندوتش بيض مقلي',
-        descriptionEn: 'Fried egg sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '21',
-        name: 'ساندوتش بيض عيون',
-        nameEn: 'Sunny Side Up Egg Sandwich',
-        description: 'ساندوتش بيض عيون',
-        descriptionEn: 'Sunny side up egg sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '22',
-        name: 'ساندوتش بيض أومليت',
-        nameEn: 'Omelet Sandwich',
-        description: 'ساندوتش بيض أومليت',
-        descriptionEn: 'Omelet sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '23',
-        name: 'ساندوتش لحم مفروم',
-        nameEn: 'Minced Meat Sandwich',
-        description: 'ساندوتش لحم مفروم',
-        descriptionEn: 'Minced meat sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '24',
-        name: 'ساندوتش كبدة',
-        nameEn: 'Liver Sandwich',
-        description: 'ساندوتش كبدة',
-        descriptionEn: 'Liver sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '25',
-        name: 'ساندوتش سجق',
-        nameEn: 'Sausage Sandwich',
-        description: 'ساندوتش سجق',
-        descriptionEn: 'Sausage sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '26',
-        name: 'ساندوتش بسطرمة',
-        nameEn: 'Pastrami Sandwich',
-        description: 'ساندوتش بسطرمة',
-        descriptionEn: 'Pastrami sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '27',
-        name: 'ساندوتش مرتديلا',
-        nameEn: 'Mortadella Sandwich',
-        description: 'ساندوتش مرتديلا',
-        descriptionEn: 'Mortadella sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '28',
-        name: 'ساندوتش تونة',
-        nameEn: 'Tuna Sandwich',
-        description: 'ساندوتش تونة',
-        descriptionEn: 'Tuna sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '29',
-        name: 'ساندوتش جبنة قريش',
-        nameEn: 'Cottage Cheese Sandwich',
-        description: 'ساندوتش جبنة قريش',
-        descriptionEn: 'Cottage cheese sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '30',
-        name: 'ساندوتش جبنة نابلسية',
-        nameEn: 'Nabulsi Cheese Sandwich',
-        description: 'ساندوتش جبنة نابلسية',
-        descriptionEn: 'Nabulsi cheese sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '31',
-        name: 'ساندوتش جبنة شيدر',
-        nameEn: 'Cheddar Cheese Sandwich',
-        description: 'ساندوتش جبنة شيدر',
-        descriptionEn: 'Cheddar cheese sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      },
-      {
-        id: '32',
-        name: 'ساندوتش جبنة موتزاريلا',
-        nameEn: 'Mozzarella Cheese Sandwich',
-        description: 'ساندوتش جبنة موتزاريلا',
-        descriptionEn: 'Mozzarella cheese sandwich',
-        price: 82,
-        imageUrl: 'https://via.placeholder.com/300',
-        categoryId: '5',
-        isAvailable: true
-      }
-    ];
+  loadCategoriesWithProducts(): void {
+    this.isLoading = true;
+    this.isLoadingCategories = true;
 
-    this.loadMenuItems();
+    this.categoryService.getCategoriesWithProducts().pipe(
+      catchError(error => {
+        console.error('Error loading categories with products:', error);
+        this.isLoading = false;
+        this.isLoadingCategories = false;
+        return of([]);
+      })
+    ).subscribe((categoriesWithProducts: CategoryWithProducts[]) => {
+      // Filter only active categories
+      const activeCategories = categoriesWithProducts.filter(cat => cat.isActive);
+      this.allCategoriesWithProducts = activeCategories;
+
+      // Transform to Category format for the sidebar
+      const categories: Category[] = activeCategories.map(cat => ({
+        id: cat.id.toString(),
+        name: cat.nameAr || '',
+        nameEn: cat.nameEn || '',
+        description: cat.descriptionAr || '',
+        descriptionEn: cat.descriptionEn || '',
+        imageUrl: cat.imageUrl || '',
+        displayOrder: 0,
+        isActive: cat.isActive
+      }));
+
+      this.categories$ = of(addLanguageProperty(categories, this.translationService));
+
+      this.isLoadingCategories = false;
+
+      // Transform all products to MenuItem format
+      this.allMenuItems = [];
+      activeCategories.forEach(category => {
+        if (category.products && category.products.length > 0) {
+          category.products.forEach((product: any) => {
+            if (product.isActive) {
+              this.allMenuItems.push({
+                id: product.id.toString(),
+                name: product.nameAr || '',
+                nameEn: product.nameEn || '',
+                description: product.descriptionAr || '',
+                descriptionEn: product.descriptionEn || '',
+                price: product.basePrice || 0,
+                imageUrl: product.imageUrl || 'https://via.placeholder.com/300',
+                categoryId: category.id.toString(),
+                isAvailable: product.isActive
+              });
+            }
+          });
+        }
+      });
+
+      // Load menu items after data is loaded
+      this.loadMenuItems();
+      this.isLoading = false;
+      this.isLoadingCategories = false;
+    });
   }
 
   selectCategory(categoryId: string): void {
-    this.selectedCategoryId = categoryId;
+    this.selectedCategoryId = parseInt(categoryId, 10);
+    const category = this.allCategoriesWithProducts.find(cat => cat.id === this.selectedCategoryId);
+    if (category) {
+      this.selectedCategoryName = this.currentLang === 'ar' ? category.nameAr : category.nameEn;
+    }
     this.currentPage = 1;
     this.loadMenuItems();
+    // Update URL with category ID
+    this.router.navigate(['/menu'], { queryParams: { category: categoryId } });
   }
 
   selectCategoryByName(categoryName: string): void {
-    this.selectedCategoryName = categoryName;
-    const categoryId = this.categoryNameToIdMap[categoryName];
-    if (categoryId) {
-      this.selectedCategoryId = categoryId;
-      this.currentPage = 1;
-      this.loadMenuItems();
-      // Update URL without reloading
-      this.router.navigate(['/menu'], { queryParams: { category: categoryName } });
+    // Find category by name (for backward compatibility)
+    const category = this.allCategoriesWithProducts.find(
+      cat => cat.nameAr === categoryName || cat.nameEn === categoryName
+    );
+    if (category) {
+      this.selectCategory(category.id.toString());
     }
   }
 
   loadMenuItems(): void {
-    let items: MenuItem[];
-    if (this.selectedCategoryId) {
-      items = this.allMenuItems.filter(item => item.categoryId === this.selectedCategoryId);
+    let allFilteredItems: MenuItem[];
+    if (this.selectedCategoryId !== null) {
+      allFilteredItems = this.allMenuItems.filter(item => item.categoryId === this.selectedCategoryId!.toString());
     } else {
-      items = this.allMenuItems;
+      allFilteredItems = this.allMenuItems;
+    }
+
+    // Calculate total pages
+    this.totalPages = Math.ceil(allFilteredItems.length / this.itemsPerPage);
+
+    // Ensure currentPage doesn't exceed totalPages
+    if (this.currentPage > this.totalPages && this.totalPages > 0) {
+      this.currentPage = this.totalPages;
     }
 
     // Pagination
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
-    items = items.slice(startIndex, endIndex);
+    const paginatedItems = allFilteredItems.slice(startIndex, endIndex);
 
     // Add isArabicLang property to items
-    this.menuItems$ = of(addLanguageProperty(items, this.translationService));
+    this.menuItems$ = of(addLanguageProperty(paginatedItems, this.translationService));
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5; // Show max 5 page buttons
+    let startPage = 1;
+    let endPage = this.totalPages;
+
+    if (this.totalPages > maxVisiblePages) {
+      // Show pages around current page
+      const halfVisible = Math.floor(maxVisiblePages / 2);
+      startPage = Math.max(1, this.currentPage - halfVisible);
+      endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+
+      // Adjust if we're near the end
+      if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  hasNextPage(): boolean {
+    return this.currentPage < this.totalPages;
+  }
+
+  hasPreviousPage(): boolean {
+    return this.currentPage > 1;
   }
 
   getCategoryItemCount(categoryId: string): number {
@@ -988,23 +873,45 @@ export class MenuComponent implements OnInit {
   }
 
   goToPage(page: number): void {
-    this.currentPage = page;
-    this.loadMenuItems();
-    // Scroll to the items section so user can see the first item
-    setTimeout(() => {
-      if (this.itemsContent) {
-        this.itemsContent.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        // Fallback to scroll to top if element not found
-        this.viewportScroller.scrollToPosition([0, 0]);
-      }
-    }, 100);
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.loadMenuItems();
+      // Scroll to the items section so user can see the first item
+      setTimeout(() => {
+        if (this.itemsContent) {
+          this.itemsContent.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          // Fallback to scroll to top if element not found
+          this.viewportScroller.scrollToPosition([0, 0]);
+        }
+      }, 100);
+    }
+  }
+
+  goToNextPage(): void {
+    if (this.hasNextPage()) {
+      this.goToPage(this.currentPage + 1);
+    }
+  }
+
+  goToPreviousPage(): void {
+    if (this.hasPreviousPage()) {
+      this.goToPage(this.currentPage - 1);
+    }
   }
 
   addToCart(item: MenuItem, event: Event): void {
     event.stopPropagation();
-    this.cartService.addItem(item, 1);
-    this.router.navigate(['/cart']);
+
+    // Open cart dialog with item data (without adding to cart first)
+    const dialogRef = this.dialog.open(CartDialogComponent, {
+      width: '90vw',
+      maxWidth: '500px',
+      maxHeight: '90vh',
+      panelClass: 'cart-dialog-panel',
+      disableClose: false,
+      data: { item: item }
+    });
   }
 }
 

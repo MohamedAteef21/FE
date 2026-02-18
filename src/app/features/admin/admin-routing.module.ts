@@ -3,8 +3,10 @@ import { RouterModule, Routes } from '@angular/router';
 import { AdminLayoutComponent } from './layout/admin-layout.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { MenuManagementComponent } from './menu-management/menu-management.component';
+import { ProductsManagementComponent } from './products-management/products-management.component';
 import { OrderManagementComponent } from './order-management/order-management.component';
-import { SettingsComponent } from './settings/settings.component';
+import { BannersComponent } from './banners/banners.component';
+import { OffersComponent } from './offers/offers.component';
 import { adminGuard } from '../../core/guards/admin.guard';
 
 const routes: Routes = [
@@ -23,16 +25,24 @@ const routes: Routes = [
         component: DashboardComponent
       },
       {
-        path: 'menu',
+        path: 'categories',
         component: MenuManagementComponent
+      },
+      {
+        path: 'products',
+        component: ProductsManagementComponent
       },
       {
         path: 'orders',
         component: OrderManagementComponent
       },
       {
-        path: 'settings',
-        component: SettingsComponent
+        path: 'banners',
+        component: BannersComponent
+      },
+      {
+        path: 'offers',
+        component: OffersComponent
       }
     ]
   }

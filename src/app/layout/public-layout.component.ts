@@ -1,13 +1,20 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DOCUMENT, ViewportScroller } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '../shared/shared.module';
 import { CartService } from '../core/services/cart.service';
 import { TranslationService } from '../core/services/translation.service';
-import { Observable } from 'rxjs';
+import { CategoryService } from '../core/services/category.service';
+import { AuthService } from '../core/services/auth.service';
+import { Observable, Subscription, of } from 'rxjs';
+import { map, filter, catchError } from 'rxjs/operators';
 import { Cart } from '../models/menu-item.model';
+import { MatDialog } from '@angular/material/dialog';
+import { LocationDialogComponent } from './location-dialog.component';
+import { Category, CategoryWithProducts } from '../models/category.model';
+import { User } from '../models/auth.model';
 
 @Component({
   selector: 'app-public-layout',
@@ -15,6 +22,73 @@ import { Cart } from '../models/menu-item.model';
   imports: [CommonModule, SharedModule, RouterModule, TranslateModule, ReactiveFormsModule],
   template: `
   
+    <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
+  
+  <!-- Mobile Drawer -->
+  <div class="mobile-drawer" [class.open]="isMobileMenuOpen">
+    <div class="mobile-drawer-header">
+      <img src="assets/Bashwat-logo.png" alt="Logo" class="mobile-drawer-logo" />
+      <button class="mobile-drawer-close" (click)="closeMobileMenu()">✕</button>
+    </div>
+    <div class="mobile-drawer-body">
+      <!-- User section -->
+      <div class="mobile-user-section">
+        <button mat-icon-button [matMenuTriggerFor]="userMenu" class="mobile-user-menu-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2Z" fill="#333"/><path d="M21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="#333"/>
+          </svg>
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <button *ngIf="currentUser" mat-menu-item disabled>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2Z" fill="#666"/><path d="M21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="#666"/>
+            </svg>
+            <span>{{ currentUser.email }}</span>
+          </button>
+          <button *ngIf="!currentUser" mat-menu-item (click)="onUserClick(); closeMobileMenu()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 7L9.6 8.4L11.17 10H2V12H11.17L9.6 13.6L11 15L15 11L11 7ZM20 19H4V5H20V7H22V3C22 2.45 21.55 2 21 2H3C2.45 2 2 2.45 2 3V21C2 21.55 2.45 22 3 22H21C21.55 22 22 21.55 22 21V17H20V19Z" fill="#666"/>
+            </svg>
+            <span>{{ 'NAV.LOGIN' | translate }}</span>
+          </button>
+          <button *ngIf="currentUser" mat-menu-item (click)="onLogout(); closeMobileMenu()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.59L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#666"/>
+            </svg>
+            <span>{{ 'NAV.LOGOUT' | translate }}</span>
+          </button>
+        </mat-menu>
+      </div>
+      <!-- Location -->
+      <div class="mobile-location" (click)="openLocationDialog(); closeMobileMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.3" d="M12 2C13.9891 2 15.8968 2.79018 17.3033 4.1967C18.7098 5.60322 19.5 7.51088 19.5 9.5C19.5 12.068 18.1 14.156 16.65 15.64C16.0736 16.2239 15.4542 16.7638 14.797 17.255C14.203 17.701 12.845 18.537 12.845 18.537C12.5874 18.6834 12.2963 18.7604 12 18.7604C11.7037 18.7604 11.4126 18.6834 11.155 18.537C10.4811 18.1462 9.82938 17.7182 9.203 17.255C8.5458 16.7638 7.9264 16.2239 7.35 15.64C5.9 14.156 4.5 12.068 4.5 9.5C4.5 7.51088 5.29018 5.60322 6.6967 4.1967C8.10322 2.79018 10.0109 2 12 2Z" fill="#d32f2f"/></svg>
+        <span>{{ currentLocation || 'التوصيل إلى موقعي' }}</span>
+      </div>
+      <!-- Categories -->
+      <div class="mobile-nav-section-title">الأصناف</div>
+      <div class="mobile-categories-list">
+        <a *ngFor="let category of menuCategories" 
+           class="mobile-category-link"
+           (click)="navigateToCategory(category.id); closeMobileMenu()">
+          <img [src]="category.image" [alt]="category.nameAr" class="mobile-cat-img" />
+          <span>{{ currentLang === 'ar' ? category.nameAr : category.nameEn }}</span>
+        </a>
+      </div>
+      <!-- Language & Social -->
+      <div class="mobile-bottom-section">
+        <button class="mobile-lang-btn" (click)="onLanguageChange()">
+          <span>{{ currentLang === 'ar' ? 'English' : 'العربية' }}</span>
+        </button>
+        <div class="mobile-social-icons">
+          <a href="https://web.facebook.com/bashawatqtr" target="_blank" class="mobile-social-icon"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" target="_blank" class="mobile-social-icon"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.tiktok.com/@al.bashawat.resta" target="_blank" class="mobile-social-icon"><i class="fab fa-tiktok"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
     <nav class="navbar-container">
   <div class="top-bar">
     <div class="top-bar-content">
@@ -23,25 +97,25 @@ import { Cart } from '../models/menu-item.model';
           <i class="fas fa-headset"></i>
           اتصل بنا 39990689
         </span>
-        <span>الاسئلة الشائعة</span>
-        <span class="divider">| |</span>
-        <span>المدونات</span>
-        <span class="divider">|</span>
-        <span>من نحن</span>
+        <span class="top-bar-hide-mobile">الاسئلة الشائعة</span>
+        <span class="divider top-bar-hide-mobile">| |</span>
+        <span class="top-bar-hide-mobile">المدونات</span>
+        <span class="divider top-bar-hide-mobile">|</span>
+        <span class="top-bar-hide-mobile">من نحن</span>
       </div>
 
       <div class="top-bar-left">
-        <span class="discount-text">خصم 15% حتى 20/2/2026</span>
+        <span class="discount-text" style=''>خصم 15% حتى 20/2/2026</span>
       </div>
 
       <div class="social-icons">
-        <a href="#" class="social-icon" target="_blank" rel="noopener noreferrer" title="Facebook">
+        <a href="https://web.facebook.com/bashawatqtr" class="social-icon" target="_blank" rel="noopener noreferrer" title="Facebook">
           <i class="fab fa-facebook-f"></i>
         </a>
-        <a href="#" class="social-icon" target="_blank" rel="noopener noreferrer" title="Instagram">
+        <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" class="social-icon" target="_blank" rel="noopener noreferrer" title="Instagram">
           <i class="fab fa-instagram"></i>
         </a>
-        <a href="#" class="social-icon" target="_blank" rel="noopener noreferrer" title="TikTok">
+        <a href="https://www.tiktok.com/@al.bashawat.resta" class="social-icon" target="_blank" rel="noopener noreferrer" title="TikTok">
           <i class="fab fa-tiktok"></i>
         </a>
       </div>
@@ -50,6 +124,13 @@ import { Cart } from '../models/menu-item.model';
 
   <div class="main-navbar">
     <div class="navbar-content">
+      <!-- Mobile Hamburger Button -->
+      <button class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Toggle navigation">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
       <div class="navbar-right">
         <button class="cart-button" (click)="onCartClick()">
           <div class="cart-icon-wrapper">
@@ -57,16 +138,38 @@ import { Cart } from '../models/menu-item.model';
               <path d="M7.25 12C7.25 11.8011 7.32902 11.6103 7.46967 11.4697C7.61032 11.329 7.80109 11.25 8 11.25H16C16.1989 11.25 16.3897 11.329 16.5303 11.4697C16.671 11.6103 16.75 11.8011 16.75 12C16.75 12.1989 16.671 12.3897 16.5303 12.5303C16.3897 12.671 16.1989 12.75 16 12.75H8C7.80109 12.75 7.61032 12.671 7.46967 12.5303C7.32902 12.3897 7.25 12.1989 7.25 12ZM10 14.25C9.80109 14.25 9.61032 14.329 9.46967 14.4697C9.32902 14.6103 9.25 14.8011 9.25 15C9.25 15.1989 9.32902 15.3897 9.46967 15.5303C9.61032 15.671 9.80109 15.75 10 15.75H14C14.1989 15.75 14.3897 15.671 14.5303 15.5303C14.671 15.3897 14.75 15.1989 14.75 15C14.75 14.8011 14.671 14.6103 14.5303 14.4697C14.3897 14.329 14.1989 14.25 14 14.25H10Z" fill="black"/>
               <path fill-rule="evenodd" clip-rule="evenodd" d="M14.6666 2.33015C14.8444 2.24123 15.0503 2.22658 15.239 2.28939C15.4276 2.35221 15.5836 2.48737 15.6726 2.66515L17.4856 6.29115C17.9129 6.31181 18.3029 6.34715 18.6556 6.39715C19.7116 6.54815 20.5856 6.87415 21.2066 7.64215C21.8276 8.41015 21.9636 9.33315 21.8906 10.3971C21.8206 11.4281 21.5406 12.7291 21.1926 14.3541L20.7416 16.4611C20.5066 17.5581 20.3156 18.4471 20.0756 19.1411C19.8256 19.8661 19.4956 20.4611 18.9336 20.9161C18.3716 21.3711 17.7196 21.5681 16.9596 21.6611C16.2296 21.7501 15.3196 21.7501 14.1996 21.7501H9.80361C8.68161 21.7501 7.77261 21.7501 7.04261 21.6611C6.28261 21.5681 5.63061 21.3711 5.06861 20.9161C4.50661 20.4611 4.17661 19.8661 3.92661 19.1421C3.68661 18.4471 3.49661 17.5581 3.26061 16.4621L2.80961 14.3551C2.46161 12.7291 2.18261 11.4281 2.11161 10.3971C2.03861 9.33315 2.17461 8.41115 2.79561 7.64215C3.41561 6.87415 4.28961 6.54815 5.34561 6.39715C5.69894 6.34781 6.08894 6.31248 6.51561 6.29115L8.33161 2.66515C8.42138 2.48878 8.57723 2.35504 8.76518 2.29307C8.95313 2.23111 9.15795 2.24594 9.33502 2.33434C9.51208 2.42274 9.64703 2.57754 9.71045 2.76501C9.77387 2.95247 9.76063 3.1574 9.67361 3.33515L8.21361 6.25215C8.57761 6.25015 8.96061 6.24948 9.36261 6.25015H14.6406C15.0426 6.25015 15.4256 6.25081 15.7896 6.25215L14.3306 3.33515C14.2417 3.15731 14.227 2.95144 14.2899 2.7628C14.3527 2.57416 14.4878 2.41818 14.6656 2.32915M5.73361 7.85815L5.33061 8.66415C5.28571 8.75236 5.25872 8.84859 5.25118 8.94728C5.24365 9.04598 5.25573 9.14519 5.28672 9.23919C5.31771 9.3332 5.367 9.42014 5.43175 9.495C5.49651 9.56986 5.57544 9.63117 5.664 9.67538C5.75256 9.7196 5.84899 9.74584 5.94774 9.75261C6.04649 9.75938 6.1456 9.74653 6.23937 9.71481C6.33313 9.68308 6.41968 9.63312 6.49404 9.56778C6.5684 9.50245 6.62909 9.42305 6.67261 9.33415L7.45961 7.76015C8.02961 7.75015 8.67961 7.74915 9.42361 7.74915H14.5796C15.3236 7.74915 15.9736 7.74915 16.5436 7.75915L17.3306 9.33415C17.4204 9.51052 17.5762 9.64425 17.7642 9.70622C17.9521 9.76818 18.157 9.75335 18.334 9.66495C18.5111 9.57655 18.646 9.42175 18.7094 9.23429C18.7729 9.04682 18.7596 8.84189 18.6726 8.66415L18.2696 7.85815L18.4436 7.88115C19.3276 8.00815 19.7606 8.23915 20.0406 8.58415C20.3206 8.93015 20.4546 9.40315 20.3936 10.2941C20.3316 11.2041 20.0776 12.4001 19.7136 14.0991L19.2836 16.0991C19.0366 17.2541 18.8636 18.0531 18.6576 18.6511C18.4576 19.2311 18.2536 19.5371 17.9906 19.7491C17.7286 19.9611 17.3856 20.0971 16.7786 20.1711C16.1496 20.2481 15.3316 20.2491 14.1506 20.2491H9.85161C8.67161 20.2491 7.85361 20.2481 7.22461 20.1711C6.61661 20.0971 6.27461 19.9611 6.01261 19.7491C5.74961 19.5371 5.54461 19.2301 5.34561 18.6511C5.13861 18.0531 4.96561 17.2541 4.71861 16.0991L4.28961 14.0991C3.92561 12.3991 3.67161 11.2051 3.60961 10.2941C3.54861 9.40315 3.68361 8.93015 3.96261 8.58415C4.24261 8.23915 4.67561 8.00815 5.55961 7.88115L5.73361 7.85815Z" fill="black"/>
             </svg>
-            <span class="cart-badge">0</span>
+            <span class="cart-badge">{{ (cartItemCount$ | async) || 0 }}</span>
           </div>
-          <span class="wallet-amount">{{ walletBalance.toFixed(2) }} {{ currency }}</span>
+          <span class="wallet-amount">{{ ((cart$ | async)?.subtotal || 0).toFixed(2) }} {{ currency }}</span>
         </button>
 
-        <button class="user-button">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2ZM12 10C11.4067 10 10.8266 9.82405 10.3333 9.49441C9.83994 9.16476 9.45542 8.69623 9.22836 8.14805C9.0013 7.59987 8.94189 6.99667 9.05764 6.41473C9.1734 5.83279 9.45912 5.29824 9.87868 4.87868C10.2982 4.45912 10.8328 4.1734 11.4147 4.05764C11.9967 3.94189 12.5999 4.0013 13.1481 4.22836C13.6962 4.45542 14.1648 4.83994 14.4944 5.33329C14.8241 5.82664 15 6.40666 15 7C15 7.79565 14.6839 8.55871 14.1213 9.12132C13.5587 9.68393 12.7956 10 12 10ZM21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="black"/>
-        </svg>
-        </button>
+        <div class="user-menu-wrapper">
+          <button *ngIf="!currentUser" class="user-button" (click)="onUserClick()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2ZM12 10C11.4067 10 10.8266 9.82405 10.3333 9.49441C9.83994 9.16476 9.45542 8.69623 9.22836 8.14805C9.0013 7.59987 8.94189 6.99667 9.05764 6.41473C9.1734 5.83279 9.45912 5.29824 9.87868 4.87868C10.2982 4.45912 10.8328 4.1734 11.4147 4.05764C11.9967 3.94189 12.5999 4.0013 13.1481 4.22836C13.6962 4.45542 14.1648 4.83994 14.4944 5.33329C14.8241 5.82664 15 6.40666 15 7C15 7.79565 14.6839 8.55871 14.1213 9.12132C13.5587 9.68393 12.7956 10 12 10ZM21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="black"/>
+            </svg>
+            <span>{{ 'NAV.LOGIN' | translate }}</span>
+          </button>
+          <button *ngIf="currentUser" mat-icon-button [matMenuTriggerFor]="desktopUserMenu" class="user-menu-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2Z" fill="#333"/><path d="M21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="#333"/>
+            </svg>
+          </button>
+          <mat-menu #desktopUserMenu="matMenu">
+            <button mat-menu-item disabled>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2Z" fill="#666"/><path d="M21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="#666"/>
+              </svg>
+              <span>{{ currentUser?.email }}</span>
+            </button>
+            <button mat-menu-item (click)="onLogout()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.59L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#666"/>
+              </svg>
+              <span>{{ 'NAV.LOGOUT' | translate }}</span>
+            </button>
+          </mat-menu>
+        </div>
 
         <button class="language-button" (click)="onLanguageChange()">
           <span class="flag-icon" [attr.aria-label]="currentLang === 'ar' ? 'English flag' : 'Qatar flag'">
@@ -117,9 +220,12 @@ import { Cart } from '../models/menu-item.model';
           </svg>
         </button>
 
-        <div class="location-dropdown">
-          <span>التوصيل الى الرياض منيو الدوحهان</span>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div class="location-dropdown" (click)="openLocationDialog()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="chevron-icon">
+            <path d="M6 9L12 15L18 9" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>{{ currentLocation || 'التوصيل الى الرياض مترو الجوعان' }}</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="location-icon">
             <path d="M6.72 16.64C6.97461 16.5657 7.24829 16.5957 7.48083 16.7232C7.71338 16.8507 7.88574 17.0654 7.96 17.32C8.03426 17.5746 8.00434 17.8483 7.87681 18.0808C7.74929 18.3134 7.53461 18.4857 7.28 18.56C6.78 18.706 6.42 18.86 6.189 19C6.427 19.143 6.803 19.303 7.325 19.452C8.48 19.782 10.133 20 12 20C13.867 20 15.52 19.782 16.675 19.452C17.198 19.303 17.573 19.143 17.811 19C17.581 18.86 17.221 18.706 16.721 18.56C16.4704 18.4825 16.2603 18.3096 16.136 18.0786C16.0117 17.8476 15.9831 17.577 16.0564 17.3251C16.1298 17.0733 16.2991 16.8603 16.528 16.7321C16.7569 16.604 17.0269 16.5709 17.28 16.64C17.948 16.835 18.56 17.085 19.03 17.406C19.465 17.705 20 18.226 20 19C20 19.783 19.452 20.308 19.01 20.607C18.532 20.929 17.907 21.18 17.224 21.375C15.846 21.77 14 22 12 22C10 22 8.154 21.77 6.776 21.375C6.093 21.18 5.468 20.929 4.99 20.607C4.548 20.307 4 19.783 4 19C4 18.226 4.535 17.705 4.97 17.406C5.44 17.085 6.052 16.835 6.72 16.64ZM12 7.5C10.46 7.5 9.498 9.167 10.268 10.5C10.625 11.119 11.285 11.5 12 11.5C13.54 11.5 14.502 9.833 13.732 8.5C13.5565 8.19597 13.304 7.9435 13 7.76796C12.6959 7.59243 12.3511 7.50001 12 7.5Z" fill="black"/>
             <path opacity="0.3" d="M12 2C13.9891 2 15.8968 2.79018 17.3033 4.1967C18.7098 5.60322 19.5 7.51088 19.5 9.5C19.5 12.068 18.1 14.156 16.65 15.64C16.0736 16.2239 15.4542 16.7638 14.797 17.255C14.203 17.701 12.845 18.537 12.845 18.537C12.5874 18.6834 12.2963 18.7604 12 18.7604C11.7037 18.7604 11.4126 18.6834 11.155 18.537C10.4811 18.1462 9.82938 17.7182 9.203 17.255C8.5458 16.7638 7.9264 16.2239 7.35 15.64C5.9 14.156 4.5 12.068 4.5 9.5C4.5 7.51088 5.29018 5.60322 6.6967 4.1967C8.10322 2.79018 10.0109 2 12 2Z" fill="black"/>
           </svg>
@@ -139,7 +245,10 @@ import { Cart } from '../models/menu-item.model';
   <div class="menu-bar">
     <div class="menu-content">
       <!-- Menu Toggle -->
-      <button class="menu-toggle" type="button" (mouseenter)="toggleMenuDropdown()" [attr.aria-expanded]="menuDropdownVisible">
+      <button class="menu-toggle" type="button"
+        (mouseenter)="!isMobile() && toggleMenuDropdown()"
+        (click)="isMobile() && toggleMenuDropdown()"
+        [attr.aria-expanded]="menuDropdownVisible">
         <span class="menu-toggle-label">{{ 'MENU.PRODUCT_LIST' | translate }}</span>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 18C3.71667 18 3.47934 17.904 3.288 17.712C3.09667 17.52 3.00067 17.2827 3 17C2.99934 16.7173 3.09534 16.48 3.288 16.288C3.48067 16.096 3.718 16 4 16H20C20.2833 16 20.521 16.096 20.713 16.288C20.905 16.48 21.0007 16.7173 21 17C20.9993 17.2827 20.9033 17.5203 20.712 17.713C20.5207 17.9057 20.2833 18.0013 20 18H4ZM4 13C3.71667 13 3.47934 12.904 3.288 12.712C3.09667 12.52 3.00067 12.2827 3 12C2.99934 11.7173 3.09534 11.48 3.288 11.288C3.48067 11.096 3.718 11 4 11H20C20.2833 11 20.521 11.096 20.713 11.288C20.905 11.48 21.0007 11.7173 21 12C20.9993 12.2827 20.9033 12.5203 20.712 12.713C20.5207 12.9057 20.2833 13.0013 20 13H4ZM4 8C3.71667 8 3.47934 7.904 3.288 7.712C3.09667 7.52 3.00067 7.28267 3 7C2.99934 6.71733 3.09534 6.48 3.288 6.288C3.48067 6.096 3.718 6 4 6H20C20.2833 6 20.521 6.096 20.713 6.288C20.905 6.48 21.0007 6.71733 21 7C20.9993 7.28267 20.9033 7.52033 20.712 7.713C20.5207 7.90567 20.2833 8.00133 20 8H4Z" fill="white"/>
@@ -148,28 +257,32 @@ import { Cart } from '../models/menu-item.model';
 
       <!-- First 5 Menu Items -->
       <div class="menu-items-container">
-        <a *ngFor="let item of firstFiveMenuItems" [href]="item.link" class="menu-link">
-          <i *ngIf="item.icon" class="icon-{{ item.icon }}"></i>
-          {{ item.label }}
+        <a *ngFor="let category of firstFiveMenuItems" 
+           (click)="navigateToCategory(category.id, $event)" 
+           class="menu-link"
+           style="cursor: pointer;">
+          <span *ngIf="currentLang === 'ar'">{{ category.nameAr }}</span>
+          <span *ngIf="currentLang === 'en'">{{ category.nameEn }}</span>
         </a>
       </div>
 
       <!-- Menu Dropdown -->
-      <div class="menu-dropdown" *ngIf="menuDropdownVisible" (mouseleave)="toggleMenuDropdown()" >
+      <div class="menu-dropdown" *ngIf="menuDropdownVisible" (mouseleave)="!isMobile() && toggleMenuDropdown()">
         <div class="menu-dropdown-content">
           <!-- Categories Section (Left) -->
           <div class="categories-section">
             <div *ngFor="let category of menuCategories" 
                  class="category-item"
-                 [class.active]="selectedCategoryName === category.name"
-                 (mouseenter)="selectCategory(category.name)"
-                 (click)="navigateToCategory(category.name)"
+                 [class.active]="selectedCategoryId === category.id"
+                 (mouseenter)="!isMobile() && selectCategory(category.id)"
+                 (click)="handleCategoryClick(category.id, $event)"
                  style="cursor: pointer;">
               <span class="category-label">
-                {{ category.name }}
+                <span *ngIf="currentLang === 'ar'">{{ category.nameAr }}</span>
+                <span *ngIf="currentLang === 'en'">{{ category.nameEn }}</span>
               </span>
               <div class="category-icon">
-                <img [src]="category.image" [alt]="category.name" />
+                <img [src]="category.image" [alt]="currentLang === 'ar' ? category.nameAr : category.nameEn" />
               </div>
             </div>
           </div>
@@ -200,7 +313,7 @@ import { Cart } from '../models/menu-item.model';
         <div class="footer-top-bar"></div>
 
 
-            <section class="newsletter-section">
+            <section class="newsletter-section" *ngIf="!isAuthPage">
       <div class="container">
         <div class="newsletter-content">
 
@@ -232,13 +345,13 @@ import { Cart } from '../models/menu-item.model';
             <div class="footer-column footer-social">
               <h3 class="footer-heading">{{ 'FOOTER.FOLLOW_US' | translate }}</h3>
               <div class="footer-social-icons">
-                <a href="#" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Facebook">
+                <a href="https://web.facebook.com/bashawatqtr" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Facebook" (click)="openSocialLink('https://web.facebook.com/bashawatqtr', $event)">
                   <i class="fab fa-facebook-f"></i>
                 </a>
-                <a href="#" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Instagram">
+                <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Instagram" (click)="openSocialLink('https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu', $event)">
                   <i class="fab fa-instagram"></i>
                 </a>
-                <a href="#" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="TikTok">
+                <a href="https://www.tiktok.com/@al.bashawat.resta" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="TikTok" (click)="openSocialLink('https://www.tiktok.com/@al.bashawat.resta', $event)">
                   <i class="fab fa-tiktok"></i>
                 </a>
               </div>
@@ -248,26 +361,30 @@ import { Cart } from '../models/menu-item.model';
               <h3 class="footer-heading">{{ 'FOOTER.ABOUT_COMPANY' | translate }}</h3>
               <ul class="footer-links">
                 <li><a routerLink="/about">{{ 'NAV.ABOUT' | translate }}</a></li>
-                <li><a href="#">{{ 'FOOTER.PRIVACY_POLICY' | translate }}</a></li>
-                <li><a href="#">{{ 'FOOTER.HELP_CENTER' | translate }}</a></li>
-                <li><a href="#">{{ 'FOOTER.SHIPPING_DELIVERY' | translate }}</a></li>
+                <li><a routerLink="/privacy-policy">{{ 'FOOTER.PRIVACY_POLICY' | translate }}</a></li>
+                <li><a routerLink="/help-center">{{ 'FOOTER.HELP_CENTER' | translate }}</a></li>
+                <li><a routerLink="/shipping-policy">{{ 'FOOTER.SHIPPING_DELIVERY' | translate }}</a></li>
               </ul>
             </div>
 
             <div class="footer-column footer-categories">
               <h3 class="footer-heading">{{ 'FOOTER.CATEGORIES' | translate }}</h3>
               <div class="footer-categories-grid">
-                <ul class="footer-links">
-                  <li><a href="#">{{ 'FOOTER.CATEGORY_BREAKFAST' | translate }}</a></li>
-                  <li><a href="#">{{ 'FOOTER.CATEGORY_PASTA' | translate }}</a></li>
+                            <ul class="footer-links">
+                  <li *ngFor="let category of getSecondHalfCategories()">
+                    <a (click)="navigateToCategory(category.id, $event)" style="cursor: pointer;">
+                      <span *ngIf="currentLang === 'ar'">{{ category.nameAr }}</span>
+                      <span *ngIf="currentLang === 'en'">{{ category.nameEn }}</span>
+                    </a>
+                  </li>
                 </ul>
                 <ul class="footer-links">
-                  <li><a href="#">{{ 'FOOTER.CATEGORY_EGYPTIAN_CASSEROLES' | translate }}</a></li>
-                  <li><a href="#">{{ 'FOOTER.CATEGORY_SOUP' | translate }}</a></li>
-                  <li><a href="#">{{ 'FOOTER.CATEGORY_GRILLS' | translate }}</a></li>
-                  <li><a href="#">{{ 'FOOTER.CATEGORY_SANDWICHES' | translate }}</a></li>
-                  <li><a href="#">{{ 'FOOTER.CATEGORY_MINI_PIZZA' | translate }}</a></li>
-                  <li><a href="#">{{ 'FOOTER.CATEGORY_APPETIZERS' | translate }}</a></li>
+                  <li *ngFor="let category of getFirstHalfCategories()">
+                    <a (click)="navigateToCategory(category.id, $event)" style="cursor: pointer;">
+                      <span *ngIf="currentLang === 'ar'">{{ category.nameAr }}</span>
+                      <span *ngIf="currentLang === 'en'">{{ category.nameEn }}</span>
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -319,6 +436,7 @@ import { Cart } from '../models/menu-item.model';
           </div>
         </div>
       </footer>
+
   `,
   styles: [`
     .navbar-brand {
@@ -559,17 +677,82 @@ html[dir="rtl"] .navbar-center {
   font-size: 14px;
 }
 
+.user-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .user-button {
   background-color: transparent;
   border: none;
   padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+.user-menu-btn {
+  color: #333;
   transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .user-button:hover {
   background-color: #E8E8E8;
+}
+
+.user-name {
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.logout-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 120px;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logout-button {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: transparent;
+  border: none;
+  text-align: right;
+  cursor: pointer;
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #F00E0C;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logout-button:hover {
+  background-color: #F5F5F5;
 }
 
 .language-button {
@@ -706,31 +889,47 @@ html[dir="rtl"] .navbar-center {
 .location-dropdown {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background-color: #F5F5F5;
+  gap: 10px;
+  background-color: #ECECEC;
   border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
+  width: 254px;
+  height: 40px;
+  padding: 8px 14px;
+  border-radius: 25px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.3s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 5.18px 6.91px 0px #0000001A;
+  opacity: 1;
 }
 
 .location-dropdown:hover {
-  background-color: #EEEEEE;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  background-color: #E0E0E0;
+  box-shadow: 0px 5.18px 6.91px 0px #0000001A;
 }
 
-.location-dropdown svg {
+.location-dropdown .location-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.location-dropdown .chevron-icon {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
 }
 
 .location-dropdown span {
-  font-size: 14px;
+  font-family: Almarai, sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 12px;
+  line-height: 100%;
+  letter-spacing: 0%;
   color: #333;
+  flex: 1;
+  text-align: right;
 }
 
 /* Navbar Left */
@@ -1043,6 +1242,259 @@ body.rtl .menu-items-container {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Hamburger Button */
+.hamburger-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.hamburger-line {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: #333;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+/* Mobile Drawer */
+.mobile-menu-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9998;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.mobile-menu-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 300px;
+  height: 100%;
+  background: white;
+  z-index: 9999;
+  transition: right 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+  overflow-y: auto;
+}
+
+.mobile-drawer.open {
+  right: 0;
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.mobile-drawer-logo {
+  height: 50px;
+  width: auto;
+}
+
+.mobile-drawer-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  padding: 8px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.mobile-drawer-close:hover {
+  background-color: #f5f5f5;
+}
+
+.mobile-drawer-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.mobile-user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 10px;
+}
+
+.mobile-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: 'Almarai', sans-serif;
+  font-size: 15px;
+  color: #333;
+  flex: 1;
+}
+
+.mobile-user-menu-btn {
+  color: #333;
+  width: 40px;
+  height: 40px;
+}
+
+.mobile-logout-btn {
+  background: transparent;
+  border: 1px solid #d32f2f;
+  color: #d32f2f;
+  font-family: 'Almarai', sans-serif;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mobile-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #ececec;
+  border-radius: 25px;
+  cursor: pointer;
+  font-family: 'Almarai', sans-serif;
+  font-size: 13px;
+  color: #333;
+}
+
+.mobile-nav-section-title {
+  font-family: 'Almarai', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #d32f2f;
+  border-bottom: 2px solid #d32f2f;
+  padding-bottom: 6px;
+}
+
+.mobile-categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.mobile-category-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #333;
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.mobile-category-link:hover {
+  background-color: #fff3f3;
+  color: #d32f2f;
+}
+
+.mobile-cat-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mobile-bottom-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-top: 1px solid #f0f0f0;
+  margin-top: auto;
+}
+
+.mobile-lang-btn {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  color: #333;
+}
+
+.mobile-social-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.mobile-social-icon {
+  color: #333;
+  font-size: 18px;
+  text-decoration: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f5f5f5;
+  transition: background-color 0.2s;
+}
+
+.mobile-social-icon:hover {
+  background: #d32f2f;
+  color: white;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .navbar-center {
@@ -1069,22 +1521,62 @@ body.rtl .menu-items-container {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  
+  .download-button span {
+    display: none;
+  }
+  
+  .logo img {
+    height: 64px;
+  }
 }
 
 @media (max-width: 768px) {
-  .top-bar-content {
-    flex-direction: column;
-    gap: 10px;
+  .top-bar {
+    display: none;
+  }
+  
+  .hamburger-btn {
+    display: flex;
+    order: 0;
   }
   
   .navbar-content {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 0 12px;
+  }
+  
+  .navbar-right {
+    gap: 6px;
+  }
+  
+  .user-button {
+    padding: 6px;
+  }
+  
+  .user-name {
+    display: none;
+  }
+  
+  .language-button span:last-child {
+    display: none;
+  }
+  
+  .language-button {
+    padding: 6px;
   }
   
   .navbar-center {
-    order: 3;
-    width: 100%;
-    justify-content: flex-start;
+    display: none;
+  }
+  
+  .logo img {
+    height: 52px;
+  }
+  
+  .wallet-amount {
+    display: none;
   }
   
   .menu-items {
@@ -1093,6 +1585,56 @@ body.rtl .menu-items-container {
   
   .menu-toggle {
     display: block;
+  }
+  
+  .menu-items-container {
+    display: none;
+  }
+  
+  .menu-toggle-label {
+    font-size: 13px;
+  }
+  
+  .menu-dropdown {
+    width: calc(100vw - 20px);
+    right: 10px;
+    height: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .menu-dropdown-content {
+    flex-direction: row-reverse;
+  }
+
+  .categories-section {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    overflow-x: unset;
+    overflow-y: auto;
+  }
+
+  .category-item {
+    flex-direction: row;
+    width: 100%;
+    gap: 16px;
+    padding: 10px;
+  }
+
+  .menu-items-section {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-bar-hide-mobile {
+    display: none;
+  }
+  
+  .navbar-content {
+    padding: 0 8px;
   }
 }
 
@@ -1105,7 +1647,6 @@ body.rtl .menu-items-container {
 .footer-top-bar {
   width: 100%;
   height: 4px;
-  // background-color: #000000;
 }
 
 .footer-main-content {
@@ -1206,8 +1747,6 @@ body.rtl .menu-items-container {
   height: 93px;
   object-fit: contain;
   border-radius: 50%;
-  // background-color: #FFD700;
-  // border: 3px solid #DC2626;
   padding: 8px;
   display: block;
 }
@@ -1333,19 +1872,51 @@ html[dir="rtl"] .footer-bottom-content {
 }
 
 @media (max-width: 768px) {
+  .footer-main-content {
+    padding: 24px 16px;
+  }
+  
   .footer-content-wrapper {
-    grid-template-columns: 1fr;
-    gap: 30px;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  
+  .footer-contact {
+    grid-column: 1 / -1;
   }
   
   .footer-categories-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
   
   .footer-bottom-content {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     text-align: center;
+  }
+  
+  .footer-heading {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  
+  .footer-links a {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-content-wrapper {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .footer-categories-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .footer-social-icons {
+    justify-content: flex-start;
   }
 }
 
@@ -1353,7 +1924,7 @@ html[dir="rtl"] .footer-bottom-content {
 .newsletter-section {
   padding: 1.5rem;
   background-color: #FDC55E26;
-  margin: 4rem;
+  margin: 2rem;
 }
 
 .newsletter-content {
@@ -1400,7 +1971,8 @@ html[dir="rtl"] .footer-bottom-content {
 }
 
 .newsletter-input {
-  width: 522px;
+  width: 100%;
+  max-width: 522px;
   height: 72px;
   padding: 16px;
   padding-left: 200px;
@@ -1472,6 +2044,11 @@ html[dir="rtl"] .footer-bottom-content {
 }
 
 @media (max-width: 768px) {
+  .newsletter-section {
+    margin: 1rem;
+    padding: 1.25rem;
+  }
+  
   .newsletter-content {
     flex-direction: column;
     text-align: center;
@@ -1479,6 +2056,11 @@ html[dir="rtl"] .footer-bottom-content {
   
   .newsletter-text {
     text-align: center;
+    min-width: unset;
+  }
+  
+  .newsletter-title {
+    font-size: 1.1rem;
   }
   
   .newsletter-form {
@@ -1486,34 +2068,59 @@ html[dir="rtl"] .footer-bottom-content {
     flex-direction: column;
   }
   
+  .newsletter-input-wrapper {
+    width: 100%;
+  }
+  
   .newsletter-input {
-    padding: 1rem 140px 1rem 1rem;
-    font-size: 1rem;
+    width: 100%;
+    max-width: 100%;
+    height: 60px;
+    padding: 1rem 1rem 1rem 160px;
+    font-size: 0.9rem;
   }
   
   .newsletter-button {
-    width: 183px;
-    height: 40px;
-    padding: 12px 10px;
-    font-size: 0.9rem;
+    width: 150px;
+    height: 36px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
     background-color: #F00E0C;
     border-radius: 100px;
-    border-width: 1px;
     border: 1px solid transparent;
+    left: 8px;
   }
 }
+
+@media (max-width: 480px) {
+  .newsletter-input {
+    padding-left: 130px;
+    font-size: 0.8rem;
+    height: 55px;
+  }
+  
+  .newsletter-button {
+    width: 120px;
+    font-size: 0.78rem;
+    left: 6px;
+  }
+  
+  .newsletter-title {
+    font-size: 1rem;
+  }
+}
+
   `]
 })
-export class PublicLayoutComponent implements OnInit {
+export class PublicLayoutComponent implements OnInit, OnDestroy {
   cart$: Observable<Cart>;
   cartItemCount$: Observable<number>;
   currentLang: string = 'en';
-  // ---------------------------??
-  cartItemCount = 0;
-  walletBalance = 0.00;
   currency = 'ريال';
   isSearchOpen = false;
   newsletterForm!: FormGroup;
+  isAuthPage = false;
+  private routerSubscription?: Subscription;
 
   menuItems: any[] = [
     // { label: 'قائمة المنتجات', link: '#', icon: 'menu' },
@@ -1536,110 +2143,129 @@ export class PublicLayoutComponent implements OnInit {
     { label: 'الافطار', link: '#' }
   ];
 
-  // Menu categories with menu items
-  menuCategories = [
-    {
-      name: 'الفطار',
-      image: 'assets/itmes/الفطار.png',
-      menuItems: [
-        { labelAr: 'ساندوتش فلافل', labelEn: 'Falafel Sandwich', link: '#' },
-        { labelAr: 'ساندوتش بيض مقلي', labelEn: 'Fried Egg Sandwich', link: '#' },
-        { labelAr: 'ساندوتش فلافل محشية', labelEn: 'Stuffed Falafel Sandwich', link: '#' },
-        { labelAr: 'ساندوتش فلافل رويال ميكس', labelEn: 'Royal Mix Falafel Sandwich', link: '#' },
-        { labelAr: 'ساندوتش فول', labelEn: 'Foul Sandwich', link: '#' },
-        { labelAr: 'ساندوتش بيض مسلوق', labelEn: 'Boiled Egg Sandwich', link: '#' },
-        { labelAr: 'ساندوتش جبنة بالطماطم', labelEn: 'Cheese and Tomato Sandwich', link: '#' }
-      ]
-    },
-    {
-      name: 'المقبلات',
-      image: 'assets/itmes/المقبلات.png',
-      menuItems: [
-        { labelAr: 'مقبلات ساخنة', labelEn: 'Hot Appetizers', link: '#' },
-        { labelAr: 'مقبلات باردة', labelEn: 'Cold Appetizers', link: '#' }
-      ]
-    },
-    {
-      name: 'الباستا',
-      image: 'assets/itmes/الباستا.png',
-      menuItems: [
-        { labelAr: 'باستا كاربونارا', labelEn: 'Carbonara Pasta', link: '#' },
-        { labelAr: 'باستا بولونيز', labelEn: 'Bolognese Pasta', link: '#' }
-      ]
-    },
-    {
-      name: 'الساندوشات',
-      image: 'assets/itmes/الساندوشات.png',
-      menuItems: [
-        { labelAr: 'ساندوتش دجاج', labelEn: 'Chicken Sandwich', link: '#' },
-        { labelAr: 'ساندوتش لحم', labelEn: 'Meat Sandwich', link: '#' }
-      ]
-    },
-    {
-      name: 'الخضار',
-      image: 'assets/itmes/الخضار.png',
-      menuItems: [
-        { labelAr: 'سلطة خضار', labelEn: 'Vegetable Salad', link: '#' }
-      ]
-    },
-    {
-      name: 'الشوربة',
-      image: 'assets/itmes/الشوربةز.png',
-      menuItems: [
-        { labelAr: 'شوربة خضار', labelEn: 'Vegetable Soup', link: '#' },
-        { labelAr: 'شوربة دجاج', labelEn: 'Chicken Soup', link: '#' }
-      ]
-    },
-    {
-      name: 'المشاوي',
-      image: 'assets/itmes/المشاوى.png',
-      menuItems: [
-        { labelAr: 'مشاوي دجاج', labelEn: 'Chicken Grill', link: '#' },
-        { labelAr: 'مشاوي لحم', labelEn: 'Meat Grill', link: '#' }
-      ]
-    },
-    {
-      name: 'الحلويات',
-      image: 'assets/itmes/الحلويات.png',
-      menuItems: []
-    },
-    {
-      name: 'الصواني',
-      image: 'assets/itmes/الصوانى.png',
-      menuItems: []
-    },
-    {
-      name: 'الأطباق الرئيسة',
-      image: 'assets/itmes/الأطباق الرئيسة.png',
-      menuItems: []
-    }
-  ];
+  // Menu categories with menu items - loaded from API
+  menuCategories: Array<{
+    id: number;
+    nameAr: string;
+    nameEn: string;
+    image: string;
+    menuItems: Array<{ labelAr: string; labelEn: string; link: string }>;
+  }> = [];
 
-  selectedCategoryName: string = 'الفطار';
+  selectedCategoryId: number | null = null;
   menuDropdownVisible = false;
+  isMobileMenuOpen = false;
+  currentLocation: string = '';
+  currentUser: User | null = null;
+  isAuthenticated: boolean = false;
+  private authSubscription?: Subscription;
+
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    if (this.isMobileMenuOpen) {
+      this.document.body.style.overflow = 'hidden';
+    } else {
+      this.document.body.style.overflow = '';
+    }
+  }
+
+  closeMobileMenu() {
+    this.isMobileMenuOpen = false;
+    this.document.body.style.overflow = '';
+  }
 
   get firstFiveMenuItems() {
-    return this.menuItems.slice(0, 5);
+    return this.menuCategories.slice(0, 5);
   }
 
   toggleMenuDropdown() {
     this.menuDropdownVisible = !this.menuDropdownVisible;
   }
 
-  selectCategory(categoryName: string) {
-    this.selectedCategoryName = categoryName;
+  selectCategory(categoryId: number) {
+    this.selectedCategoryId = categoryId;
+  }
+
+  isMobile(): boolean {
+    return window.innerWidth <= 768;
+  }
+
+  handleCategoryClick(categoryId: number, event: Event): void {
+    if (this.isMobile()) {
+      // On mobile: just navigate, don't show products
+      this.navigateToCategory(categoryId);
+    } else {
+      // On desktop: select category to show products (hover already handles this)
+      // Click still navigates as fallback
+      this.navigateToCategory(categoryId);
+    }
   }
 
   getMenuItemsForCategory() {
-    const category = this.menuCategories.find(c => c.name === this.selectedCategoryName);
+    const category = this.menuCategories.find(c => c.id === this.selectedCategoryId);
     return category ? category.menuItems : [];
   }
 
-  navigateToCategory(categoryName: string): void {
-    this.router.navigate(['/menu'], { queryParams: { category: categoryName } }).then(() => {
-      this.viewportScroller.scrollToPosition([0, 0]);
+  loadMenuCategories(): void {
+    // Fetch categories with products from API (uses cache if available)
+    this.categoryService.getCategoriesWithProducts().pipe(
+      catchError(error => {
+        console.error('Error loading categories with products:', error);
+        // Fallback to empty array on error
+        return of([]);
+      })
+    ).subscribe((categories: CategoryWithProducts[]) => {
+      // Filter only active categories
+      const activeCategories = categories.filter(category => category.isActive);
+
+      // Transform API data to match the current structure
+      this.menuCategories = activeCategories.map(category => {
+        // Transform products to menuItems format
+        const menuItems = (category.products || []).map((product: any) => ({
+          labelAr: product.nameAr || '',
+          labelEn: product.nameEn || '',
+          link: `/menu?category=${category.id}&product=${product.id}`
+        }));
+
+        return {
+          id: category.id,
+          nameAr: category.nameAr || '',
+          nameEn: category.nameEn || '',
+          image: category.imageUrl || `assets/itmes/${category.nameAr || category.nameEn || 'default'}.png`,
+          menuItems: menuItems
+        };
+      });
+
+      // Set default selected category if available
+      if (this.menuCategories.length > 0 && !this.selectedCategoryId) {
+        this.selectedCategoryId = this.menuCategories[0].id;
+      }
+    });
+  }
+
+  navigateToCategory(categoryId: number, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.router.navigate(['/menu'], { queryParams: { category: categoryId } }).then(() => {
+      // Scroll to top smoothly after navigation completes
+      // Use window.scrollTo with smooth behavior
+      setTimeout(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      }, 50);
       this.menuDropdownVisible = false; // Close dropdown after navigation
     });
+  }
+
+  getFirstHalfCategories(): any[] {
+    const midPoint = Math.ceil(this.menuCategories.length / 2);
+    return this.menuCategories.slice(0, midPoint);
+  }
+
+  getSecondHalfCategories(): any[] {
+    const midPoint = Math.ceil(this.menuCategories.length / 2);
+    return this.menuCategories.slice(midPoint);
   }
 
   toggleSearch() {
@@ -1660,7 +2286,34 @@ export class PublicLayoutComponent implements OnInit {
   }
 
   onCartClick() {
-    console.log('Cart clicked');
+    this.router.navigate(['/cart']);
+  }
+
+  onUserClick() {
+    // If not logged in, navigate to login page
+    if (!this.isAuthenticated) {
+      this.router.navigate(['/login']);
+    }
+    // If logged in, do nothing (hover will show logout)
+  }
+
+  onLogout() {
+    this.authService.logout();
+    // Optionally navigate to home
+    this.router.navigate(['/']);
+  }
+
+  getUserDisplayName(): string {
+    if (!this.currentUser) {
+      return 'User';
+    }
+    if (this.currentUser.firstName) {
+      return this.currentUser.firstName;
+    }
+    if (this.currentUser.name) {
+      return this.currentUser.name;
+    }
+    return 'User';
   }
 
   onLanguageChange() {
@@ -1675,15 +2328,15 @@ export class PublicLayoutComponent implements OnInit {
     @Inject(DOCUMENT) private document: Document,
     private fb: FormBuilder,
     private router: Router,
-    private viewportScroller: ViewportScroller
+    private viewportScroller: ViewportScroller,
+    private dialog: MatDialog,
+    private categoryService: CategoryService,
+    private authService: AuthService
   ) {
     this.cart$ = this.cartService.cart$;
-    this.cartItemCount$ = new Observable(observer => {
-      this.cart$.subscribe(cart => {
-        const count = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-        observer.next(count);
-      });
-    });
+    this.cartItemCount$ = this.cart$.pipe(
+      map(cart => cart.items.reduce((sum, item) => sum + item.quantity, 0))
+    );
 
     this.currentLang = this.translationService.getCurrentLanguage();
     this.updateDirection(this.currentLang);
@@ -1698,6 +2351,112 @@ export class PublicLayoutComponent implements OnInit {
     // Initialize newsletter form
     this.newsletterForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
+    });
+
+    // Subscribe to authentication state
+    this.authSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.isAuthenticated = !!user;
+    });
+
+    // Check initial route
+    this.checkAuthPage(this.router.url);
+
+    // Subscribe to route changes
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        this.checkAuthPage(event.url);
+      });
+
+    // Load saved location
+    const savedLocation = localStorage.getItem('user_location');
+    if (savedLocation) {
+      this.currentLocation = savedLocation;
+    } else {
+      // Try to get current location on init
+      this.getCurrentLocation();
+    }
+
+    // Load menu categories from API
+    this.loadMenuCategories();
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  private checkAuthPage(url: string): void {
+    const authRoutes = ['/login', '/register', '/forgot-password'];
+    this.isAuthPage = authRoutes.some(route => url.includes(route));
+  }
+
+  getCurrentLocation(): void {
+    if (!navigator.geolocation) {
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        this.reverseGeocode(lat, lng);
+      },
+      () => {
+        // Silent fail - user can set location manually
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 300000 // 5 minutes
+      }
+    );
+  }
+
+  reverseGeocode(lat: number, lng: number): void {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.address) {
+          const addr = data.address;
+          const parts = [];
+          if (addr.city || addr.town || addr.village) {
+            parts.push(addr.city || addr.town || addr.village);
+          }
+          if (addr.state || addr.region) {
+            parts.push(addr.state || addr.region);
+          }
+          if (addr.country) {
+            parts.push(addr.country);
+          }
+          const address = parts.length > 0 ? parts.join('، ') : data.display_name || 'موقعي الحالي';
+          this.currentLocation = address;
+          localStorage.setItem('user_location', address);
+        }
+      })
+      .catch(() => {
+        // Silent fail
+      });
+  }
+
+  openLocationDialog(): void {
+    const dialogRef = this.dialog.open(LocationDialogComponent, {
+      width: '90vw',
+      maxWidth: '500px',
+      maxHeight: '90vh',
+      panelClass: 'location-dialog-panel',
+      data: { currentLocation: this.currentLocation }
+    });
+
+    dialogRef.afterClosed().subscribe((result?: string) => {
+      if (result) {
+        this.currentLocation = result;
+      }
     });
   }
 
@@ -1749,6 +2508,12 @@ export class PublicLayoutComponent implements OnInit {
     link.href = 'assets/Bashwat_menu.pdf'; // Path to PDF in assets folder
     link.download = 'Bashwat_menu.pdf';
     link.click();
+  }
+
+  openSocialLink(url: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 }
 

@@ -23,7 +23,13 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { TranslateModule } from '@ngx-translate/core';
+
+// PrimeNG Modules
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 // Shared Components
 import { LoadingSpinnerComponent } from './components/loading-spinner/loading-spinner.component';
@@ -53,7 +59,13 @@ const MATERIAL_MODULES = [
   MatBadgeModule,
   MatSidenavModule,
   MatListModule,
-  MatTooltipModule
+  MatTooltipModule,
+  MatSlideToggleModule,
+  MatPaginatorModule
+];
+
+const PRIMENG_MODULES = [
+  ToastModule
 ];
 
 const SHARED_COMPONENTS = [
@@ -79,6 +91,7 @@ const SHARED_DIRECTIVES = [
     HttpClientModule,
     TranslateModule,
     ...MATERIAL_MODULES,
+    ...PRIMENG_MODULES,
     ...SHARED_COMPONENTS,
     ...SHARED_PIPES,
     ...SHARED_DIRECTIVES
@@ -91,9 +104,13 @@ const SHARED_DIRECTIVES = [
     HttpClientModule,
     TranslateModule,
     ...MATERIAL_MODULES,
+    ...PRIMENG_MODULES,
     ...SHARED_COMPONENTS,
     ...SHARED_PIPES,
     ...SHARED_DIRECTIVES
+  ],
+  providers: [
+    MessageService
   ]
 })
 export class SharedModule { }

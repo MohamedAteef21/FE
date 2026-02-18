@@ -4,8 +4,12 @@ import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { SharedModule } from '../../../shared/shared.module';
 import { Category, MenuItem } from '../../../models/menu-item.model';
 import { CartService } from '../../../core/services/cart.service';
+import { CategoryService } from '../../../core/services/category.service';
+import { CategoryWithProducts } from '../../../models/category.model';
+import { TranslationService } from '../../../core/services/translation.service';
+import { addLanguageProperty } from '../../../core/utils/item-translation.util';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-category-dialog',
@@ -35,7 +39,7 @@ import { map } from 'rxjs/operators';
                   class="category-image"
                   onerror="this.src='assets/placeholder.png'" />
               </div>
-              <div class="category-name">{{ category.name }}</div>
+              <div class="category-name">{{ category.isArabicLang ? category.name : (category.nameEn || category.name) }}</div>
             </div>
           </div>
         </div>
@@ -47,7 +51,7 @@ import { map } from 'rxjs/operators';
               <mat-icon>arrow_back</mat-icon>
               <span>رجوع</span>
             </button>
-            <h3 class="section-title">{{ selectedCategory.name }}</h3>
+            <h3 class="section-title">{{ selectedCategory.isArabicLang ? selectedCategory.name : (selectedCategory.nameEn || selectedCategory.name) }}</h3>
           </div>
           
           <div class="menu-items-grid">
@@ -56,7 +60,7 @@ import { map } from 'rxjs/operators';
                 <img [src]="item.imageUrl" [alt]="item.name" class="item-image" />
               </div>
               <div class="item-content">
-                <h4 class="item-name">{{ item.name }}</h4>
+                <h4 class="item-name">{{ item.isArabicLang ? item.name : (item.nameEn || item.name) }}</h4>
                 <div class="item-footer">
                   <span class="item-price">{{ item.price }} ريال</span>
                   <button class="add-btn" (click)="addToCart(item)">
@@ -283,181 +287,76 @@ import { map } from 'rxjs/operators';
 })
 export class CategoryDialogComponent implements OnInit {
   categories$!: Observable<Category[]>;
-  menuItems$!: Observable<MenuItem[]>;
   filteredMenuItems$!: Observable<MenuItem[]>;
   selectedCategory: Category | null = null;
+  allCategoriesWithProducts: CategoryWithProducts[] = [];
+  allMenuItems: MenuItem[] = [];
 
   constructor(
     private dialogRef: MatDialogRef<CategoryDialogComponent>,
-    private cartService: CartService
-  ) {}
+    private cartService: CartService,
+    private categoryService: CategoryService,
+    private translationService: TranslationService
+  ) { }
 
   ngOnInit(): void {
-    this.loadCategories();
-    this.loadMenuItems();
+    this.loadCategoriesWithProducts();
   }
 
-  loadCategories(): void {
-    // Static mock data - same as menu component
-    this.categories$ = of([
-      {
-        id: '1',
-        name: 'الخضار',
-        nameEn: 'Vegetables',
-        description: 'أطباق الخضار الطازجة',
-        imageUrl: 'assets/itmes/الخضار.png',
-        displayOrder: 1,
-        isActive: true
-      },
-      {
-        id: '2',
-        name: 'الساندوشات',
-        nameEn: 'Sandwiches',
-        description: 'ساندوتشات لذيذة',
-        imageUrl: 'assets/itmes/الساندوشات.png',
-        displayOrder: 2,
-        isActive: true
-      },
-      {
-        id: '3',
-        name: 'الباستا',
-        nameEn: 'Pasta',
-        description: 'أطباق الباستا المميزة',
-        imageUrl: 'assets/itmes/الباستا.png',
-        displayOrder: 3,
-        isActive: true
-      },
-      {
-        id: '4',
-        name: 'المقبلات',
-        nameEn: 'Appetizers',
-        description: 'ابدأ وجبتك مع مقبلاتنا اللذيذة',
-        imageUrl: 'assets/itmes/المقبلات.png',
-        displayOrder: 4,
-        isActive: true
-      },
-      {
-        id: '5',
-        name: 'الفطار',
-        nameEn: 'Breakfast',
-        description: 'وجبات الفطور اللذيذة',
-        imageUrl: 'assets/itmes/الفطار.png',
-        displayOrder: 5,
-        isActive: true
-      },
-      {
-        id: '6',
-        name: 'الحلويات',
-        nameEn: 'Desserts',
-        description: 'حلويات لذيذة',
-        imageUrl: 'assets/itmes/الحلويات.png',
-        displayOrder: 6,
-        isActive: true
-      },
-      {
-        id: '7',
-        name: 'الصواني',
-        nameEn: 'Trays',
-        description: 'صواني لذيذة',
-        imageUrl: 'assets/itmes/الصوانى.png',
-        displayOrder: 7,
-        isActive: true
-      },
-      {
-        id: '8',
-        name: 'الأطباق الرئيسة',
-        nameEn: 'Main Dishes',
-        description: 'أطباق رئيسية',
-        imageUrl: 'assets/itmes/الأطباق الرئيسة.png',
-        displayOrder: 8,
-        isActive: true
-      },
-      {
-        id: '9',
-        name: 'المشاوي',
-        nameEn: 'Grills',
-        description: 'مشاوي مشكلة',
-        imageUrl: 'assets/itmes/المشاوى.png',
-        displayOrder: 9,
-        isActive: true
-      },
-      {
-        id: '10',
-        name: 'الشوربة',
-        nameEn: 'Soup',
-        description: 'شوربات ساخنة',
-        imageUrl: 'assets/itmes/الشوربةز.png',
-        displayOrder: 10,
-        isActive: true
-      }
-    ]);
-  }
+  loadCategoriesWithProducts(): void {
+    this.categoryService.getCategoriesWithProducts().pipe(
+      catchError(error => {
+        console.error('Error loading categories with products:', error);
+        return of([]);
+      })
+    ).subscribe((categoriesWithProducts: CategoryWithProducts[]) => {
+      // Filter only active categories
+      const activeCategories = categoriesWithProducts.filter(cat => cat.isActive);
+      this.allCategoriesWithProducts = activeCategories;
 
-  loadMenuItems(): void {
-    // Static mock data - same structure as menu component
-    this.menuItems$ = of([
-      {
-        id: '1',
-        name: 'ورق عنب',
-        description: 'ورق عنب محشي',
-        price: 25,
-        imageUrl: 'assets/1.png',
-        categoryId: '1',
-        isAvailable: true
-      },
-      {
-        id: '2',
-        name: 'سلطة خضار',
-        description: 'سلطة خضار طازجة',
-        price: 15,
-        imageUrl: 'assets/1.png',
-        categoryId: '1',
-        isAvailable: true
-      },
-      {
-        id: '3',
-        name: 'ساندوتش فلافل',
-        description: 'ساندوتش فلافل لذيذ',
-        price: 10,
-        imageUrl: 'assets/1.png',
-        categoryId: '2',
-        isAvailable: true
-      },
-      {
-        id: '4',
-        name: 'باستا كاربونارا',
-        description: 'باستا كاربونارا إيطالية',
-        price: 35,
-        imageUrl: 'assets/1.png',
-        categoryId: '3',
-        isAvailable: true
-      },
-      {
-        id: '5',
-        name: 'حمص',
-        description: 'حمص لبناني',
-        price: 12,
-        imageUrl: 'assets/1.png',
-        categoryId: '4',
-        isAvailable: true
-      },
-      {
-        id: '6',
-        name: 'فول',
-        description: 'فول مصري',
-        price: 8,
-        imageUrl: 'assets/1.png',
-        categoryId: '5',
-        isAvailable: true
-      }
-    ]);
+      // Transform to Category format for display
+      const categories: Category[] = activeCategories.map(cat => ({
+        id: cat.id.toString(),
+        name: cat.nameAr || '',
+        nameEn: cat.nameEn || '',
+        description: cat.descriptionAr || '',
+        descriptionEn: cat.descriptionEn || '',
+        imageUrl: cat.imageUrl || '',
+        displayOrder: 0,
+        isActive: cat.isActive
+      }));
+
+      this.categories$ = of(addLanguageProperty(categories, this.translationService));
+
+      // Transform all products to MenuItem format
+      this.allMenuItems = [];
+      activeCategories.forEach(category => {
+        if (category.products && category.products.length > 0) {
+          category.products.forEach((product: any) => {
+            if (product.isActive) {
+              this.allMenuItems.push({
+                id: product.id.toString(),
+                name: product.nameAr || '',
+                nameEn: product.nameEn || '',
+                description: product.descriptionAr || '',
+                descriptionEn: product.descriptionEn || '',
+                price: product.basePrice || 0,
+                imageUrl: product.imageUrl || 'https://via.placeholder.com/300',
+                categoryId: category.id.toString(),
+                isAvailable: product.isActive
+              });
+            }
+          });
+        }
+      });
+    });
   }
 
   selectCategory(category: Category): void {
     this.selectedCategory = category;
-    this.filteredMenuItems$ = this.menuItems$.pipe(
-      map(items => items.filter(item => item.categoryId === category.id))
-    );
+    // Filter menu items by selected category and add language property
+    const filteredItems = this.allMenuItems.filter(item => item.categoryId === category.id);
+    this.filteredMenuItems$ = of(addLanguageProperty(filteredItems, this.translationService));
   }
 
   goBack(): void {

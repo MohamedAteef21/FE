@@ -7,6 +7,12 @@ import { CartComponent } from './cart/cart.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { AboutComponent } from './about/about.component';
 import { ContactComponent } from './contact/contact.component';
+import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.component';
+import { ShippingPolicyComponent } from './shipping-policy/shipping-policy.component';
+import { HelpCenterComponent } from './help-center/help-center.component';
+import { PublicLoginComponent } from '../auth/public-login/public-login.component';
+import { RegisterComponent } from '../auth/register/register.component';
+import { ForgotPasswordComponent } from '../auth/forgot-password/forgot-password.component';
 
 const routes: Routes = [
   {
@@ -36,6 +42,30 @@ const routes: Routes = [
   {
     path: 'contact',
     component: ContactComponent
+  },
+  {
+    path: 'privacy-policy',
+    component: PrivacyPolicyComponent
+  },
+  {
+    path: 'shipping-policy',
+    component: ShippingPolicyComponent
+  },
+  {
+    path: 'help-center',
+    component: HelpCenterComponent
+  },
+  {
+    path: 'login',
+    component: PublicLoginComponent
+  },
+  {
+    path: 'register',
+    component: RegisterComponent
+  },
+  {
+    path: 'forgot-password',
+    component: ForgotPasswordComponent
   }
 ];
 

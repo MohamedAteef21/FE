@@ -35,7 +35,7 @@ import { CategoryDialogComponent } from './category-dialog.component';
             <div class="cart-grid-container">
               <!-- Order Summary Sidebar -->
               <div class="sidebar-wrapper">
-                <div class="sidebar-content" *ngIf="cart.items.length > 0">
+                <div class="sidebar-content">
                 <div class="order-summary">
                   <div class="summary-item summary-item-total">
                     <span>{{ 'CART.ITEMS_TOTAL' | translate }}:</span>
@@ -79,7 +79,7 @@ import { CategoryDialogComponent } from './category-dialog.component';
                     class="complete-order-btn" 
                     mat-raised-button  
                     (click)="checkout()"
-                    [disabled]="!termsAccepted">
+                    [disabled]="!termsAccepted || cart.items.length === 0">
                     {{ 'CART.COMPLETE_ORDER' | translate }}
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12.0001 18C9.31606 18 6.86606 18.378 5.00006 19M18.0001 13C18.6247 12.9998 19.2406 12.8533 19.7984 12.5722C20.3562 12.2912 20.8404 11.8834 21.2123 11.3816C21.5842 10.8798 21.8335 10.2978 21.94 9.68237C22.0466 9.06691 22.0075 8.43506 21.826 7.83741C21.6444 7.23976 21.3255 6.69292 20.8946 6.24071C20.4637 5.7885 19.9329 5.44348 19.3448 5.23328C18.7566 5.02308 18.1274 4.95354 17.5075 5.03025C16.8876 5.10695 16.2943 5.32775 15.7751 5.67497C15.5 4.89341 14.9891 4.2165 14.3129 3.73766C13.6367 3.25882 12.8286 3.00165 12.0001 3.00165C11.1715 3.00165 10.3634 3.25882 9.6872 3.73766C9.01102 4.2165 8.50014 4.89341 8.22506 5.67497C7.70585 5.32775 7.11254 5.10695 6.49265 5.03025C5.87277 4.95354 5.24353 5.02308 4.65535 5.23328C4.06717 5.44348 3.53639 5.7885 3.10552 6.24071C2.67465 6.69292 2.35568 7.23976 2.17414 7.83741C1.9926 8.43506 1.95354 9.06691 2.0601 9.68237C2.16666 10.2978 2.41587 10.8798 2.78777 11.3816C3.15967 11.8834 3.64393 12.2912 4.20175 12.5722C4.75956 12.8533 5.37545 12.9998 6.00006 13V18.5M21.0001 18.5H15.0001M21.0001 18.5C21.0001 19.2 19.0061 20.509 18.5001 21M21.0001 18.5C21.0001 17.8 19.0061 16.491 18.5001 16" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -92,9 +92,12 @@ import { CategoryDialogComponent } from './category-dialog.component';
                   <div class="terms-delivery-container">
                     <!-- Terms and Conditions -->
                     <div class="terms-section">
-                      <mat-checkbox *ngIf="!termsAccepted" [(ngModel)]="termsAccepted" class="terms-checkbox">
-                        {{ 'CART.TERMS_AGREEMENT' | translate }}
-                      </mat-checkbox>
+                      <div *ngIf="!termsAccepted" class="terms-unchecked" (click)="termsAccepted = true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="terms-checkmark">
+                          <path d="M20 12V18C20 18.5304 19.7893 19.0391 19.4142 19.4142C19.0391 19.7893 18.5304 20 18 20H6C5.46957 20 4.96086 19.7893 4.58579 19.4142C4.21071 19.0391 4 18.5304 4 18V6C4 5.46957 4.21071 4.96086 4.58579 4.58579C4.96086 4.21071 5.46957 4 6 4H15" stroke="#808080" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="terms-label">{{ 'CART.TERMS_AGREEMENT' | translate }}</span>
+                      </div>
                       <div *ngIf="termsAccepted" class="terms-checked" (click)="termsAccepted = false">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="terms-checkmark">
                           <path d="M9 11L12 14L20 6" stroke="#0AAD0A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -118,7 +121,7 @@ import { CategoryDialogComponent } from './category-dialog.component';
               
               <!-- Cart Items Section -->
               <div class="cart-items-wrapper">
-                <div class="cart-content" *ngIf="cart.items.length > 0; else emptyCart">
+                <div class="cart-content">
                   <!-- Page Title -->
                   <div class="cart-title-section">
                     <h2 class="cart-title">{{ 'CART.TITLE' | translate }}</h2>
@@ -139,42 +142,46 @@ import { CategoryDialogComponent } from './category-dialog.component';
                     </div>
 
                     <!-- Cart Items -->
-                    <div class="cart-item-row" *ngFor="let item of cart.items">
-                      <div class="item-info">
-                        <img [src]="item.menuItem.imageUrl" [alt]="item.menuItem.name" class="item-image" />
-                        <span class="item-name">{{ item.menuItem.name }}</span>
-                      </div>
-                      <div class="item-price">{{ formatCurrency(item.menuItem.price) }}</div>
-                      <div class="item-quantity">
-                        <span class="qty-value">{{ item.quantity }}</span>
-                      </div>
-                      <div class="item-total">{{ formatCurrency(item.subtotal) }}</div>
-                      <button class="delete-btn" (click)="removeItem(item.menuItem.id)" mat-icon-button>
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <div *ngIf="cart.items.length > 0">
+                      <div class="cart-item-row" *ngFor="let item of cart.items">
+                        <div class="item-info">
+                          <img [src]="item.menuItem.imageUrl" [alt]="item.menuItem.name" class="item-image" />
+                          <span class="item-name">{{ item.menuItem.name }}</span>
+                        </div>
+                        <div class="item-price">{{ formatCurrency(item.menuItem.price) }}</div>
+                        <div class="item-quantity">
+                          <span class="qty-value">{{ item.quantity }}</span>
+                        </div>
+                        <div class="item-total">{{ formatCurrency(item.subtotal) }}</div>
+                        <button class="delete-btn" (click)="removeItem(item.menuItem.id)" mat-icon-button>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M8.16651 24.5C7.52484 24.5 6.97573 24.2717 6.51917 23.8152C6.06262 23.3586 5.83395 22.8091 5.83317 22.1667V7C5.50262 7 5.22573 6.888 5.00251 6.664C4.77929 6.44 4.66729 6.16311 4.66651 5.83333C4.66573 5.50356 4.77773 5.22667 5.00251 5.00267C5.22729 4.77867 5.50417 4.66667 5.83317 4.66667H10.4998C10.4998 4.33611 10.6118 4.05922 10.8358 3.836C11.0598 3.61278 11.3367 3.50078 11.6665 3.5H16.3332C16.6637 3.5 16.941 3.612 17.165 3.836C17.389 4.06 17.5006 4.33689 17.4998 4.66667H22.1665C22.4971 4.66667 22.7743 4.77867 22.9983 5.00267C23.2223 5.22667 23.334 5.50356 23.3332 5.83333C23.3324 6.16311 23.2204 6.44039 22.9972 6.66517C22.774 6.88994 22.4971 7.00156 22.1665 7V22.1667C22.1665 22.8083 21.9382 23.3578 21.4817 23.8152C21.0251 24.2725 20.4756 24.5008 19.8332 24.5H8.16651ZM11.6665 19.8333C11.9971 19.8333 12.2743 19.7213 12.4983 19.4973C12.7223 19.2733 12.834 18.9964 12.8332 18.6667V10.5C12.8332 10.1694 12.7212 9.89256 12.4972 9.66933C12.2732 9.44611 11.9963 9.33411 11.6665 9.33333C11.3367 9.33256 11.0598 9.44456 10.8358 9.66933C10.6118 9.89411 10.4998 10.171 10.4998 10.5V18.6667C10.4998 18.9972 10.6118 19.2745 10.8358 19.4985C11.0598 19.7225 11.3367 19.8341 11.6665 19.8333ZM16.3332 19.8333C16.6637 19.8333 16.941 19.7213 17.165 19.4973C17.389 19.2733 17.5006 18.9964 17.4998 18.6667V10.5C17.4998 10.1694 17.3878 9.89256 17.1638 9.66933C16.9398 9.44611 16.663 9.33411 16.3332 9.33333C16.0034 9.33256 15.7265 9.44456 15.5025 9.66933C15.2785 9.89411 15.1665 10.171 15.1665 10.5V18.6667C15.1665 18.9972 15.2785 19.2745 15.5025 19.4985C15.7265 19.7225 16.0034 19.8341 16.3332 19.8333Z" fill="#F00E0C"/>
 </svg>
+                        </button>
+                      </div>
+
+                      <!-- Add More Button -->
+                      <button class="add-more-btn" (click)="goToMenu()" mat-stroked-button>
+                        {{ 'CART.ADD_MORE' | translate }}
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8 3.33333V12.6667M3.33333 8H12.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                       </button>
                     </div>
 
-                    <!-- Add More Button -->
-                    <button class="add-more-btn" (click)="goToMenu()" mat-stroked-button>
-                      {{ 'CART.ADD_MORE' | translate }}
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 3.33333V12.6667M3.33333 8H12.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
+                    <!-- Empty Cart Message -->
+                    <div *ngIf="cart.items.length === 0" class="empty-cart-message">
+                      <mat-icon class="empty-cart-icon">shopping_cart</mat-icon>
+                      <p>{{ 'CART.EMPTY_CART' | translate }}</p>
+                      <button class="add-more-btn" (click)="goToMenu()" mat-stroked-button>
+                        {{ 'CART.BROWSE_MENU' | translate }}
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8 3.33333V12.6667M3.33333 8H12.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              
-                <ng-template #emptyCart>
-                  <div class="empty-cart">
-                    <mat-icon class="empty-cart-icon">shopping_cart</mat-icon>
-                    <p>{{ 'CART.EMPTY_CART' | translate }}</p>
-                    <button mat-raised-button color="primary" (click)="goToMenu()" class="mt-2">
-                      {{ 'CART.BROWSE_MENU' | translate }}
-                    </button>
-                  </div>
-                </ng-template>
               </div>
             </div>
           </ng-container>
@@ -258,6 +265,15 @@ import { CategoryDialogComponent } from './category-dialog.component';
         grid-template-columns: 1fr;
         gap: 1.5rem;
         padding: 0 1rem;
+      }
+
+      /* Show cart items first, order summary second on mobile */
+      .cart-items-wrapper {
+        order: 1;
+      }
+
+      .sidebar-wrapper {
+        order: 2;
       }
     }
 
@@ -577,6 +593,23 @@ import { CategoryDialogComponent } from './category-dialog.component';
       direction: rtl;
     }
 
+    .empty-cart-message {
+      text-align: center;
+      padding: 3rem 2rem;
+      direction: rtl;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .empty-cart-message p {
+      color: #666;
+      font-size: 1rem;
+      margin: 0;
+    }
+
     @media (max-width: 768px) {
       .empty-cart {
         padding: 3rem 1.5rem;
@@ -757,7 +790,7 @@ import { CategoryDialogComponent } from './category-dialog.component';
 
     .discount-btn {
       position: absolute;
-      right: 315px;
+      left: 0;
       top: 50%;
       transform: translateY(-50%);
       width: 118px;
@@ -815,7 +848,8 @@ import { CategoryDialogComponent } from './category-dialog.component';
     }
 
     .complete-order-btn {
-      width: 433px;
+      width: 100%;
+      max-width: 433px;
       height: 40px;
       padding: 12px 10px;
       border-radius: 100px;
@@ -831,6 +865,10 @@ import { CategoryDialogComponent } from './category-dialog.component';
       justify-content: center;
       gap: 10px;
       opacity: 1;
+      font-family: 'Almarai', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
     }
 
     .complete-order-btn.mat-raised-button {
@@ -876,6 +914,13 @@ import { CategoryDialogComponent } from './category-dialog.component';
     }
 
     .terms-checked {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .terms-unchecked {
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -1055,7 +1100,8 @@ import { CategoryDialogComponent } from './category-dialog.component';
       }
 
       .complete-order-btn {
-        width: 433px;
+        width: 100%;
+        max-width: 100%;
         height: 40px;
         padding: 12px 10px;
         border-radius: 100px;
@@ -1103,7 +1149,7 @@ export class CartComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return `${amount.toLocaleString('ar-QA')} ر.ق`;
+    return `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.ق`;
   }
 
   getFinalTotal(cart: Cart): number {

@@ -9,7 +9,7 @@ export const routes: Routes = [
     loadChildren: () => import('./features/public/public.module').then(m => m.PublicModule)
   },
   {
-    path: 'login',
+    path: 'auth',
     loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
   },
   {

@@ -8,11 +8,40 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface RegisterRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface RegisterResponse {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  token: string;
+}
+
+export interface AuthResponse {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  token: string;
+}
+
 export interface User {
   id: string;
   email: string;
   role: UserRole;
   name?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export enum UserRole {

@@ -2,6 +2,10 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 @import 'bootstrap/scss/bootstrap';
 
+/* PrimeNG Theme and Styles */
+@import 'primeng/resources/themes/lara-light-blue/theme.css';
+@import 'primeng/resources/primeng.min.css';
+
 html, body {
   height: 100%;
   margin: 0;
@@ -59,5 +63,172 @@ body.ltr {
 
 .rtl .mat-card {
   text-align: right;
+}
+
+/* Error Snackbar Styling */
+.error-snackbar {
+  background-color: #F00E0C !important;
+  color: white !important;
+}
+
+.error-snackbar .mat-simple-snackbar-action {
+  color: white !important;
+}
+
+/* =============================================
+   GLOBAL MOBILE / RESPONSIVE UTILITIES
+   ============================================= */
+
+/* Prevent horizontal overflow on all screens */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Ensure images never overflow their containers */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Touch-friendly tap targets (min 44×44px) */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Increase base font size slightly for readability */
+  body {
+    font-size: 15px;
+  }
+
+  /* Prevent text from overflowing narrow containers */
+  p, span, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+}
+
+/* Smooth scrolling everywhere */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Mobile-safe utility classes */
+.hidden-mobile {
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+}
+
+.visible-mobile {
+  display: none !important;
+  @media (max-width: 768px) {
+    display: block !important;
+  }
+}
+
+/* Flex column on mobile */
+.flex-col-mobile {
+  @media (max-width: 768px) {
+    flex-direction: column !important;
+  }
+}
+
+/* Full width on mobile */
+.full-width-mobile {
+  @media (max-width: 768px) {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Center text on mobile */
+.text-center-mobile {
+  @media (max-width: 768px) {
+    text-align: center !important;
+  }
+}
+
+/* Fix for Angular Material dialogs on mobile */
+@media (max-width: 768px) {
+  .mat-mdc-dialog-container {
+    max-width: 95vw !important;
+  }
+
+  .cdk-overlay-pane {
+    max-width: 95vw !important;
+  }
+}
+
+/* Fix for Angular Material snackbar on mobile */
+@media (max-width: 768px) {
+  .mat-mdc-snack-bar-container {
+    margin: 0.5rem !important;
+  }
+}
+
+/* =============================================
+   ADMIN PAGINATOR – match dark-navy design
+   ============================================= */
+
+/* Container */
+.mat-mdc-paginator {
+  background: transparent !important;
+  color: #555 !important;
+  font-family: inherit !important;
+  direction: rtl;
+}
+
+/* Items-per-page label & range label */
+.mat-mdc-paginator-page-size-label,
+.mat-mdc-paginator-range-label {
+  color: #777 !important;
+  font-size: 0.8rem !important;
+}
+
+/* Items-per-page select */
+.mat-mdc-paginator-page-size .mat-mdc-select-value {
+  color: #444 !important;
+  font-size: 0.8rem !important;
+}
+
+/* Navigation icon buttons */
+.mat-mdc-paginator-navigation-first,
+.mat-mdc-paginator-navigation-previous,
+.mat-mdc-paginator-navigation-next,
+.mat-mdc-paginator-navigation-last {
+  color: #555 !important;
+
+  &:hover:not([disabled]) {
+    background: #f0f0f0 !important;
+    border-radius: 8px !important;
+  }
+
+  &[disabled] {
+    color: #ccc !important;
+  }
+}
+
+/* Fix arrow direction for RTL */
+.mat-mdc-paginator-navigation-previous .mat-mdc-paginator-icon,
+.mat-mdc-paginator-navigation-next .mat-mdc-paginator-icon {
+  fill: currentColor !important;
+}
+
+/* Override the indigo-pink ripple / focus ring */
+.mat-mdc-paginator .mat-mdc-icon-button .mat-mdc-button-ripple,
+.mat-mdc-paginator .mat-mdc-icon-button .mat-ripple-element {
+  background-color: rgba(26, 26, 46, 0.08) !important;
+}
+
+/* Select underline accent */
+.mat-mdc-paginator .mdc-line-ripple::after {
+  border-bottom-color: #1a1a2e !important;
+}
+
+.mat-mdc-paginator .mat-mdc-select-arrow {
+  color: #888 !important;
 }
 

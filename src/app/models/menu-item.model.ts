@@ -25,6 +25,9 @@ export interface Category {
   isArabicLang?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  productCount?: number;
+  totalSales?: number;
+  orderCount?: number;
 }
 
 export interface Offer {
