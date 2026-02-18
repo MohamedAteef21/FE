@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://bashawat.runasp.net/api'
+  apiUrl: '/api'
   appName: 'Restaurant Website'
 };
 
