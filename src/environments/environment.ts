@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: '/api', // Proxied through Vercel to http://bashawat.runasp.net/api
+  apiUrl: 'https://localhost:44359'
   appName: 'Restaurant Website'
 };
 
