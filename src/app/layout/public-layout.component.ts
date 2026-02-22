@@ -134,7 +134,7 @@ import { Branch } from '../models/branch.model';
   <div class="main-navbar">
     <div class="navbar">
 
-<div class="row" style="width: 100%;display: flex;justify-content: space-between;align-items: center;padding-left: 60px;padding-right: 15px;">
+<div class="row navbar-main-row" style="width: 100%;display: flex;justify-content: space-between;align-items: center;padding-left: 60px;padding-right: 10px !important;">
 
   <div class="col-4 col-sm-4 col-md-4 col-lg-4 col-xl-4 col-xxl-4 row" id="Gr">
       <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12">
@@ -291,7 +291,7 @@ import { Branch } from '../models/branch.model';
 
 
   </div>
-      <div class="col-2 col-md-2 col-sm-2 col-lg-2 col-xl-2  col-xxl-2" style="width: 10.667%;">
+      <div class="col-2 col-md-2 col-sm-2 col-lg-2 col-xl-2  col-xxl-2 logo-col" style="width: 10.667%; padding-right: 0;">
       <!-- Left Side - Logo -->
       <div class="navbar-left">
         <div class="logo" routerLink="/">
@@ -1272,6 +1272,12 @@ html[dir="rtl"] .navbar-center {
   .menu-content {
     padding: 0;
   }
+
+  .navbar-main-row {
+    --bs-gutter-x: 0;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
 }
 
 .menu-bar {
@@ -1886,7 +1892,15 @@ body.rtl .menu-items-container {
   }
   
   .logo img {
-    height: 52px;
+    height: 86px;
+    width: auto;
+    min-height: 86px;
+    flex-shrink: 0;
+  }
+
+  .logo,
+  .navbar-left {
+    flex-shrink: 0;
   }
   
   .wallet-amount {
@@ -1898,7 +1912,7 @@ body.rtl .menu-items-container {
   }
   
   .menu-toggle {
-    display: block;
+    display: flex;
   }
   
   .menu-items-container {
