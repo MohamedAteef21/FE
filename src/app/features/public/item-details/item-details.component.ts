@@ -1,7 +1,7 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared/shared.module';
@@ -192,14 +192,11 @@ import { TranslationService } from '../../../core/services/translation.service';
     }
 
     .breadcrumb-nav {
-      // background-color: #f8f9fa;
       padding: 1rem 0;
-      // border-bottom: 1px solid #e0e0e0;
     }
 
     .breadcrumb {
       display: flex;
-      align-items: center;
       gap: 0.5rem;
       margin: 0;
       padding: 0;
@@ -911,7 +908,7 @@ import { TranslationService } from '../../../core/services/translation.service';
     }
   `]
 })
-export class ItemDetailsComponent implements OnInit {
+export class ItemDetailsComponent implements OnInit, OnDestroy {
   @ViewChild('similarProductsCarousel') similarProductsCarousel!: ElementRef;
 
   menuItem$!: Observable<any>;
@@ -928,6 +925,7 @@ export class ItemDetailsComponent implements OnInit {
   categoryNameEn: string = '';
   currentLang: string = 'ar';
   allCategoriesWithProducts: any[] = [];
+  private langChangeSubscription?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -937,11 +935,13 @@ export class ItemDetailsComponent implements OnInit {
     private translate: TranslateService,
     private productService: ProductService,
     private categoryService: CategoryService,
-    private translationService: TranslationService
+    private translationService: TranslationService,
+    private cdr: ChangeDetectorRef
   ) {
     this.currentLang = this.translationService.getCurrentLanguage();
-    this.translate.onLangChange.subscribe(event => {
+    this.langChangeSubscription = this.translate.onLangChange.subscribe(event => {
       this.currentLang = event.lang;
+      this.cdr.detectChanges();
     });
   }
 
@@ -1264,5 +1264,11 @@ export class ItemDetailsComponent implements OnInit {
         direction: 'rtl'
       });
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.langChangeSubscription) {
+      this.langChangeSubscription.unsubscribe();
+    }
   }
 }

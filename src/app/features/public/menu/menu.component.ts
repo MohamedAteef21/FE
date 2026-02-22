@@ -1,6 +1,6 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, ViewportScroller } from '@angular/common';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared/shared.module';
@@ -24,9 +24,9 @@ import { CartDialogComponent } from './cart-dialog.component';
       <!-- Breadcrumb Navigation -->
       <div class="breadcrumb-container">
         <nav class="breadcrumb-nav">
-          <a routerLink="/">الرئسية</a>
+          <a routerLink="/">{{ 'NAV.HOME' | translate }}</a>
           <span> > </span>
-          <span>الاصناف</span>
+          <span>{{ 'NAV.MENU' | translate }}</span>
         </nav>
       </div>
 
@@ -78,8 +78,7 @@ import { CartDialogComponent } from './cart-dialog.component';
                   {{ selectedCategoryName }}
                 </h2>
                 <h2 class="items-title" *ngIf="!selectedCategoryName">
-                  <span *ngIf="currentLang === 'ar'">الاصناف</span>
-                  <span *ngIf="currentLang === 'en'">Categories</span>
+                  {{ 'NAV.MENU' | translate }}
                 </h2>
                 
                 <!-- Loading Spinner -->
@@ -94,7 +93,7 @@ import { CartDialogComponent } from './cart-dialog.component';
                       <img [src]="item.imageUrl" [alt]="item.name" class="item-image" />
                     </div>
                     <div class="item-content">
-                      <h4 class="item-name">{{ item.isArabicLang ? item.name : (item.nameEn || item.name) }}</h4>
+                      <h4 class="item-name">{{ currentLang === 'ar' ? item.name : (item.nameEn || item.name) }}</h4>
                       <div class="item-rating">
                         <span class="stars">★★★★★</span>
                       </div>
@@ -140,7 +139,7 @@ import { CartDialogComponent } from './cart-dialog.component';
             <!-- Sidebar Navigation -->
             <div class="col-12 col-md-3 sidebar-wrapper">
               <div class="sidebar-content">
-                <h3 class="sidebar-title">الاصناف</h3>
+                <h3 class="sidebar-title">{{ 'NAV.MENU' | translate }}</h3>
                 
                 <!-- Loading Spinner for Categories -->
                 <div class="loading-wrapper" *ngIf="isLoadingCategories">
@@ -680,7 +679,7 @@ import { CartDialogComponent } from './cart-dialog.component';
     }
   `]
 })
-export class MenuComponent implements OnInit {
+export class MenuComponent implements OnInit, OnDestroy {
   @ViewChild('itemsContent', { static: false }) itemsContent!: ElementRef;
   categories$!: Observable<Category[]>;
   menuItems$!: Observable<MenuItem[]>;
@@ -694,6 +693,8 @@ export class MenuComponent implements OnInit {
   totalPages: number = 1;
   isLoading: boolean = false;
   isLoadingCategories: boolean = false;
+  isShow: boolean = false;
+  private langChangeSubscription?: Subscription;
 
   constructor(
     private router: Router,
@@ -703,11 +704,20 @@ export class MenuComponent implements OnInit {
     private categoryService: CategoryService,
     private translate: TranslateService,
     private viewportScroller: ViewportScroller,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {
     this.currentLang = this.translationService.getCurrentLanguage();
-    this.translate.onLangChange.subscribe(event => {
+    this.langChangeSubscription = this.translate.onLangChange.subscribe(event => {
       this.currentLang = event.lang;
+      // Update selectedCategoryName if a category is selected
+      if (this.selectedCategoryId !== null) {
+        const category = this.allCategoriesWithProducts.find(cat => cat.id === this.selectedCategoryId);
+        if (category) {
+          this.selectedCategoryName = this.currentLang === 'ar' ? category.nameAr : category.nameEn;
+        }
+      }
+      this.cdr.detectChanges();
     });
   }
 
@@ -916,6 +926,12 @@ export class MenuComponent implements OnInit {
 
   navigateToItem(itemId: string): void {
     this.router.navigate(['/item', itemId]);
+  }
+
+  ngOnDestroy(): void {
+    if (this.langChangeSubscription) {
+      this.langChangeSubscription.unsubscribe();
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DOCUMENT, ViewportScroller } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -1266,6 +1266,12 @@ html[dir="rtl"] .navbar-center {
   padding: 0 50px;
   position: relative;
   justify-content: space-between;
+}
+
+@media (max-width: 767px) {
+  .menu-content {
+    padding: 0;
+  }
 }
 
 .menu-bar {
@@ -2750,7 +2756,8 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
     private categoryService: CategoryService,
     private authService: AuthService,
     private branchService: BranchService,
-    private productService: ProductService
+    private productService: ProductService,
+    private cdr: ChangeDetectorRef
   ) {
     this.cart$ = this.cartService.cart$;
     this.cartItemCount$ = this.cart$.pipe(
@@ -2763,6 +2770,7 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
     this.translate.onLangChange.subscribe(event => {
       this.currentLang = event.lang;
       this.updateDirection(event.lang);
+      this.cdr.detectChanges();
     });
   }
 

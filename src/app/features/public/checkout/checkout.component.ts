@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, ViewportScroller } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -1447,6 +1447,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   isSubmitting: boolean = false;
   currentUser: User | null = null;
   private authSubscription?: Subscription;
+  private langChangeSubscription?: Subscription;
 
   // ─── Location data (loaded from API) ───────────────────────────────────────
   cities: CityWithDetails[] = [];
@@ -1469,6 +1470,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private viewportScroller: ViewportScroller,
     private dialog: MatDialog,
+    private cdr: ChangeDetectorRef,
   ) {
     // Set minimum date to today
     const today = new Date();
@@ -1501,6 +1503,11 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     // Subscribe to current user to get user data when authenticated
     this.authSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+    });
+
+    // Subscribe to language changes to update nameEn/nameAr displays
+    this.langChangeSubscription = this.translate.onLangChange.subscribe(() => {
+      this.cdr.detectChanges();
     });
 
     this.cart$ = this.cartService.cart$;
@@ -2027,6 +2034,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.authSubscription) {
       this.authSubscription.unsubscribe();
+    }
+    if (this.langChangeSubscription) {
+      this.langChangeSubscription.unsubscribe();
     }
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { SharedModule } from '../../../shared/shared.module';
@@ -7,8 +7,9 @@ import { CartService } from '../../../core/services/cart.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { CategoryWithProducts } from '../../../models/category.model';
 import { TranslationService } from '../../../core/services/translation.service';
+import { TranslateService } from '@ngx-translate/core';
 import { addLanguageProperty } from '../../../core/utils/item-translation.util';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 @Component({
@@ -285,19 +286,26 @@ import { map, catchError } from 'rxjs/operators';
     }
   `]
 })
-export class CategoryDialogComponent implements OnInit {
+export class CategoryDialogComponent implements OnInit, OnDestroy {
   categories$!: Observable<Category[]>;
   filteredMenuItems$!: Observable<MenuItem[]>;
   selectedCategory: Category | null = null;
   allCategoriesWithProducts: CategoryWithProducts[] = [];
   allMenuItems: MenuItem[] = [];
+  private langChangeSubscription?: Subscription;
 
   constructor(
     private dialogRef: MatDialogRef<CategoryDialogComponent>,
     private cartService: CartService,
     private categoryService: CategoryService,
-    private translationService: TranslationService
-  ) { }
+    private translationService: TranslationService,
+    private translate: TranslateService,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.langChangeSubscription = this.translate.onLangChange.subscribe(() => {
+      this.cdr.detectChanges();
+    });
+  }
 
   ngOnInit(): void {
     this.loadCategoriesWithProducts();
@@ -371,6 +379,12 @@ export class CategoryDialogComponent implements OnInit {
 
   close(): void {
     this.dialogRef.close();
+  }
+
+  ngOnDestroy(): void {
+    if (this.langChangeSubscription) {
+      this.langChangeSubscription.unsubscribe();
+    }
   }
 }
 
