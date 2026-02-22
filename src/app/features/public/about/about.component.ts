@@ -12,9 +12,9 @@ import { SharedModule } from '../../../shared/shared.module';
     <div class="about-container">
       <!-- Breadcrumb Navigation -->
       <nav class="breadcrumb-nav">
-        <a routerLink="/" class="breadcrumb-link">الرئيسية</a>
+        <a routerLink="/" class="breadcrumb-link">{{ "ITEM_DETAILS.HOME" | translate }}</a>
         <span class="breadcrumb-separator"> > </span>
-        <span class="breadcrumb-current">من نحن</span>
+        <span class="breadcrumb-current">{{ "NAV.ABOUT" | translate }}</span>
       </nav>
 
       <!-- Header Banner Section -->

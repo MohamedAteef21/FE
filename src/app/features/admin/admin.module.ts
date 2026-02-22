@@ -10,6 +10,10 @@ import { OrderManagementComponent } from './order-management/order-management.co
 import { BannersComponent } from './banners/banners.component';
 import { OffersComponent } from './offers/offers.component';
 import { SettingsComponent } from './settings/settings.component';
+import { BranchesComponent } from './branches/branches.component';
+import { UsersComponent } from './users/users.component';
+import { NotificationsComponent } from './notifications/notifications.component';
+import { DeliveryAreasComponent } from './delivery-areas/delivery-areas.component';
 
 @NgModule({
   declarations: [],
@@ -24,7 +28,11 @@ import { SettingsComponent } from './settings/settings.component';
     OrderManagementComponent,
     BannersComponent,
     OffersComponent,
-    SettingsComponent
+    SettingsComponent,
+    BranchesComponent,
+    UsersComponent,
+    NotificationsComponent,
+    DeliveryAreasComponent
   ]
 })
 export class AdminModule { }

@@ -15,6 +15,7 @@ interface OrderDisplayData {
   orderId: string;
   referenceNumber: string;
   identifier: string;
+  customerName: string;
   address: string;
   orderDate: string;
   price: number;
@@ -83,7 +84,7 @@ interface OrderDisplayData {
               <th>{{ 'ADMIN.ORDER_MANAGEMENT.PRICE' | translate }}</th>
               <th>{{ 'ADMIN.ORDER_MANAGEMENT.ORDER_DATE' | translate }}</th>
               <th>{{ 'ADMIN.ORDER_MANAGEMENT.ADDRESS' | translate }}</th>
-              <th>{{ 'ADMIN.ORDER_MANAGEMENT.IDENTIFIER' | translate }}</th>
+              <th>{{ 'ADMIN.ORDER_MANAGEMENT.CUSTOMER_NAME' | translate }}</th>
               <th>{{ 'ADMIN.ORDER_MANAGEMENT.REFERENCE_NUMBER' | translate }}</th>
               <th>{{ 'ADMIN.ORDER_MANAGEMENT.ACTIONS' | translate }}</th>
             </tr>
@@ -119,7 +120,7 @@ interface OrderDisplayData {
               <td>{{ order.price }} رق</td>
               <td>{{ order.orderDate }}</td>
               <td class="truncate-cell">{{ order.address }}</td>
-              <td>{{ order.identifier }}</td>
+              <td>{{ order.customerName || '-' }}</td>
               <td>{{ order.referenceNumber }}</td>
               <td>
                 <button mat-icon-button [matMenuTriggerFor]="orderMenu" class="actions-btn">
@@ -612,6 +613,7 @@ export class OrderManagementComponent implements OnInit {
         orderId: order.id,
         referenceNumber: order.orderNumber,
         identifier: '',
+        customerName: order.customerName || '',
         address,
         orderDate,
         price: order.finalAmount,
@@ -632,9 +634,20 @@ export class OrderManagementComponent implements OnInit {
     try {
       const date = new Date(dateString);
       const currentLang = this.translate.currentLang || 'ar';
-      return date.toLocaleDateString(currentLang === 'ar' ? 'ar-QA' : 'en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
-      });
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      };
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      };
+      const locale = currentLang === 'ar' ? 'ar-QA' : 'en-US';
+      const formattedDate = date.toLocaleDateString(locale, dateOptions);
+      const formattedTime = date.toLocaleTimeString(locale, timeOptions);
+      return `${formattedDate} - ${formattedTime}`;
     } catch {
       return dateString;
     }

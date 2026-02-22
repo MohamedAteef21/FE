@@ -8,13 +8,22 @@ import { CartService } from '../core/services/cart.service';
 import { TranslationService } from '../core/services/translation.service';
 import { CategoryService } from '../core/services/category.service';
 import { AuthService } from '../core/services/auth.service';
+import { BranchService } from '../core/services/branch.service';
+import { ProductService, Product } from '../core/services/product.service';
 import { Observable, Subscription, of } from 'rxjs';
 import { map, filter, catchError } from 'rxjs/operators';
 import { Cart } from '../models/menu-item.model';
 import { MatDialog } from '@angular/material/dialog';
 import { LocationDialogComponent } from './location-dialog.component';
 import { Category, CategoryWithProducts } from '../models/category.model';
-import { User } from '../models/auth.model';
+import { User, UserRole } from '../models/auth.model';
+import { Branch } from '../models/branch.model';
+
+
+
+
+
+
 
 @Component({
   selector: 'app-public-layout',
@@ -63,10 +72,10 @@ import { User } from '../models/auth.model';
       <!-- Location -->
       <div class="mobile-location" (click)="openLocationDialog(); closeMobileMenu()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.3" d="M12 2C13.9891 2 15.8968 2.79018 17.3033 4.1967C18.7098 5.60322 19.5 7.51088 19.5 9.5C19.5 12.068 18.1 14.156 16.65 15.64C16.0736 16.2239 15.4542 16.7638 14.797 17.255C14.203 17.701 12.845 18.537 12.845 18.537C12.5874 18.6834 12.2963 18.7604 12 18.7604C11.7037 18.7604 11.4126 18.6834 11.155 18.537C10.4811 18.1462 9.82938 17.7182 9.203 17.255C8.5458 16.7638 7.9264 16.2239 7.35 15.64C5.9 14.156 4.5 12.068 4.5 9.5C4.5 7.51088 5.29018 5.60322 6.6967 4.1967C8.10322 2.79018 10.0109 2 12 2Z" fill="#d32f2f"/></svg>
-        <span>{{ currentLocation || 'التوصيل إلى موقعي' }}</span>
+        <span>{{ currentLocation || ('LAYOUT.DELIVERY_TO_MY_LOCATION' | translate) }}</span>
       </div>
       <!-- Categories -->
-      <div class="mobile-nav-section-title">الأصناف</div>
+      <div class="mobile-nav-section-title">{{ 'LAYOUT.CATEGORIES' | translate }}</div>
       <div class="mobile-categories-list">
         <a *ngFor="let category of menuCategories" 
            class="mobile-category-link"
@@ -78,7 +87,7 @@ import { User } from '../models/auth.model';
       <!-- Language & Social -->
       <div class="mobile-bottom-section">
         <button class="mobile-lang-btn" (click)="onLanguageChange()">
-          <span>{{ currentLang === 'ar' ? 'English' : 'العربية' }}</span>
+          <span>{{ currentLang === 'ar' ? ('LANGUAGE.ENGLISH' | translate) : ('LANGUAGE.ARABIC' | translate) }}</span>
         </button>
         <div class="mobile-social-icons">
           <a href="https://web.facebook.com/bashawatqtr" target="_blank" class="mobile-social-icon"><i class="fab fa-facebook-f"></i></a>
@@ -95,17 +104,17 @@ import { User } from '../models/auth.model';
       <div class="top-bar-right">
         <span class="contact-item">
           <i class="fas fa-headset"></i>
-          اتصل بنا 39990689
+          {{ 'LAYOUT.CONTACT_US' | translate }} {{ getContactPhone() }}
         </span>
-        <span class="top-bar-hide-mobile">الاسئلة الشائعة</span>
+        <span class="top-bar-hide-mobile">{{ 'LAYOUT.FAQ' | translate }}</span>
         <span class="divider top-bar-hide-mobile">| |</span>
-        <span class="top-bar-hide-mobile">المدونات</span>
+        <span class="top-bar-hide-mobile">{{ 'LAYOUT.BLOGS' | translate }}</span>
         <span class="divider top-bar-hide-mobile">|</span>
-        <span class="top-bar-hide-mobile">من نحن</span>
+        <a routerLink="/about" class="top-bar-hide-mobile">{{ 'LAYOUT.ABOUT_US' | translate }}</a>
       </div>
 
       <div class="top-bar-left">
-        <span class="discount-text" style=''>خصم 15% حتى 20/2/2026</span>
+        <span class="discount-text" style=''>{{ 'LAYOUT.DISCOUNT_TEXT' | translate }}</span>
       </div>
 
       <div class="social-icons">
@@ -123,14 +132,12 @@ import { User } from '../models/auth.model';
   </div>
 
   <div class="main-navbar">
-    <div class="navbar-content">
-      <!-- Mobile Hamburger Button -->
-      <button class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Toggle navigation">
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-      </button>
+    <div class="navbar">
 
+<div class="row" style="width: 100%;display: flex;justify-content: space-between;align-items: center;padding-left: 60px;padding-right: 15px;">
+
+  <div class="col-4 col-sm-4 col-md-4 col-lg-4 col-xl-4 col-xxl-4 row" id="Gr">
+      <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12">
       <div class="navbar-right">
         <button class="cart-button" (click)="onCartClick()">
           <div class="cart-icon-wrapper">
@@ -140,7 +147,7 @@ import { User } from '../models/auth.model';
             </svg>
             <span class="cart-badge">{{ (cartItemCount$ | async) || 0 }}</span>
           </div>
-          <span class="wallet-amount">{{ ((cart$ | async)?.subtotal || 0).toFixed(2) }} {{ currency }}</span>
+          <span class="wallet-amount">{{ ((cart$ | async)?.subtotal || 0).toFixed(2) }} {{ 'COMMON.RIYAL' | translate }}</span>
         </button>
 
         <div class="user-menu-wrapper">
@@ -148,7 +155,7 @@ import { User } from '../models/auth.model';
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2ZM12 10C11.4067 10 10.8266 9.82405 10.3333 9.49441C9.83994 9.16476 9.45542 8.69623 9.22836 8.14805C9.0013 7.59987 8.94189 6.99667 9.05764 6.41473C9.1734 5.83279 9.45912 5.29824 9.87868 4.87868C10.2982 4.45912 10.8328 4.1734 11.4147 4.05764C11.9967 3.94189 12.5999 4.0013 13.1481 4.22836C13.6962 4.45542 14.1648 4.83994 14.4944 5.33329C14.8241 5.82664 15 6.40666 15 7C15 7.79565 14.6839 8.55871 14.1213 9.12132C13.5587 9.68393 12.7956 10 12 10ZM21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="black"/>
             </svg>
-            <span>{{ 'NAV.LOGIN' | translate }}</span>
+            <span *ngIf="!isMobile()">{{ 'NAV.LOGIN' | translate }}</span>
           </button>
           <button *ngIf="currentUser" mat-icon-button [matMenuTriggerFor]="desktopUserMenu" class="user-menu-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -162,6 +169,12 @@ import { User } from '../models/auth.model';
               </svg>
               <span>{{ currentUser?.email }}</span>
             </button>
+            <button mat-menu-item *ngIf="currentUser?.role === UserRole.ADMIN" (click)="navigateToAdminDashboard()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z" fill="#666"/>
+              </svg>
+              <span>{{ 'LAYOUT.DASHBOARD' | translate }}</span>
+            </button>
             <button mat-menu-item (click)="onLogout()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.59L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#666"/>
@@ -172,7 +185,7 @@ import { User } from '../models/auth.model';
         </div>
 
         <button class="language-button" (click)="onLanguageChange()">
-          <span class="flag-icon" [attr.aria-label]="currentLang === 'ar' ? 'English flag' : 'Qatar flag'">
+          <span class="flag-icon" [attr.aria-label]="currentLang === 'ar' ? ('LAYOUT.ENGLISH_FLAG' | translate) : ('LAYOUT.QATAR_FLAG' | translate)">
             <svg *ngIf="currentLang === 'en'" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g clip-path="url(#qatarFlagClip)">
                 <path d="M24.888 3.88867H8.55469V24.1109H24.888C25.7131 24.1109 26.5045 23.7831 27.0879 23.1997C27.6714 22.6162 27.9991 21.8249 27.9991 20.9998V6.99978C27.9991 6.17466 27.6714 5.38334 27.0879 4.7999C26.5045 4.21645 25.7131 3.88867 24.888 3.88867Z" fill="#66001E"/>
@@ -189,28 +202,71 @@ import { User } from '../models/auth.model';
               <path d="M16.3333 3.88889H11.6667V11.6667H0V16.3333H11.6667V24.1111H16.3333V16.3333H28V11.6667H16.3333V3.88889Z" fill="#CE1124"/>
             </svg>
           </span>
-          <span>{{ currentLang === 'ar' ? 'English' : 'العربية' }}</span>
+          <span>{{ currentLang === 'ar' ? ('LANGUAGE.ENGLISH' | translate) : ('LANGUAGE.ARABIC' | translate) }}</span>
         </button>
       </div>
+</div>
+</div>
 
-      <!-- Center - Search & Downloads -->
-      <div class="navbar-center">
+
+
+
+
+
+  <div class="col-8 col-sm-8 col-md-8 col-lg-8 col-xl-8 col-xxl-8" style="display: flex;justify-content: flex-end;align-items: center;">
+
+
+  <div class="col-8 col-sm-8 col-md-8 col-lg-8 col-xl-8 col-xxl-8" style="display: flex;justify-content: flex-end;" id="G-search">
+
+<div class="col-auto col-md-auto col-sm-auto col-lg-auto col-xl-auto col-xxl-auto" style="position: relative;">
+        <div class="search-wrapper" [class.search-open]="isSearchOpen">
+          <div class="search-input-container" *ngIf="isSearchOpen">
             <input
-            *ngIf="isSearchOpen"
-            type="text"
-            class="search-input"
-            placeholder="البحث"
-            (input)="onSearch($event)"
-            #searchInput
-          />
-        <div class="search-container" [class.search-open]="isSearchOpen">
-          <button class="search-button" (click)="toggleSearch()">
+              type="text"
+              class="search-input"
+              [placeholder]="'LAYOUT.SEARCH' | translate"
+              (input)="onSearch($event)"
+              (keyup.enter)="onSearchClick()"
+              (focus)="onSearchFocus()"
+              (blur)="onSearchBlur()"
+              #searchInput
+            />
+            <button class="search-submit-button" (click)="onSearchClick()" [disabled]="isSearching">
+              <svg *ngIf="!isSearching" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.5 16C7.68333 16 6.146 15.3707 4.888 14.112C3.63 12.8533 3.00067 11.316 3 9.5C2.99933 7.684 3.62867 6.14667 4.888 4.888C6.14733 3.62933 7.68467 3 9.5 3C11.3153 3 12.853 3.62933 14.113 4.888C15.373 6.14667 16.002 7.684 16 9.5C16 10.2333 15.8833 10.925 15.65 11.575C15.4167 12.225 15.1 12.8 14.7 13.3L20.3 18.9C20.4833 19.0833 20.575 19.3167 20.575 19.6C20.575 19.8833 20.4833 20.1167 20.3 20.3C20.1167 20.4833 19.8833 20.575 19.6 20.575C19.3167 20.575 19.0833 20.4833 18.9 20.3L13.3 14.7C12.8 15.1 12.225 15.4167 11.575 15.65C10.925 15.8833 10.2333 16 9.5 16ZM9.5 14C10.75 14 11.8127 13.5627 12.688 12.688C13.5633 11.8133 14.0007 10.7507 14 9.5C13.9993 8.24933 13.562 7.187 12.688 6.313C11.814 5.439 10.7513 5.00133 9.5 5C8.24867 4.99867 7.18633 5.43633 6.313 6.313C5.43967 7.18967 5.002 8.252 5 9.5C4.998 10.748 5.43567 11.8107 6.313 12.688C7.19033 13.5653 8.25267 14.0027 9.5 14Z" fill="currentColor"/>
+              </svg>
+              <span *ngIf="isSearching" class="search-spinner"></span>
+            </button>
+          </div>
+          <button class="search-toggle-button" *ngIf="!isSearchOpen" (click)="toggleSearch()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9.5 16C7.68333 16 6.146 15.3707 4.888 14.112C3.63 12.8533 3.00067 11.316 3 9.5C2.99933 7.684 3.62867 6.14667 4.888 4.888C6.14733 3.62933 7.68467 3 9.5 3C11.3153 3 12.853 3.62933 14.113 4.888C15.373 6.14667 16.002 7.684 16 9.5C16 10.2333 15.8833 10.925 15.65 11.575C15.4167 12.225 15.1 12.8 14.7 13.3L20.3 18.9C20.4833 19.0833 20.575 19.3167 20.575 19.6C20.575 19.8833 20.4833 20.1167 20.3 20.3C20.1167 20.4833 19.8833 20.575 19.6 20.575C19.3167 20.575 19.0833 20.4833 18.9 20.3L13.3 14.7C12.8 15.1 12.225 15.4167 11.575 15.65C10.925 15.8833 10.2333 16 9.5 16ZM9.5 14C10.75 14 11.8127 13.5627 12.688 12.688C13.5633 11.8133 14.0007 10.7507 14 9.5C13.9993 8.24933 13.562 7.187 12.688 6.313C11.814 5.439 10.7513 5.00133 9.5 5C8.24867 4.99867 7.18633 5.43633 6.313 6.313C5.43967 7.18967 5.002 8.252 5 9.5C4.998 10.748 5.43567 11.8107 6.313 12.688C7.19033 13.5653 8.25267 14.0027 9.5 14Z" fill="black"/>
             </svg>
           </button>
         </div>
+        <!-- Search Results Dropdown -->
+        <div class="search-results-dropdown" *ngIf="isSearchOpen && searchResults.length > 0 && showSearchResults">
+          <div 
+            class="search-result-item" 
+            *ngFor="let product of searchResults"
+            (click)="selectSearchResult(product)"
+            (mousedown)="$event.preventDefault()">
+            <div class="search-result-image" *ngIf="product.imageUrl">
+              <img [src]="product.imageUrl" [alt]="currentLang === 'ar' ? product.nameAr : product.nameEn" />
+            </div>
+            <div class="search-result-content">
+              <div class="search-result-name">{{ currentLang === 'ar' ? product.nameAr : (product.nameEn || product.nameAr) }}</div>
+              <div class="search-result-category">{{ product.categoryName }}</div>
+              <div class="search-result-price">{{ product.basePrice }} {{ 'COMMON.RIYAL' | translate }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="search-results-dropdown search-no-results" *ngIf="isSearchOpen && searchResults.length === 0 && showSearchResults && searchTerm.length > 0 && !isSearching">
+          <div class="search-no-results-message">{{ (currentLang === 'ar' ? 'لا توجد نتائج' : 'No results found') }}</div>
+        </div>
+</div>
 
+<div class="col-auto col-md-auto col-sm-auto col-lg-auto col-xl-auto col-xxl-auto">
         <button class="download-button" (click)="downloadMenuPDF()">
           <span>{{ 'DOWNLOAD.BASHWAT_MENU' | translate }}</span>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -219,32 +275,50 @@ import { User } from '../models/auth.model';
             <path d="M6 19H18" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-
+</div>
+<div class="col-auto col-md-auto col-sm-auto col-lg-auto col-xl-auto col-xxl-auto">
         <div class="location-dropdown" (click)="openLocationDialog()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="chevron-icon">
             <path d="M6 9L12 15L18 9" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span>{{ currentLocation || 'التوصيل الى الرياض مترو الجوعان' }}</span>
+          <span>{{ currentLocation || ('LAYOUT.DEFAULT_LOCATION' | translate) }}</span>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="location-icon">
             <path d="M6.72 16.64C6.97461 16.5657 7.24829 16.5957 7.48083 16.7232C7.71338 16.8507 7.88574 17.0654 7.96 17.32C8.03426 17.5746 8.00434 17.8483 7.87681 18.0808C7.74929 18.3134 7.53461 18.4857 7.28 18.56C6.78 18.706 6.42 18.86 6.189 19C6.427 19.143 6.803 19.303 7.325 19.452C8.48 19.782 10.133 20 12 20C13.867 20 15.52 19.782 16.675 19.452C17.198 19.303 17.573 19.143 17.811 19C17.581 18.86 17.221 18.706 16.721 18.56C16.4704 18.4825 16.2603 18.3096 16.136 18.0786C16.0117 17.8476 15.9831 17.577 16.0564 17.3251C16.1298 17.0733 16.2991 16.8603 16.528 16.7321C16.7569 16.604 17.0269 16.5709 17.28 16.64C17.948 16.835 18.56 17.085 19.03 17.406C19.465 17.705 20 18.226 20 19C20 19.783 19.452 20.308 19.01 20.607C18.532 20.929 17.907 21.18 17.224 21.375C15.846 21.77 14 22 12 22C10 22 8.154 21.77 6.776 21.375C6.093 21.18 5.468 20.929 4.99 20.607C4.548 20.307 4 19.783 4 19C4 18.226 4.535 17.705 4.97 17.406C5.44 17.085 6.052 16.835 6.72 16.64ZM12 7.5C10.46 7.5 9.498 9.167 10.268 10.5C10.625 11.119 11.285 11.5 12 11.5C13.54 11.5 14.502 9.833 13.732 8.5C13.5565 8.19597 13.304 7.9435 13 7.76796C12.6959 7.59243 12.3511 7.50001 12 7.5Z" fill="black"/>
             <path opacity="0.3" d="M12 2C13.9891 2 15.8968 2.79018 17.3033 4.1967C18.7098 5.60322 19.5 7.51088 19.5 9.5C19.5 12.068 18.1 14.156 16.65 15.64C16.0736 16.2239 15.4542 16.7638 14.797 17.255C14.203 17.701 12.845 18.537 12.845 18.537C12.5874 18.6834 12.2963 18.7604 12 18.7604C11.7037 18.7604 11.4126 18.6834 11.155 18.537C10.4811 18.1462 9.82938 17.7182 9.203 17.255C8.5458 16.7638 7.9264 16.2239 7.35 15.64C5.9 14.156 4.5 12.068 4.5 9.5C4.5 7.51088 5.29018 5.60322 6.6967 4.1967C8.10322 2.79018 10.0109 2 12 2Z" fill="black"/>
           </svg>
         </div>
-      </div>
+</div>
 
+
+  </div>
+      <div class="col-2 col-md-2 col-sm-2 col-lg-2 col-xl-2  col-xxl-2" style="width: 10.667%;">
       <!-- Left Side - Logo -->
       <div class="navbar-left">
         <div class="logo" routerLink="/">
           <img src="assets/Bashwat-logo.png" alt="Logo" />
         </div>
       </div>
+</div>
+
+<div id="tabs" class="col-2 col-md-2 col-sm-2 col-lg-2 col-xl-2  col-xxl-2" style="display: flex;justify-content: center;align-items: center;">
+      <!-- Mobile Hamburger Button -->
+      <button class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Toggle navigation">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+</div>
+</div>
+  </div>
     </div>
   </div>
 
   <!-- Menu Bar -->
   <div class="menu-bar">
     <div class="menu-content">
+<span id="scroll" >
       <!-- Menu Toggle -->
+       <span style="display: flex;">
       <button class="menu-toggle" type="button"
         (mouseenter)="!isMobile() && toggleMenuDropdown()"
         (click)="isMobile() && toggleMenuDropdown()"
@@ -254,7 +328,7 @@ import { User } from '../models/auth.model';
           <path d="M4 18C3.71667 18 3.47934 17.904 3.288 17.712C3.09667 17.52 3.00067 17.2827 3 17C2.99934 16.7173 3.09534 16.48 3.288 16.288C3.48067 16.096 3.718 16 4 16H20C20.2833 16 20.521 16.096 20.713 16.288C20.905 16.48 21.0007 16.7173 21 17C20.9993 17.2827 20.9033 17.5203 20.712 17.713C20.5207 17.9057 20.2833 18.0013 20 18H4ZM4 13C3.71667 13 3.47934 12.904 3.288 12.712C3.09667 12.52 3.00067 12.2827 3 12C2.99934 11.7173 3.09534 11.48 3.288 11.288C3.48067 11.096 3.718 11 4 11H20C20.2833 11 20.521 11.096 20.713 11.288C20.905 11.48 21.0007 11.7173 21 12C20.9993 12.2827 20.9033 12.5203 20.712 12.713C20.5207 12.9057 20.2833 13.0013 20 13H4ZM4 8C3.71667 8 3.47934 7.904 3.288 7.712C3.09667 7.52 3.00067 7.28267 3 7C2.99934 6.71733 3.09534 6.48 3.288 6.288C3.48067 6.096 3.718 6 4 6H20C20.2833 6 20.521 6.096 20.713 6.288C20.905 6.48 21.0007 6.71733 21 7C20.9993 7.28267 20.9033 7.52033 20.712 7.713C20.5207 7.90567 20.2833 8.00133 20 8H4Z" fill="white"/>
         </svg>
       </button>
-
+</span>
       <!-- First 5 Menu Items -->
       <div class="menu-items-container">
         <a *ngFor="let category of firstFiveMenuItems" 
@@ -300,6 +374,8 @@ import { User } from '../models/auth.model';
           </div>
         </div>
       </div>
+</span>
+
     </div>
   </div>
 </nav>
@@ -322,18 +398,18 @@ import { User } from '../models/auth.model';
               <input
                 type="email"
                 formControlName="email"
-                placeholder="ادخل عنوان بريدك الالكتروني"
+                [placeholder]="'LAYOUT.EMAIL_PLACEHOLDER' | translate"
                 class="newsletter-input"
                 [class.error]="newsletterForm.get('email')?.invalid && newsletterForm.get('email')?.touched"
               />
               <button type="submit" class="newsletter-button" >
-                اشترك الان
+                {{ 'LAYOUT.SUBSCRIBE_NOW' | translate }}
               </button>
             </div>
           </form>
             <div class="newsletter-text">
-            <h3 class="newsletter-title">اشترك للحصول على اجدد العروض والخصومات الحصريه</h3>
-            <p class="newsletter-subtitle">كن أول من يعرف كل ما هو جديد في إكسبشن</p>
+            <h3 class="newsletter-title">{{ 'LAYOUT.NEWSLETTER_TITLE' | translate }}</h3>
+            <p class="newsletter-subtitle">{{ 'LAYOUT.NEWSLETTER_SUBTITLE' | translate }}</p>
           </div>
         </div>
       </div>
@@ -341,23 +417,20 @@ import { User } from '../models/auth.model';
         
         <!-- Main Content Area -->
         <div class="footer-main-content">
-          <div class="footer-content-wrapper">
-            <div class="footer-column footer-social">
-              <h3 class="footer-heading">{{ 'FOOTER.FOLLOW_US' | translate }}</h3>
-              <div class="footer-social-icons">
-                <a href="https://web.facebook.com/bashawatqtr" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Facebook" (click)="openSocialLink('https://web.facebook.com/bashawatqtr', $event)">
-                  <i class="fab fa-facebook-f"></i>
-                </a>
-                <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Instagram" (click)="openSocialLink('https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu', $event)">
-                  <i class="fab fa-instagram"></i>
-                </a>
-                <a href="https://www.tiktok.com/@al.bashawat.resta" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="TikTok" (click)="openSocialLink('https://www.tiktok.com/@al.bashawat.resta', $event)">
-                  <i class="fab fa-tiktok"></i>
-                </a>
+      <div class="footer-logo-1">
+                <img src="assets/Bashwat-logo.png" alt="Al Bashawat Logo" />
               </div>
-            </div>
+
+          <div class="row">
+
+
+<div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
 
             <div class="footer-column footer-about">
+      <div class="footer-logo">
+                <img src="assets/Bashwat-logo.png" alt="Al Bashawat Logo" />
+              </div>
+
               <h3 class="footer-heading">{{ 'FOOTER.ABOUT_COMPANY' | translate }}</h3>
               <ul class="footer-links">
                 <li><a routerLink="/about">{{ 'NAV.ABOUT' | translate }}</a></li>
@@ -366,7 +439,8 @@ import { User } from '../models/auth.model';
                 <li><a routerLink="/shipping-policy">{{ 'FOOTER.SHIPPING_DELIVERY' | translate }}</a></li>
               </ul>
             </div>
-
+</div>
+<div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6" style="padding-bottom: 1.5rem !important;">
             <div class="footer-column footer-categories">
               <h3 class="footer-heading">{{ 'FOOTER.CATEGORIES' | translate }}</h3>
               <div class="footer-categories-grid">
@@ -388,26 +462,46 @@ import { User } from '../models/auth.model';
                 </ul>
               </div>
             </div>
-
-            <div class="footer-column footer-contact">
-              <div class="footer-logo">
-                <img src="assets/Bashwat-logo.png" alt="Al Bashawat Logo" />
+</div>
+<div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
+            <div class="footer-column footer-social">
+              <h3 class="footer-heading">{{ 'FOOTER.FOLLOW_US' | translate }}</h3>
+              <div class="footer-social-icons">
+                <a href="https://web.facebook.com/bashawatqtr" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Facebook" (click)="openSocialLink('https://web.facebook.com/bashawatqtr', $event)">
+                  <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Instagram" (click)="openSocialLink('https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu', $event)">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://www.tiktok.com/@al.bashawat.resta" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="TikTok" (click)="openSocialLink('https://www.tiktok.com/@al.bashawat.resta', $event)">
+                  <i class="fab fa-tiktok"></i>
+                </a>
               </div>
+            </div>
+</div>
+
+<div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
+            <div class="footer-column footer-contact">
+        
               <div class="footer-contact-info">
                 <div class="footer-contact-item">
                   <i class="fas fa-map-marker-alt"></i>
-                  <span>{{ 'FOOTER.ADDRESS' | translate }}</span>
+                  <span>{{ getBranchAddress() }}</span>
                 </div>
-                <div class="footer-contact-item">
+                <div class="footer-contact-item" *ngIf="currentBranch">
+                  <i class="fas fa-phone"></i>
+                  <span>{{ getBranchPhone() }}</span>
+                </div>
+                <div class="footer-contact-item" *ngIf="!currentBranch">
                   <i class="fas fa-phone"></i>
                   <span>{{ 'FOOTER.PHONE_1' | translate }}</span>
                 </div>
-                <div class="footer-contact-item">
+                <div class="footer-contact-item" *ngIf="!currentBranch">
                   <i class="fas fa-phone"></i>
                   <span>{{ 'FOOTER.PHONE_2' | translate }}</span>
                 </div>
                 <div class="footer-working-hours">
-                  {{ 'FOOTER.WORKING_HOURS' | translate }}
+                  {{ getBranchWorkingHours() }}
                 </div>
                 <div class="footer-payment-methods">
                   <h4 class="footer-payment-heading">{{ 'FOOTER.PAYMENT_METHODS' | translate }}</h4>
@@ -427,11 +521,14 @@ import { User } from '../models/auth.model';
               </div>
             </div>
           </div>
+          </div>
+
+
         </div>
         <!-- Bottom Dark Red Bar -->
         <div class="footer-bottom-bar">
           <div class="footer-bottom-content">
-            <div class="footer-powered-by">Powered by codereels</div>
+            <div class="footer-powered-by">{{ 'LAYOUT.POWERED_BY' | translate }}</div>
             <div class="footer-copyright">{{ 'FOOTER.COPYRIGHT_FULL' | translate }}</div>
           </div>
         </div>
@@ -490,8 +587,8 @@ html[dir="rtl"] .navbar-container {
 }
 
 .top-bar-content {
-  max-width: 1400px;
-  margin: 0 auto;
+  // max-width: 1400px;
+  margin: 0 2.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -810,22 +907,225 @@ html[dir="rtl"] .navbar-center {
   position: relative;
 }
 
-.search-container {
+.search-wrapper {
   display: flex;
   align-items: center;
-  background-color: transparent;
-  border-radius: 6px;
-  padding: 2px;
   position: relative;
+}
+
+.search-input-container {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 25px;
+  padding: 8px 12px;
+  min-width: 300px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-input-container:focus-within {
+  border-color: #d32f2f;
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
+  background-color: #fff;
 }
 
 .search-input {
   border: none;
   background: transparent;
-  padding: 8px 12px;
-  width: 200px;
+  padding: 4px 8px;
+  flex: 1;
   outline: none;
   font-size: 14px;
+  font-family: 'Almarai', sans-serif;
+  color: #333;
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.search-submit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #d32f2f;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  padding: 0;
+  color: white;
+  min-width: 32px;
+}
+
+.search-submit-button:hover:not(:disabled) {
+  background-color: #b71c1c;
+  transform: scale(1.05);
+}
+
+.search-submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+.search-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.search-toggle-button {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+}
+
+.search-toggle-button:hover {
+  background-color: #f5f5f5;
+  color: #d32f2f;
+}
+
+.search-toggle-button svg {
+  display: block;
+}
+
+.search-results-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 400px;
+  max-width: 500px;
+  max-height: 500px;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.search-results-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-results-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.search-results-dropdown::-webkit-scrollbar-thumb {
+  background: #d32f2f;
+  border-radius: 10px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background-color: #f9f9f9;
+}
+
+.search-result-image {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+.search-result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.search-result-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.search-result-name {
+  font-family: 'Almarai', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #333;
+  line-height: 1.3;
+}
+
+.search-result-category {
+  font-family: 'Almarai', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: #666;
+}
+
+.search-result-price {
+  font-family: 'Almarai', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #d32f2f;
+}
+
+.search-no-results {
+  padding: 24px;
+  text-align: center;
+}
+
+.search-no-results-message {
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  color: #666;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .search-button {
@@ -963,7 +1263,7 @@ html[dir="rtl"] .navbar-center {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 50px;
   position: relative;
   justify-content: space-between;
 }
@@ -1203,6 +1503,9 @@ body.rtl .menu-items-container {
   color: #DC2626;
   background-color: #F9F9F9;
 }
+
+
+
 
 
 /* Icons - Using Unicode and CSS for non-PrimeNG icons */
@@ -1501,8 +1804,13 @@ body.rtl .menu-items-container {
     flex-wrap: wrap;
   }
   
-  .search-input {
-    width: 150px;
+  .search-input-container {
+    min-width: 250px;
+  }
+
+  .search-results-dropdown {
+    min-width: 350px;
+    max-width: 400px;
   }
 }
 
@@ -1625,6 +1933,18 @@ body.rtl .menu-items-container {
 
   .menu-items-section {
     display: none;
+  }
+
+  .search-input-container {
+    min-width: 200px;
+    width: 100%;
+  }
+
+  .search-results-dropdown {
+    min-width: calc(100vw - 40px);
+    max-width: calc(100vw - 40px);
+    right: 20px;
+    left: 20px;
   }
 }
 
@@ -2116,11 +2436,16 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
   cart$: Observable<Cart>;
   cartItemCount$: Observable<number>;
   currentLang: string = 'en';
-  currency = 'ريال';
   isSearchOpen = false;
   newsletterForm!: FormGroup;
   isAuthPage = false;
+  currentBranch: Branch | null = null;
+  branches: Branch[] = [];
   private routerSubscription?: Subscription;
+  searchResults: Product[] = [];
+  searchTerm: string = '';
+  showSearchResults: boolean = false;
+  isSearching: boolean = false;
 
   menuItems: any[] = [
     // { label: 'قائمة المنتجات', link: '#', icon: 'menu' },
@@ -2158,7 +2483,12 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
   currentLocation: string = '';
   currentUser: User | null = null;
   isAuthenticated: boolean = false;
+  readonly UserRole = UserRole;
   private authSubscription?: Subscription;
+
+  navigateToAdminDashboard(): void {
+    this.router.navigate(['/admin/dashboard']);
+  }
 
   toggleMobileMenu() {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
@@ -2187,6 +2517,7 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
   }
 
   isMobile(): boolean {
+    console.log(window.innerWidth);
     return window.innerWidth <= 768;
   }
 
@@ -2269,20 +2600,106 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
   }
 
   toggleSearch() {
-    this.isSearchOpen = !this.isSearchOpen;
     if (this.isSearchOpen) {
+      this.closeSearch();
+    } else {
+      this.isSearchOpen = true;
       setTimeout(() => {
         const input = document.querySelector('.search-input') as HTMLInputElement;
         if (input) {
           input.focus();
         }
-      }, 0);
+      }, 100);
     }
   }
 
   onSearch(event: Event) {
+    // Only update the search term, don't trigger API call
     const searchTerm = (event.target as HTMLInputElement).value;
-    console.log('Searching for:', searchTerm);
+    this.searchTerm = searchTerm;
+    // Clear results while typing
+    if (searchTerm.length === 0) {
+      this.searchResults = [];
+      this.showSearchResults = false;
+    }
+  }
+
+  onSearchFocus() {
+    // Show existing results if available
+    if (this.searchTerm.length > 0 && this.searchResults.length > 0) {
+      this.showSearchResults = true;
+    }
+  }
+
+  onSearchBlur() {
+    // Delay to allow click events on results
+    setTimeout(() => {
+      // Check if user clicked outside search area
+      const activeElement = document.activeElement;
+      const searchWrapper = document.querySelector('.search-wrapper');
+
+      // If focus moved outside search area and not on results, close search
+      if (activeElement && searchWrapper && !searchWrapper.contains(activeElement)) {
+        // Check if clicked on search results
+        const searchResults = document.querySelector('.search-results-dropdown');
+        if (!searchResults || !searchResults.contains(activeElement)) {
+          // Close search and return to original state
+          this.closeSearch();
+        }
+      } else if (!this.searchTerm || this.searchTerm.trim().length === 0) {
+        this.showSearchResults = false;
+      }
+    }, 200);
+  }
+
+  closeSearch(): void {
+    this.isSearchOpen = false;
+    this.searchResults = [];
+    this.searchTerm = '';
+    this.showSearchResults = false;
+    this.isSearching = false;
+  }
+
+  onSearchClick(): void {
+    // Trigger search when button is clicked or Enter is pressed
+    if (this.searchTerm && this.searchTerm.trim().length > 0) {
+      this.performSearch(this.searchTerm.trim());
+    } else {
+      this.searchResults = [];
+      this.showSearchResults = false;
+    }
+  }
+
+  performSearch(query: string): void {
+    if (!query || query.trim().length === 0) {
+      this.searchResults = [];
+      this.isSearching = false;
+      this.showSearchResults = false;
+      return;
+    }
+
+    this.isSearching = true;
+    this.showSearchResults = true;
+
+    this.productService.searchProducts(query).pipe(
+      catchError(error => {
+        console.error('Search error:', error);
+        this.isSearching = false;
+        this.searchResults = [];
+        return of([]);
+      })
+    ).subscribe(results => {
+      this.searchResults = results;
+      this.isSearching = false;
+      this.showSearchResults = true;
+    });
+  }
+
+  selectSearchResult(product: Product): void {
+    this.router.navigate(['/item', product.id]).then(() => {
+      this.closeSearch();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 
   onCartClick() {
@@ -2331,7 +2748,9 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
     private viewportScroller: ViewportScroller,
     private dialog: MatDialog,
     private categoryService: CategoryService,
-    private authService: AuthService
+    private authService: AuthService,
+    private branchService: BranchService,
+    private productService: ProductService
   ) {
     this.cart$ = this.cartService.cart$;
     this.cartItemCount$ = this.cart$.pipe(
@@ -2367,6 +2786,8 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.checkAuthPage(event.url);
+        // Scroll to the top of the page on every navigation
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
       });
 
     // Load saved location
@@ -2380,6 +2801,9 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
 
     // Load menu categories from API
     this.loadMenuCategories();
+
+    // Load branch data
+    this.loadBranchData();
   }
 
   ngOnDestroy(): void {
@@ -2515,5 +2939,87 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     window.open(url, '_blank', 'noopener,noreferrer');
   }
+
+  loadBranchData(): void {
+    this.branchService.getBranches().pipe(
+      catchError(error => {
+        console.error('Error loading branches:', error);
+        return of([]);
+      })
+    ).subscribe((branches: Branch[]) => {
+      // Store branches array
+      this.branches = branches;
+      // Get the first active branch, or first branch if no active branch found
+      const activeBranch = branches.find(b => b.isActive) || branches[0];
+      if (activeBranch) {
+        this.currentBranch = activeBranch;
+      }
+    });
+  }
+
+  getContactPhone(): string {
+    if (this.branches.length > 0) {
+      // Try phoneNumber first, fallback to phone
+      const firstBranch = this.branches[0] as any;
+      return firstBranch.phoneNumber || firstBranch.phone || '39990689';
+    }
+    return '39990689'; // Fallback to default
+  }
+
+  getBranchName(): string {
+    if (!this.currentBranch) {
+      return '';
+    }
+    return this.currentLang === 'ar' ? this.currentBranch.nameAr : this.currentBranch.nameEn;
+  }
+
+  getBranchAddress(): string {
+    if (!this.currentBranch) {
+      return this.translate.instant('FOOTER.ADDRESS');
+    }
+    const address = this.currentLang === 'ar' ? this.currentBranch.addressAr : this.currentBranch.addressEn;
+    return (address && address.trim()) || this.translate.instant('FOOTER.ADDRESS');
+  }
+
+  getBranchPhone(): string {
+    if (!this.currentBranch) {
+      return this.translate.instant('FOOTER.PHONE_1');
+    }
+    return this.currentBranch.phone || this.translate.instant('FOOTER.PHONE_1');
+  }
+
+  getBranchWorkingHours(): string {
+    if (!this.currentBranch) {
+      return this.translate.instant('FOOTER.WORKING_HOURS');
+    }
+    const openingTime = this.formatTime(this.currentBranch.openingTime);
+    const closingTime = this.formatTime(this.currentBranch.closingTime);
+    if (openingTime && closingTime) {
+      const translated = this.translate.instant('FOOTER.WORKING_HOURS_FORMAT', {
+        opening: openingTime,
+        closing: closingTime
+      });
+      // If translation returns the key itself, use fallback
+      if (translated === 'FOOTER.WORKING_HOURS_FORMAT') {
+        return this.currentLang === 'ar'
+          ? `ساعات العمل: من الساعة ${openingTime} حتى ${closingTime} طوال أيام الأسبوع.`
+          : `Working Hours: From ${openingTime} to ${closingTime}, seven days a week.`;
+      }
+      return translated;
+    }
+    return this.translate.instant('FOOTER.WORKING_HOURS');
+  }
+
+  formatTime(timeString: string): string {
+    if (!timeString) return '';
+    // TimeSpan format is "HH:mm:ss", we only need "HH:mm"
+    const parts = timeString.split(':');
+    if (parts.length >= 2) {
+      return `${parts[0]}:${parts[1]}`;
+    }
+    return timeString;
+  }
 }
+
+
 

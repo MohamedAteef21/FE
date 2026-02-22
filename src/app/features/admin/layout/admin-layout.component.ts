@@ -90,6 +90,39 @@ import { Subscription } from 'rxjs';
                 <span>العروض</span>
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" routerLink="/admin/branches" routerLinkActive="active">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="currentColor"/>
+                </svg>
+                <span>الفروع</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" routerLink="/admin/delivery-areas" routerLinkActive="active">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="currentColor"/>
+                </svg>
+                <span>مناطق التوصيل</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" routerLink="/admin/notifications" routerLinkActive="active">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.89 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.63 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" fill="currentColor"/>
+                </svg>
+                <span>الاشعارات</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" routerLink="/admin/users" routerLinkActive="active">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" fill="currentColor"/>
+                  <path d="M12 14C8.67 14 2 15.34 2 18.5V21H22V18.5C22 15.34 15.33 14 12 14Z" fill="currentColor"/>
+                </svg>
+                <span>المستخدمين</span>
+              </a>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -106,6 +139,10 @@ import { Subscription } from 'rxjs';
               <mat-icon class="search-icon">search</mat-icon>
               <input type="text" class="search-input" placeholder="بحث...">
             </div>
+            <button *ngIf="isAdmin" class="switch-view-button" (click)="switchToPublic()">
+              <mat-icon>home</mat-icon>
+              <span>الموقع العام</span>
+            </button>
             <button class="language-button" (click)="onLanguageChange()">
               <span class="flag-icon" [attr.aria-label]="currentLang === 'ar' ? 'English flag' : 'Qatar flag'">
                 <svg *ngIf="currentLang === 'en'" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -219,6 +256,31 @@ import { Subscription } from 'rxjs';
 
     .language-button:hover {
       background-color: #F5F5F5;
+    }
+
+    .switch-view-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: transparent;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      color: #333;
+      font-family: 'Almarai', sans-serif;
+      font-size: 14px;
+    }
+
+    .switch-view-button:hover {
+      background-color: #F5F5F5;
+    }
+
+    .switch-view-button mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
 
     .flag-icon {
@@ -339,6 +401,7 @@ import { Subscription } from 'rxjs';
 export class AdminLayoutComponent implements OnInit, OnDestroy {
   currentUser: any;
   currentLang: string = 'en';
+  isAdmin: boolean = false;
   private langSubscription?: Subscription;
 
   constructor(
@@ -353,6 +416,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       name: 'Admin User',
       role: 'ADMIN'
     };
+    this.isAdmin = this.authService.isAdmin();
   }
 
   ngOnInit(): void {
@@ -376,10 +440,13 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.translationService.setLanguage(newLang);
   }
 
+  switchToPublic(): void {
+    this.router.navigate(['/']);
+  }
+
   logout(): void {
-    // Clear authentication manually and redirect to public home page
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    // Use AuthService logout which clears both localStorage and sessionStorage
+    this.authService.logout();
     // Navigate to public home page instead of login
     this.router.navigate(['/']);
   }

@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { SharedModule } from '../../../shared/shared.module';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -458,11 +459,14 @@ export class RegisterComponent implements OnInit {
   hideConfirmPassword = true;
   isLoading = false;
   acceptTermsChecked = false;
+  returnUrl: string = '/';
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private authService: AuthService,
+    private route: ActivatedRoute
   ) {
     this.registerForm = this.fb.group({
       firstName: ['', [Validators.required]],
@@ -478,7 +482,8 @@ export class RegisterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Component initialization
+    // Get return URL from query parameters, default to home
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
   }
 
   toggleAcceptTerms(): void {
@@ -502,22 +507,44 @@ export class RegisterComponent implements OnInit {
       this.isLoading = true;
       const formValue = this.registerForm.value;
 
-      // TODO: Call registration API
-      console.log('Registration data:', formValue);
+      // Map form data to RegisterRequest (mobile -> phone)
+      const registerData = {
+        firstName: formValue.firstName,
+        lastName: formValue.lastName,
+        email: formValue.email,
+        phone: formValue.mobile, // Map mobile to phone
+        password: formValue.password,
+        confirmPassword: formValue.confirmPassword
+      };
 
-      // Simulate API call
-      setTimeout(() => {
-        this.isLoading = false;
-        this.snackBar.open(
-          'تم إنشاء الحساب بنجاح',
-          'إغلاق',
-          { duration: 3000 }
-        );
-        // Redirect to login after successful registration
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 1500);
-      }, 1000);
+      this.authService.register(registerData).subscribe({
+        next: (response) => {
+          this.isLoading = false;
+          this.snackBar.open(
+            'تم إنشاء الحساب بنجاح',
+            'إغلاق',
+            { duration: 3000 }
+          );
+          // Redirect based on user role or return URL
+          setTimeout(() => {
+            if (this.authService.isAdmin()) {
+              this.router.navigate(['/admin/dashboard']);
+            } else {
+              // Redirect to return URL (e.g., /checkout) or home
+              this.router.navigate([this.returnUrl]);
+            }
+          }, 1500);
+        },
+        error: (error) => {
+          this.isLoading = false;
+          const errorMessage = error?.error?.message || error?.message || 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.';
+          this.snackBar.open(
+            errorMessage,
+            'إغلاق',
+            { duration: 5000, panelClass: ['error-snackbar'] }
+          );
+        }
+      });
     } else {
       // Mark all fields as touched to show errors
       Object.keys(this.registerForm.controls).forEach(key => {

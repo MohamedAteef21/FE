@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { SharedModule } from '../../../shared/shared.module';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -329,11 +329,14 @@ export class PublicLoginComponent implements OnInit {
   isLoading = false;
   rememberMeChecked = false;
 
+  returnUrl: string = '/';
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private route: ActivatedRoute
   ) {
     this.loginForm = this.fb.group({
       phoneNumberOrEmail: ['', [Validators.required, this.phoneOrEmailValidator]],
@@ -371,12 +374,15 @@ export class PublicLoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // If already logged in, redirect based on role
+    // Get return URL from query parameters, default to home
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+
+    // If already logged in, redirect based on role or return URL
     if (this.authService.isAuthenticated()) {
       if (this.authService.isAdmin()) {
         this.router.navigate(['/admin/dashboard']);
       } else {
-        this.router.navigate(['/']);
+        this.router.navigate([this.returnUrl]);
       }
     }
   }
@@ -407,14 +413,15 @@ export class PublicLoginComponent implements OnInit {
         password: password
       };
 
-      this.authService.login(loginRequest).subscribe({
+      this.authService.login(loginRequest, this.rememberMeChecked).subscribe({
         next: () => {
           this.isLoading = false;
           // Check if user is Admin and redirect accordingly
           if (this.authService.isAdmin()) {
             this.router.navigate(['/admin/dashboard']);
           } else {
-            this.router.navigate(['/']);
+            // Redirect to return URL (e.g., /checkout) or home
+            this.router.navigate([this.returnUrl]);
           }
         },
         error: (error) => {

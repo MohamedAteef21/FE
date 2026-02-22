@@ -17,7 +17,9 @@
     "YEAR": "١٩٩٥",
     "SLOGAN": "بخبرة أكثر من ثلاثون عام",
     "VIEW_ALL": "عرض الكل",
-    "CATEGORIES": "الاصناف"
+    "CATEGORIES": "الاصناف",
+    "WE_CHOSE_FOR_YOU": "اخترنا لك",
+    "ORDER_NOW": "أطلب الان"
   },
   "MENU": {
     "TITLE": "قائمتنا",
@@ -43,9 +45,20 @@
     "ACTIVATE": "تفعيل",
     "APPLIED_DISCOUNT": "الخصم المطبق",
     "COMPLETE_ORDER": "استكمال الطلب",
-    "TERMS_AGREEMENT": "اوافق على الشروط والأحكام",
+    "TERMS_AGREEMENT": "بإكمال الطلب يتم تأكيد موافقتكم علي الشروط و الأحكام",
     "DELIVERY_TIME": "التوصيل في خلال ساعة واحدة فقط",
-    "ADD_MORE": "أضف المزيد للسلة"
+    "ADD_MORE": "أضف المزيد للسلة",
+    "PRICE_LABEL": "السعر:",
+    "QUANTITY_LABEL": "الكمية:",
+    "TOTAL_LABEL": "الإجمالي:"
+  },
+  "CART_DIALOG": {
+    "ADD_NEW_ITEM": "إضافة صنف جديد",
+    "ADD_TO_CART": "أضف الى السلة",
+    "EMPTY_CART": "السلة فارغة",
+    "EXISTING_ITEMS": "الاصناف الموجودة",
+    "TOTAL": "الإجمالي:",
+    "ORDER_NOW": "أطلب الان"
   },
   "CHECKOUT": {
     "TITLE": "استكمال الطلب",
@@ -102,6 +115,9 @@
     "STREET": "شارع",
     "ZONE": "منطقة",
     "RETURN_TO_HOME": "الرجوع اللي الرئيسيه",
+    "AUTH_REQUIRED_TITLE": "تسجيل الدخول مطلوب",
+    "AUTH_REQUIRED_MESSAGE": "لتأكيد طلبك، تحتاج إلى تسجيل الدخول أو إنشاء حساب جديد.",
+    "LOGIN": "تسجيل الدخول",
     "SELECT_CITY": "اختر المدينة",
     "SELECT_DISTRICT": "اختر الحي",
     "SELECT_AREA": "اختر المنطقة",
@@ -170,6 +186,7 @@
     "PHONE_1": "399 90589",
     "PHONE_2": "399 90589",
     "WORKING_HOURS": "ساعات العمل: من الساعة 09:00 صباحًا حتى 11:45 مساءً طوال أيام الأسبوع.",
+    "WORKING_HOURS_FORMAT": "ساعات العمل: من الساعة {{opening}} حتى {{closing}} طوال أيام الأسبوع.",
     "PAYMENT_METHODS": "طرق الدفع",
     "CASH_ON_DELIVERY": "Cash on delivery"
   },
@@ -187,7 +204,13 @@
     "QUANTITY": "الكمية",
     "ADD_TO_CART": "أضف إلى السلة",
     "NOT_AVAILABLE": "غير متوفر",
-    "ITEM_ADDED": "تم إضافة العنصر إلى السلة"
+    "ITEM_ADDED": "تم إضافة العنصر إلى السلة",
+    "HOME": "الرئيسية",
+    "AVAILABLE": "متاح",
+    "SIZE": "حجم",
+    "DELIVERY_TIME": "التوصيل في خلال ساعة واحدة فقط",
+    "ORDER_NOW": "أطلب الان",
+    "SIMILAR_PRODUCTS": "منتجات مشابهه"
   },
   "LOGIN": {
     "TITLE": "تسجيل دخول المدير",
@@ -247,6 +270,7 @@
       "ORDER_NUMBER": "رقم الطلب",
       "REFERENCE_NUMBER": "الرقم المرجعى",
       "CUSTOMER": "العميل",
+      "CUSTOMER_NAME": "اسم العميل",
       "IDENTIFIER": "التعريف",
       "ADDRESS": "العنوان",
       "ORDER_DATE": "تاريخ الطلب",
@@ -306,6 +330,29 @@
     "RESTAURANT": "المطعم",
     "CLOSE": "إغلاق",
     "ITEM": "عنصر",
-    "ITEMS": "عناصر"
+    "ITEMS": "عناصر",
+    "RIYAL": "ريال",
+    "ORDER": "أطلب +",
+    "MUTE_VIDEO": "كتم الصوت",
+    "UNMUTE_VIDEO": "إلغاء كتم الصوت"
+  },
+  "LAYOUT": {
+    "DELIVERY_TO_MY_LOCATION": "التوصيل إلى موقعي",
+    "CATEGORIES": "الأصناف",
+    "CONTACT_US": "اتصل بنا",
+    "FAQ": "الاسئلة الشائعة",
+    "BLOGS": "المدونات",
+    "ABOUT_US": "من نحن",
+    "DISCOUNT_TEXT": "خصم 15% حتى 20/2/2026",
+    "DASHBOARD": "لوحة التحكم",
+    "SEARCH": "البحث",
+    "DEFAULT_LOCATION": "التوصيل الى الرياض مترو الجوعان",
+    "EMAIL_PLACEHOLDER": "ادخل عنوان بريدك الالكتروني",
+    "SUBSCRIBE_NOW": "اشترك الان",
+    "NEWSLETTER_TITLE": "اشترك للحصول على اجدد العروض والخصومات الحصريه",
+    "NEWSLETTER_SUBTITLE": "كن أول من يعرف كل ما هو جديد في إكسبشن",
+    "POWERED_BY": "Powered by codereels",
+    "ENGLISH_FLAG": "علم إنجليزي",
+    "QATAR_FLAG": "علم قطر"
   }
 }

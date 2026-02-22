@@ -1,17 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, ViewportScroller } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { SharedModule } from '../../../shared/shared.module';
 import { CartService } from '../../../core/services/cart.service';
 import { OrderService } from '../../../core/services/order.service';
 import { Cart } from '../../../models/menu-item.model';
 import { CityWithDetails, District, Area } from '../../../models/location.model';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
+import { User } from '../../../models/auth.model';
+import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
 
 @Component({
   selector: 'app-checkout',
@@ -345,20 +348,21 @@ import { AuthService } from '../../../core/services/auth.service';
                     </div>
 
                     <!-- Payment Method -->
-                    <div class="form-section">
-                      <h3 class="section-title">{{ 'CHECKOUT.PAYMENT_METHOD' | translate }}</h3>
-                      <div class="radio-group">
+                    <div class="form-section payment-method-section">
+                      <h3 class="section-title payment-method-title">{{ 'CHECKOUT.PAYMENT_METHOD' | translate }}</h3>
+                      <div class="radio-group payment-method-group">
                         <mat-radio-group formControlName="paymentMethod">
-                          <mat-radio-button value="cash" class="radio-option">
+                          <mat-radio-button value="cash" class="radio-option payment-option" style="display: flex;
+  align-items: center;">
                             <i class="pi pi-money-bill"></i>
-                            {{ 'CHECKOUT.CASH' | translate }}
+                            <span class="payment-label">{{ 'CHECKOUT.CASH' | translate }}</span>
                           </mat-radio-button>
-                          <mat-radio-button value="visa" class="radio-option radio-option-disabled" [disabled]="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M21 4H3C1.89543 4 1 4.89543 1 6V18C1 19.1046 1.89543 20 3 20H21C22.1046 20 23 19.1046 23 18V6C23 4.89543 22.1046 4 21 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                              <path d="M1 10H23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          <mat-radio-button value="visa" class="radio-option payment-option radio-option-disabled" [disabled]="true">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M21 4H3C1.89543 4 1 4.89543 1 6V18C1 19.1046 1.89543 20 3 20H21C22.1046 20 23 19.1046 23 18V6C23 4.89543 22.1046 4 21 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M1 10H23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <span class="visa-label">{{ 'CHECKOUT.VISA' | translate }}</span>
+                            <span class="visa-label payment-label">{{ 'CHECKOUT.VISA' | translate }}</span>
                             <span class="coming-soon-badge">{{ 'CHECKOUT.COMING_SOON' | translate }}</span>
                           </mat-radio-button>
                         </mat-radio-group>
@@ -399,22 +403,35 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Order Success Modal -->
       <div *ngIf="showOrderSuccess" class="order-success-overlay" (click)="closeOrderSuccess()">
         <div class="order-success-modal" (click)="$event.stopPropagation()">
-          <button class="close-modal-btn" (click)="closeOrderSuccess()">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="#F00E0C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          
-          <div class="success-icon">
+<span style="width: 100%;">
+
+    <button class="close-modal-btn" (click)="closeOrderSuccess()" style="position: relative;left: 0px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 6L6 18M6 6L18 18" stroke="#F00E0C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    </span>
+<span style="
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+">
+
+          <div class="success-icon" style="
+    display: flex;
+    flex-direction: column;
+">
             <div class="success-circle">
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 20L17 27L30 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
+            <span>
+            <h2 class="success-title">{{ 'CHECKOUT.THANK_YOU' | translate }}</h2>
+            <p class="success-subtitle">{{ 'CHECKOUT.ORDER_CONFIRMATION_MESSAGE' | translate }}</p>
+</span>
           </div>
-
-          <h2 class="success-title">{{ 'CHECKOUT.THANK_YOU' | translate }}</h2>
-          <p class="success-subtitle">{{ 'CHECKOUT.ORDER_CONFIRMATION_MESSAGE' | translate }}</p>
+</span>
 
           <div class="order-details" *ngIf="orderData">
             <div class="detail-row">
@@ -883,6 +900,89 @@ import { AuthService } from '../../../core/services/auth.service';
       background-color: transparent !important;
     }
 
+    /* Payment Method Specific Styling - More Prominent */
+    .payment-method-section {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .payment-method-title {
+      font-weight: 700 !important;
+      font-size: 20px !important;
+      color: #d32f2f !important;
+      margin-bottom: 1.25rem !important;
+    }
+
+    .payment-method-group {
+      gap: 1rem !important;
+    }
+
+    .payment-option {
+      font-weight: 700 !important;
+      font-size: 18px !important;
+      background-color: #ffffff !important;
+      border: 2px solid #e0e0e0 !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+      transition: all 0.3s ease !important;
+      min-height: 64px !important;
+      padding: 18px 28px !important;
+    }
+
+    .payment-option:hover:not(.radio-option-disabled) {
+      border-color: #d32f2f !important;
+      box-shadow: 0 4px 12px rgba(211, 47, 47, 0.15) !important;
+      transform: translateY(-2px);
+    }
+
+    .payment-option ::ng-deep .mdc-radio {
+      width: 24px !important;
+      height: 24px !important;
+    }
+
+    .payment-option ::ng-deep .mdc-radio__outer-circle,
+    .payment-option ::ng-deep .mdc-radio__inner-circle {
+      border-width: 2.5px !important;
+    }
+
+    .payment-option.mat-mdc-radio-checked {
+      background-color: #fff5f5 !important;
+      border-color: #d32f2f !important;
+      box-shadow: 0 4px 16px rgba(211, 47, 47, 0.2) !important;
+    }
+
+    .payment-option.mat-mdc-radio-checked ::ng-deep .mdc-radio__outer-circle {
+      border-color: #d32f2f !important;
+    }
+
+    .payment-option.mat-mdc-radio-checked ::ng-deep .mdc-radio__inner-circle {
+      background-color: #d32f2f !important;
+    }
+
+    .payment-label {
+      font-weight: 700 !important;
+      font-size: 18px !important;
+      color: #333 !important;
+      padding-inline: 1rem;
+    }
+
+    .payment-option .pi {
+      font-size: 28px !important;
+      width: 28px !important;
+      height: 28px !important;
+      color: #d32f2f !important;
+    }
+
+    .payment-option svg {
+      width: 28px !important;
+      height: 28px !important;
+      color: #666 !important;
+    }
+
+    .payment-option.radio-option-disabled {
+      opacity: 0.6 !important;
+      background-color: #f5f5f5 !important;
+    }
+
     .calendar-icon {
       width: 24px;
       height: 24px;
@@ -1165,7 +1265,6 @@ import { AuthService } from '../../../core/services/auth.service';
       z-index: 10000;
       backdrop-filter: blur(4px);
     }
-
     .order-success-modal {
       position: relative;
       width: 493px;
@@ -1226,7 +1325,7 @@ import { AuthService } from '../../../core/services/auth.service';
     }
 
     .success-icon {
-      margin-top: 1rem;
+      margin-top: 0rem;
     }
 
     .success-circle {
@@ -1277,6 +1376,8 @@ import { AuthService } from '../../../core/services/auth.service';
       line-height: 100%;
       letter-spacing: 0%;
       text-align: right;
+      color: #000000 !important;
+     font-weight: 600 !important;
     }
 
     .detail-label {
@@ -1332,7 +1433,7 @@ import { AuthService } from '../../../core/services/auth.service';
     }
   `]
 })
-export class CheckoutComponent implements OnInit {
+export class CheckoutComponent implements OnInit, OnDestroy {
   cart$!: Observable<Cart>;
   discountCode: string = '';
   appliedDiscount: number = 0;
@@ -1344,6 +1445,8 @@ export class CheckoutComponent implements OnInit {
   checkoutForm!: FormGroup;
   isAuthenticated: boolean = false;
   isSubmitting: boolean = false;
+  currentUser: User | null = null;
+  private authSubscription?: Subscription;
 
   // ─── Location data (loaded from API) ───────────────────────────────────────
   cities: CityWithDetails[] = [];
@@ -1365,6 +1468,7 @@ export class CheckoutComponent implements OnInit {
     private authService: AuthService,
     private snackBar: MatSnackBar,
     private viewportScroller: ViewportScroller,
+    private dialog: MatDialog,
   ) {
     // Set minimum date to today
     const today = new Date();
@@ -1393,6 +1497,11 @@ export class CheckoutComponent implements OnInit {
   ngOnInit(): void {
     this.isAuthenticated = this.authService.isAuthenticated();
     this.updateFormValidation();
+
+    // Subscribe to current user to get user data when authenticated
+    this.authSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
 
     this.cart$ = this.cartService.cart$;
     const cart = this.cartService.getCart();
@@ -1454,20 +1563,29 @@ export class CheckoutComponent implements OnInit {
       const cityControl = this.checkoutForm.get('city');
       const districtControl = this.checkoutForm.get('district');
       const areaControl = this.checkoutForm.get('area');
+      const propertyStreetControl = this.checkoutForm.get('propertyStreet');
+      const floorControl = this.checkoutForm.get('floor');
+      const apartmentControl = this.checkoutForm.get('apartment');
 
       if (method === 'pickup') {
         // Set delivery fees to 0 for pickup
         this.deliveryFees = 0;
 
-        // Remove required validators from delivery address fields
+        // Remove required validators from all delivery address fields
         cityControl?.clearValidators();
         districtControl?.clearValidators();
         areaControl?.clearValidators();
+        propertyStreetControl?.clearValidators();
+        floorControl?.clearValidators();
+        apartmentControl?.clearValidators();
 
         // Clear values
         cityControl?.setValue('');
         districtControl?.setValue('');
         areaControl?.setValue('');
+        propertyStreetControl?.setValue('');
+        floorControl?.setValue('');
+        apartmentControl?.setValue('');
         this.filteredDistricts = [];
         this.filteredAreas = [];
       } else {
@@ -1475,11 +1593,17 @@ export class CheckoutComponent implements OnInit {
         cityControl?.setValidators([Validators.required]);
         districtControl?.setValidators([Validators.required]);
         areaControl?.clearValidators(); // Area is optional
+        propertyStreetControl?.clearValidators(); // Property street is optional
+        floorControl?.clearValidators(); // Floor is optional
+        apartmentControl?.clearValidators(); // Apartment is optional
       }
 
       cityControl?.updateValueAndValidity({ emitEvent: false });
       districtControl?.updateValueAndValidity({ emitEvent: false });
       areaControl?.updateValueAndValidity({ emitEvent: false });
+      propertyStreetControl?.updateValueAndValidity({ emitEvent: false });
+      floorControl?.updateValueAndValidity({ emitEvent: false });
+      apartmentControl?.updateValueAndValidity({ emitEvent: false });
     });
   }
 
@@ -1641,11 +1765,17 @@ export class CheckoutComponent implements OnInit {
 
     // ── For non-authenticated users, require createAccount checkbox ───────────
     if (!this.isAuthenticated && !this.createAccount) {
-      this.snackBar.open(
-        this.translate.instant('CHECKOUT.CREATE_ACCOUNT_REQUIRED'),
-        this.translate.instant('COMMON.CLOSE'),
-        { duration: 5000, panelClass: ['error-snackbar'] }
-      );
+      const dialogRef = this.dialog.open(AuthRequiredDialogComponent, {
+        width: '500px',
+        maxWidth: '90vw',
+        disableClose: false,
+        panelClass: 'auth-required-dialog'
+      });
+
+      dialogRef.afterClosed().subscribe((result) => {
+        // User can choose to login or register from the dialog
+        // Navigation is handled in the dialog component
+      });
       return;
     }
 
@@ -1779,9 +1909,17 @@ export class CheckoutComponent implements OnInit {
       ? this.translate.instant('CHECKOUT.CASH')
       : this.translate.instant('CHECKOUT.VISA');
 
+    // Use logged-in user data if authenticated, otherwise use form values
+    const firstName = this.isAuthenticated && this.currentUser
+      ? this.currentUser.firstName || ''
+      : formValue.firstName || '';
+    const lastName = this.isAuthenticated && this.currentUser
+      ? this.currentUser.lastName || ''
+      : formValue.lastName || '';
+
     this.orderData = {
-      firstName: formValue.firstName,
-      lastName: formValue.lastName,
+      firstName,
+      lastName,
       orderNumber,
       orderDateTime: dateTime,
       paymentMethodLabel,
@@ -1878,8 +2016,18 @@ export class CheckoutComponent implements OnInit {
     this.showOrderSuccess = false;
     this.orderData = null;
     this.router.navigate(['/']).then(() => {
+      // Scroll to top using multiple methods to ensure it works
+      window.scrollTo(0, 0);
       this.viewportScroller.scrollToPosition([0, 0]);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
   }
 
   returnToHome(): void {

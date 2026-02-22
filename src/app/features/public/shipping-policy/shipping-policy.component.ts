@@ -13,9 +13,9 @@ import { SharedModule } from '../../../shared/shared.module';
       <div class="shipping-policy-content">
         <!-- Breadcrumb Navigation -->
         <nav class="breadcrumb-nav">
-          <a routerLink="/" class="breadcrumb-link">الرئيسية</a>
+          <a routerLink="/" class="breadcrumb-link">{{ "ITEM_DETAILS.HOME" | translate }}</a>
           <span class="breadcrumb-separator"> > </span>
-          <span class="breadcrumb-current">الشحن وسياسة الإلغاء والاسترجاع</span>
+          <span class="breadcrumb-current">{{ "FOOTER.SHIPPING_DELIVERY" | translate }}</span>
         </nav>
 
         <!-- Shipping Policy Section -->

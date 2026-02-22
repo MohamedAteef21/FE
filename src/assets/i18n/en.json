@@ -17,7 +17,9 @@
     "YEAR": "1995",
     "SLOGAN": "With over thirty years of experience",
     "VIEW_ALL": "View All",
-    "CATEGORIES": "Categories"
+    "CATEGORIES": "Categories",
+    "WE_CHOSE_FOR_YOU": "We Chose For You",
+    "ORDER_NOW": "Order Now"
   },
   "MENU": {
     "TITLE": "Our Menu",
@@ -43,9 +45,20 @@
     "ACTIVATE": "Activate",
     "APPLIED_DISCOUNT": "Applied Discount",
     "COMPLETE_ORDER": "Complete Order",
-    "TERMS_AGREEMENT": "I agree to the terms and conditions",
+    "TERMS_AGREEMENT": "By completing the order, you confirm your agreement to the terms and conditions.",
     "DELIVERY_TIME": "Delivery within one hour only",
-    "ADD_MORE": "Add more to cart"
+    "ADD_MORE": "Add more to cart",
+    "PRICE_LABEL": "Price:",
+    "QUANTITY_LABEL": "Quantity:",
+    "TOTAL_LABEL": "Total:"
+  },
+  "CART_DIALOG": {
+    "ADD_NEW_ITEM": "Add New Item",
+    "ADD_TO_CART": "Add to Cart",
+    "EMPTY_CART": "Cart is empty",
+    "EXISTING_ITEMS": "Existing Items",
+    "TOTAL": "Total:",
+    "ORDER_NOW": "Order Now"
   },
   "CHECKOUT": {
     "TITLE": "Complete Order",
@@ -102,6 +115,9 @@
     "STREET": "Street",
     "ZONE": "Zone",
     "RETURN_TO_HOME": "Return to Home",
+    "AUTH_REQUIRED_TITLE": "Authentication Required",
+    "AUTH_REQUIRED_MESSAGE": "To confirm your order, you need to login or create a new account.",
+    "LOGIN": "Login",
     "SELECT_CITY": "Select City",
     "SELECT_DISTRICT": "Select District",
     "SELECT_AREA": "Select Area",
@@ -170,6 +186,7 @@
     "PHONE_1": "399 90589",
     "PHONE_2": "399 90589",
     "WORKING_HOURS": "Working Hours: From 09:00 AM to 11:45 PM, seven days a week.",
+    "WORKING_HOURS_FORMAT": "Working Hours: From {{opening}} to {{closing}}, seven days a week.",
     "PAYMENT_METHODS": "Payment Methods",
     "CASH_ON_DELIVERY": "Cash on delivery"
   },
@@ -187,7 +204,13 @@
     "QUANTITY": "Quantity",
     "ADD_TO_CART": "Add to Cart",
     "NOT_AVAILABLE": "Not Available",
-    "ITEM_ADDED": "Item added to cart"
+    "ITEM_ADDED": "Item added to cart",
+    "HOME": "Home",
+    "AVAILABLE": "Available",
+    "SIZE": "Size",
+    "DELIVERY_TIME": "Delivery within one hour only",
+    "ORDER_NOW": "Order Now",
+    "SIMILAR_PRODUCTS": "Similar Products"
   },
   "LOGIN": {
     "TITLE": "Admin Login",
@@ -247,6 +270,7 @@
       "ORDER_NUMBER": "Order #",
       "REFERENCE_NUMBER": "Reference Number",
       "CUSTOMER": "Customer",
+      "CUSTOMER_NAME": "Customer Name",
       "IDENTIFIER": "Identifier",
       "ADDRESS": "Address",
       "ORDER_DATE": "Order Date",
@@ -306,6 +330,29 @@
     "RESTAURANT": "Restaurant",
     "CLOSE": "Close",
     "ITEM": "item",
-    "ITEMS": "items"
+    "ITEMS": "items",
+    "RIYAL": "SAR",
+    "ORDER": "Order +",
+    "MUTE_VIDEO": "Mute video",
+    "UNMUTE_VIDEO": "Unmute video"
+  },
+  "LAYOUT": {
+    "DELIVERY_TO_MY_LOCATION": "Delivery to my location",
+    "CATEGORIES": "Categories",
+    "CONTACT_US": "Contact us",
+    "FAQ": "FAQ",
+    "BLOGS": "Blogs",
+    "ABOUT_US": "About Us",
+    "DISCOUNT_TEXT": "15% discount until 20/2/2026",
+    "DASHBOARD": "Dashboard",
+    "SEARCH": "Search",
+    "DEFAULT_LOCATION": "Delivery to Al Rayyan Metro Al Jouaan",
+    "EMAIL_PLACEHOLDER": "Enter your email address",
+    "SUBSCRIBE_NOW": "Subscribe Now",
+    "NEWSLETTER_TITLE": "Subscribe to get the latest offers and exclusive discounts",
+    "NEWSLETTER_SUBTITLE": "Be the first to know everything new at Expo",
+    "POWERED_BY": "Powered by codereels",
+    "ENGLISH_FLAG": "English flag",
+    "QATAR_FLAG": "Qatar flag"
   }
 }

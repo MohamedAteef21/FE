@@ -86,6 +86,9 @@ export interface MyOrderResponse {
   id:             string;
   orderNumber:    string;
   userId:         string;
+  customerName?:  string;  // Customer name if available from API
+  customerEmail?: string;  // Customer email if available from API
+  customerPhone?: string;  // Customer phone if available from API
   branchId:       number;
   branchName:     string;      // Fallback if branchNameAr/branchNameEn not available
   branchNameAr?:  string;

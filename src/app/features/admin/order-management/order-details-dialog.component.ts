@@ -26,6 +26,18 @@ import { OrderStatus, OrderType } from '../../../models/order.model';
             <span class="info-label">{{ 'ADMIN.ORDER_MANAGEMENT.ORDER_NUMBER' | translate }}:</span>
             <span class="info-value">{{ order.orderNumber }}</span>
           </div>
+          <div class="info-row" *ngIf="order.customerName">
+            <span class="info-label">{{ 'ADMIN.ORDER_MANAGEMENT.CUSTOMER_NAME' | translate }}:</span>
+            <span class="info-value">{{ order.customerName }}</span>
+          </div>
+          <div class="info-row" *ngIf="order.customerEmail">
+            <span class="info-label">الحساب:</span>
+            <span class="info-value">{{ order.customerEmail }}</span>
+          </div>
+          <div class="info-row" *ngIf="order.customerPhone">
+            <span class="info-label">رقم الهاتف:</span>
+            <span class="info-value">{{ order.customerPhone }}</span>
+          </div>
           <div class="info-row">
             <span class="info-label">{{ 'ADMIN.ORDER_MANAGEMENT.ORDER_DATE' | translate }}:</span>
             <span class="info-value">{{ formatDate(order.createdDate) }}</span>
@@ -326,16 +338,20 @@ export class OrderDetailsDialogComponent {
     try {
       const date = new Date(dateString);
       const currentLang = this.translate.currentLang || 'ar';
-      return date.toLocaleDateString(
-        currentLang === 'ar' ? 'ar-QA' : 'en-US',
-        {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-        },
-      );
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      };
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      };
+      const locale = currentLang === 'ar' ? 'ar-QA' : 'en-US';
+      const formattedDate = date.toLocaleDateString(locale, dateOptions);
+      const formattedTime = date.toLocaleTimeString(locale, timeOptions);
+      return `${formattedDate} - ${formattedTime}`;
     } catch {
       return dateString;
     }

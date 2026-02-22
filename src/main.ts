@@ -10,6 +10,7 @@ import { AppComponent } from './app/app.component';
 import { routes } from './app/app-routing.module';
 import { JwtInterceptor } from './app/core/interceptors/jwt.interceptor';
 import { ErrorInterceptor } from './app/core/interceptors/error.interceptor';
+import { LoadingInterceptor } from './app/core/interceptors/loading.interceptor';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -29,6 +30,11 @@ bootstrapApplication(AppComponent, {
     {
       provide: HTTP_INTERCEPTORS,
       useClass: ErrorInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: LoadingInterceptor,
       multi: true
     },
     importProvidersFrom(

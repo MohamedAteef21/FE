@@ -1,11 +1,14 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable, of } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { map, catchError } from 'rxjs/operators';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared/shared.module';
 import { ChartModule } from 'primeng/chart';
 import { MatDialog } from '@angular/material/dialog';
-import { OrderStatus, PaymentStatus } from '../../../models/order.model';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { OrderService } from '../../../core/services/order.service';
+import { OrderStatus, PaymentStatus, OrderType, MyOrderResponse } from '../../../models/order.model';
 import { OrderUpdateDialogComponent } from '../order-management/order-update-dialog.component';
 
 interface SummaryCard {
@@ -41,6 +44,10 @@ interface OrderData {
     <div class="dashboard-wrapper">
       <!-- Top greeting + date filter -->
       <div class="top-bar">
+        <div class="greeting">
+          <span class="greeting-text">مرحبا بك !</span>
+          <mat-icon class="greeting-icon">waving_hand</mat-icon>
+        </div>
         <div class="date-filter">
           <button mat-icon-button class="icon-btn" title="فلتر">
             <mat-icon>filter_list</mat-icon>
@@ -49,10 +56,6 @@ interface OrderData {
             <mat-icon>calendar_today</mat-icon>
           </button>
           <span class="date-range">1 يناير 2026 - 30 يناير 2026</span>
-        </div>
-        <div class="greeting">
-          <span class="greeting-text">مرحبا بك !</span>
-          <mat-icon class="greeting-icon">waving_hand</mat-icon>
         </div>
       </div>
 
@@ -128,10 +131,10 @@ interface OrderData {
               <span class="orders-title">اخر الطلبات</span>
             </div>
             <div class="orders-tabs">
-              <button class="tab-btn" [class.active]="selectedTab === 0" (click)="selectedTab = 0; updateFilteredOrders()">
+              <button class="tab-btn" [class.active]="selectedTab === 0" (click)="selectedTab = 0; onTabChange()">
                 المطعم
               </button>
-              <button class="tab-btn" [class.active]="selectedTab === 1" (click)="selectedTab = 1; updateFilteredOrders()">
+              <button class="tab-btn" [class.active]="selectedTab === 1" (click)="selectedTab = 1; onTabChange()">
                 الدليفري
               </button>
             </div>
@@ -146,12 +149,26 @@ interface OrderData {
                   <th>السعر</th>
                   <th>تاريخ الطلب</th>
                   <th>العنوان</th>
-                  <th>التعريف</th>
+                  <th>اسم العميل</th>
                   <th>الرقم المرجعي</th>
                   <th>الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
+                <!-- Loading -->
+                <tr *ngIf="isLoading" class="loading-row">
+                  <td [attr.colspan]="9" class="loading-cell">
+                    <div class="loading-spinner">
+                      <mat-icon class="spinner-icon">hourglass_empty</mat-icon>
+                      <span>جاري التحميل...</span>
+                    </div>
+                  </td>
+                </tr>
+                <!-- Empty -->
+                <tr *ngIf="!isLoading && pagedOrders.length === 0" class="empty-row">
+                  <td [attr.colspan]="9" class="empty-cell">لا توجد طلبات</td>
+                </tr>
+                <!-- Orders -->
                 <tr *ngFor="let order of pagedOrders">
                   <td>
                     <span class="status-badge" [ngClass]="'status-' + order.statusKey">
@@ -163,7 +180,7 @@ interface OrderData {
                   <td>{{ order.price }} رق</td>
                   <td>{{ order.orderDate }}</td>
                   <td class="truncate-cell">{{ order.address }}</td>
-                  <td>{{ order.name }}</td>
+                  <td>{{ order.name || '-' }}</td>
                   <td>{{ order.referenceNumber }}</td>
                   <td>
                     <button mat-icon-button [matMenuTriggerFor]="dashMenu" class="actions-btn">
@@ -176,9 +193,6 @@ interface OrderData {
                       </button>
                     </mat-menu>
                   </td>
-                </tr>
-                <tr *ngIf="pagedOrders.length === 0">
-                  <td colspan="9" class="empty-cell">لا توجد طلبات</td>
                 </tr>
               </tbody>
             </table>
@@ -590,6 +604,34 @@ interface OrderData {
     /* ── Actions ── */
     .actions-btn { color: #888; }
 
+    /* ── Loading / Empty ── */
+    .loading-row, .empty-row { text-align: center; }
+    .loading-cell, .empty-cell {
+      padding: 3rem 1rem;
+      color: #999;
+      font-size: 0.875rem;
+    }
+
+    .loading-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .spinner-icon {
+      animation: spin 1s linear infinite;
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+      color: #1a1a2e;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
     /* ── Custom Pagination ── */
     .pagination-container {
       display: flex;
@@ -860,11 +902,18 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   dashPageSize = 5;
   filteredTotal = 0;
   pagedOrders: OrderData[] = [];
+  isLoading = false;
 
   private allOrders: OrderData[] = [];
   private filteredOrders: OrderData[] = [];
+  private ordersMap = new Map<string, MyOrderResponse>();
 
-  constructor(private dialog: MatDialog) { }
+  constructor(
+    private dialog: MatDialog,
+    private orderService: OrderService,
+    private translate: TranslateService,
+    private snackBar: MatSnackBar
+  ) { }
 
   ngOnInit(): void {
     this.initializeSummaryCards();
@@ -888,20 +937,20 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   goToPage(page: number): void {
     this.dashPageIndex = page - 1;
-    this.applyPage();
+    this.loadOrders();
   }
 
   goToNextPage(): void {
     if (!this.isLastPage()) {
       this.dashPageIndex++;
-      this.applyPage();
+      this.loadOrders();
     }
   }
 
   goToPreviousPage(): void {
     if (!this.isFirstPage()) {
       this.dashPageIndex--;
-      this.applyPage();
+      this.loadOrders();
     }
   }
 
@@ -933,25 +982,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
     ref.afterClosed().subscribe(result => {
       if (result) {
-        // Update local status to reflect change immediately
-        const found = this.allOrders.find(o => o.orderId === order.orderId);
-        if (found) {
-          found.currentOrderStatus = result.orderStatus;
-          found.currentPaymentStatus = result.paymentStatus;
-          // Rebuild status display
-          const statusMap: Record<number, { display: string; key: string }> = {
-            [OrderStatus.Pending]: { display: 'معلق', key: 'pending' },
-            [OrderStatus.Confirmed]: { display: 'تم التأكيد', key: 'confirmed' },
-            [OrderStatus.Preparing]: { display: 'قيد التحضير', key: 'preparing' },
-            [OrderStatus.Ready]: { display: 'جاهز', key: 'ready' },
-            [OrderStatus.OutForDelivery]: { display: 'في الطريق', key: 'out-for-delivery' },
-            [OrderStatus.Delivered]: { display: 'تم التسليم بنجاح', key: 'delivered' },
-            [OrderStatus.Cancelled]: { display: 'ملغي', key: 'cancelled' },
-          };
-          const info = statusMap[result.orderStatus];
-          if (info) { found.status = info.display; found.statusKey = info.key; }
-        }
-        this.updateFilteredOrders();
+        // Reload orders to reflect updated statuses
+        this.loadOrders();
       }
     });
   }
@@ -1005,83 +1037,172 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   initializeOrders(): void {
-    this.allOrders = [
-      {
-        orderId: 'mock-001', referenceNumber: '2132', name: 'شمس الدين',
-        address: '250 شارع الدين بجوار مكت.', orderDate: '15 يناير 2026',
-        price: 452, quantity: 1, item: 'قطع لحم بقري مشوي',
-        status: 'تم التسليم بنجاح', statusKey: 'delivered',
-        currentOrderStatus: OrderStatus.Delivered, currentPaymentStatus: PaymentStatus.Paid,
-        type: 'delivery'
-      },
-      {
-        orderId: 'mock-002', referenceNumber: '4284', name: 'محمد صبري',
-        address: '7 شارع البنك شركة ايك..', orderDate: '15 يناير 2026',
-        price: 789, quantity: 1, item: 'كفتة وشيش طاووق',
-        status: 'قيد التحضير', statusKey: 'preparing',
-        currentOrderStatus: OrderStatus.Preparing, currentPaymentStatus: PaymentStatus.Pending,
-        type: 'delivery'
-      },
-      {
-        orderId: 'mock-003', referenceNumber: '4285', name: 'محمد صبري',
-        address: '430230 شارع الحزين بجوار مكت', orderDate: '14 يناير 2026',
-        price: 594, quantity: 1, item: 'كفتة لحم على الغاز',
-        status: 'في الطريق', statusKey: 'out-for-delivery',
-        currentOrderStatus: OrderStatus.OutForDelivery, currentPaymentStatus: PaymentStatus.Pending,
-        type: 'delivery'
-      },
-      {
-        orderId: 'mock-004', referenceNumber: '4286', name: 'محمد صبري',
-        address: '7 شارع البنك شركة ايك', orderDate: '14 يناير 2026',
-        price: 267, quantity: 1, item: 'ريش ضاني مشوي',
-        status: 'تم التسليم بنجاح', statusKey: 'delivered',
-        currentOrderStatus: OrderStatus.Delivered, currentPaymentStatus: PaymentStatus.Paid,
-        type: 'delivery'
-      },
-      {
-        orderId: 'mock-005', referenceNumber: '4287', name: 'أحمد علي',
-        address: '15 شارع الخليج', orderDate: '13 يناير 2026',
-        price: 340, quantity: 2, item: 'شاورما دجاج',
-        status: 'تم التأكيد', statusKey: 'confirmed',
-        currentOrderStatus: OrderStatus.Confirmed, currentPaymentStatus: PaymentStatus.Pending,
-        type: 'delivery'
-      },
-      {
-        orderId: 'mock-006', referenceNumber: '4288', name: 'سارة محمود',
-        address: '22 شارع الوحدة', orderDate: '13 يناير 2026',
-        price: 210, quantity: 1, item: 'برغر لحم مزدوج',
-        status: 'ملغي', statusKey: 'cancelled',
-        currentOrderStatus: OrderStatus.Cancelled, currentPaymentStatus: PaymentStatus.Failed,
-        type: 'delivery'
-      },
-      {
-        orderId: 'mock-007', referenceNumber: '4289', name: 'خالد عمر',
-        address: 'مجمع الدوحة مول', orderDate: '12 يناير 2026',
-        price: 180, quantity: 1, item: 'باستا كريمة',
-        status: 'تم التسليم بنجاح', statusKey: 'delivered',
-        currentOrderStatus: OrderStatus.Delivered, currentPaymentStatus: PaymentStatus.Paid,
-        type: 'restaurant'
-      },
-      {
-        orderId: 'mock-008', referenceNumber: '4290', name: 'فاطمة حسن',
-        address: 'مجمع سيتي سنتر', orderDate: '12 يناير 2026',
-        price: 530, quantity: 3, item: 'مشكل مشاوي',
-        status: 'قيد التحضير', statusKey: 'preparing',
-        currentOrderStatus: OrderStatus.Preparing, currentPaymentStatus: PaymentStatus.Pending,
-        type: 'restaurant'
-      },
-    ];
-    this.updateFilteredOrders();
+    this.loadOrders();
+  }
+
+  loadOrders(): void {
+    this.isLoading = true;
+    const pageNumber = this.dashPageIndex + 1;
+    this.orderService.getMyOrders(pageNumber, this.dashPageSize).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Failed to load orders');
+        }
+        this.filteredTotal = response.data.totalCount;
+        return this.mapOrdersToDisplayData(response.data.items);
+      }),
+      catchError(error => {
+        console.error('Error loading orders:', error);
+        const errorMsg = error?.error?.message || error?.message || 'Failed to load orders';
+        this.snackBar.open(errorMsg, this.translate.instant('COMMON.CLOSE'), {
+          duration: 5000,
+          panelClass: ['error-snackbar'],
+        });
+        return of([]);
+      }),
+    ).subscribe(orders => {
+      this.allOrders = orders;
+      this.isLoading = false;
+      this.updateFilteredOrders();
+    });
+  }
+
+  private mapOrdersToDisplayData(orders: MyOrderResponse[]): OrderData[] {
+    const displayData: OrderData[] = [];
+    this.ordersMap.clear();
+
+    orders.forEach(order => {
+      this.ordersMap.set(order.orderNumber, order);
+
+      const addressParts = [
+        this.getName(order, 'areaName'),
+        this.getName(order, 'districtName'),
+        this.getName(order, 'cityName'),
+      ].filter(Boolean);
+      const address = addressParts.length > 0 ? addressParts.join('، ') + '...' : '';
+
+      const orderDate = this.formatOrderDate(order.createdDate);
+
+      const orderTypeNum = typeof order.orderType === 'string'
+        ? parseInt(order.orderType, 10)
+        : Number(order.orderType);
+      const orderType = orderTypeNum === OrderType.Pickup ? 'restaurant' : 'delivery';
+
+      const statusMap: Record<number, { display: string; key: string }> = {
+        [OrderStatus.Pending]: { display: 'معلق', key: 'pending' },
+        [OrderStatus.Confirmed]: { display: 'تم التأكيد', key: 'confirmed' },
+        [OrderStatus.Preparing]: { display: 'قيد التحضير', key: 'preparing' },
+        [OrderStatus.Ready]: { display: 'جاهز', key: 'ready' },
+        [OrderStatus.OutForDelivery]: { display: 'في الطريق', key: 'out-for-delivery' },
+        [OrderStatus.Delivered]: { display: 'تم التسليم بنجاح', key: 'delivered' },
+        [OrderStatus.Cancelled]: { display: 'ملغي', key: 'cancelled' },
+      };
+
+      const statusNum = typeof order.orderStatus === 'string'
+        ? parseInt(order.orderStatus, 10)
+        : Number(order.orderStatus);
+
+      const paymentStatusNum = typeof order.paymentStatus === 'string'
+        ? parseInt(order.paymentStatus, 10)
+        : Number(order.paymentStatus);
+
+      const statusInfo = statusMap[statusNum] || {
+        display: String(order.orderStatus),
+        key: String(order.orderStatus).toLowerCase().replace(/\s+/g, '-'),
+      };
+
+      const totalQuantity = order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
+      let orderItemSummary = '';
+      if (order.items && order.items.length > 0) {
+        const firstItem = order.items[0];
+        const productName = this.getItemName(firstItem, 'productName');
+        const variantName = this.getItemName(firstItem, 'variantName');
+        orderItemSummary = productName + (variantName ? ` - ${variantName}` : '');
+        if (order.items.length > 1) {
+          const moreCount = order.items.length - 1;
+          const currentLang = this.translate.currentLang || 'ar';
+          orderItemSummary += ` + ${moreCount} ${currentLang === 'ar' ? 'عناصر أخرى' : 'more items'}`;
+        }
+      } else {
+        orderItemSummary = (this.translate.currentLang || 'ar') === 'ar' ? 'لا توجد عناصر' : 'No items';
+      }
+
+      displayData.push({
+        orderId: order.id,
+        referenceNumber: order.orderNumber,
+        name: order.customerName || '', // Customer name from API
+        address,
+        orderDate,
+        price: order.finalAmount,
+        quantity: totalQuantity,
+        item: orderItemSummary,
+        status: statusInfo.display,
+        statusKey: statusInfo.key,
+        currentOrderStatus: statusNum,
+        currentPaymentStatus: paymentStatusNum,
+        type: orderType as 'restaurant' | 'delivery',
+      });
+    });
+
+    return displayData;
+  }
+
+  private formatOrderDate(dateString: string): string {
+    try {
+      const date = new Date(dateString);
+      const currentLang = this.translate.currentLang || 'ar';
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      };
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      };
+      const locale = currentLang === 'ar' ? 'ar-QA' : 'en-US';
+      const formattedDate = date.toLocaleDateString(locale, dateOptions);
+      const formattedTime = date.toLocaleTimeString(locale, timeOptions);
+      return `${formattedDate} - ${formattedTime}`;
+    } catch {
+      return dateString;
+    }
+  }
+
+  private getName(order: MyOrderResponse, field: 'cityName' | 'districtName' | 'areaName' | 'branchName'): string {
+    const isAr = (this.translate.currentLang || 'ar') === 'ar';
+    const arField = `${field}Ar` as keyof MyOrderResponse;
+    const enField = `${field}En` as keyof MyOrderResponse;
+    if (isAr && order[arField]) return String(order[arField]);
+    if (!isAr && order[enField]) return String(order[enField]);
+    return String(order[field] || '');
+  }
+
+  private getItemName(item: any, field: 'productName' | 'variantName'): string {
+    const isAr = (this.translate.currentLang || 'ar') === 'ar';
+    if (isAr && item[`${field}Ar`]) return item[`${field}Ar`];
+    if (!isAr && item[`${field}En`]) return item[`${field}En`];
+    return item[field] || '';
   }
 
   updateFilteredOrders(): void {
+    // Filter orders by type (restaurant/delivery)
     this.filteredOrders = this.allOrders.filter(order =>
       this.selectedTab === 0 ? order.type === 'restaurant' : order.type === 'delivery'
     );
+    // For pagination, we use the filtered count since we're filtering client-side
+    // Note: This means pagination is based on filtered results, not total API results
     this.filteredTotal = this.filteredOrders.length;
     this.filteredOrders$ = of(this.filteredOrders);
-    this.dashPageIndex = 0;
     this.applyPage();
+  }
+
+  // Reload orders when tab changes
+  onTabChange(): void {
+    this.dashPageIndex = 0;
+    this.loadOrders();
   }
 
   initializeCharts(): void {

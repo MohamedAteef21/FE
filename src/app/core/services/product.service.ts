@@ -132,5 +132,33 @@ export class ProductService {
       })
     );
   }
+
+  /**
+   * Search products by query string
+   * @param query Search query string
+   */
+  searchProducts(query: string): Observable<Product[]> {
+    if (!query || query.trim().length === 0) {
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+
+    const params: any = { q: query.trim() };
+
+    return this.http.get<ApiResponse<Product[]>>(`${this.API_URL}/search`, { params }).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          return [];
+        }
+        return response.data;
+      }),
+      catchError(error => {
+        console.error('Error searching products:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 }
 

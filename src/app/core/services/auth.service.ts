@@ -22,7 +22,7 @@ export class AuthService {
     private router: Router
   ) {}
 
-  login(credentials: LoginRequest): Observable<LoginResponse> {
+  login(credentials: LoginRequest, rememberMe: boolean = false): Observable<LoginResponse> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.API_URL}/login`, credentials).pipe(
       map(response => {
         if (!response.success || !response.data) {
@@ -44,8 +44,8 @@ export class AuthService {
           user: user
         };
 
-        this.setToken(authData.token);
-        this.setUser(user);
+        this.setToken(authData.token, rememberMe);
+        this.setUser(user, rememberMe);
         this.currentUserSubject.next(user);
 
         return loginResponse;
@@ -83,8 +83,9 @@ export class AuthService {
           token: authData.token
         };
 
-        this.setToken(authData.token);
-        this.setUser(user);
+        // Registration defaults to sessionStorage (not persistent)
+        this.setToken(authData.token, false);
+        this.setUser(user, false);
         this.currentUserSubject.next(user);
 
         return registerResponse;
@@ -105,14 +106,18 @@ export class AuthService {
   }
 
   logout(): void {
+    // Clear from both localStorage and sessionStorage
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    // Check sessionStorage first, then localStorage
+    return sessionStorage.getItem(this.TOKEN_KEY) || localStorage.getItem(this.TOKEN_KEY);
   }
 
   isAuthenticated(): boolean {
@@ -152,16 +157,33 @@ export class AuthService {
   }
 
 
-  private setToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
+  private setToken(token: string, rememberMe: boolean = false): void {
+    // Clear from both storages first to avoid conflicts
+    localStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    
+    if (rememberMe) {
+      localStorage.setItem(this.TOKEN_KEY, token);
+    } else {
+      sessionStorage.setItem(this.TOKEN_KEY, token);
+    }
   }
 
-  private setUser(user: User): void {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  private setUser(user: User, rememberMe: boolean = false): void {
+    // Clear from both storages first to avoid conflicts
+    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
+    
+    if (rememberMe) {
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    } else {
+      sessionStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    }
   }
 
   private getUserFromStorage(): User | null {
-    const userData = localStorage.getItem(this.USER_KEY);
+    // Check sessionStorage first, then localStorage
+    const userData = sessionStorage.getItem(this.USER_KEY) || localStorage.getItem(this.USER_KEY);
     return userData ? JSON.parse(userData) : null;
   }
 }

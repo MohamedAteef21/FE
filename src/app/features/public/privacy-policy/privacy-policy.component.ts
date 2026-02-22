@@ -13,9 +13,9 @@ import { SharedModule } from '../../../shared/shared.module';
       <div class="privacy-policy-content">
         <!-- Breadcrumb Navigation -->
         <nav class="breadcrumb-nav">
-          <a routerLink="/" class="breadcrumb-link">الرئيسية</a>
+          <a routerLink="/" class="breadcrumb-link">{{ "ITEM_DETAILS.HOME" | translate }}</a>
           <span class="breadcrumb-separator"> > </span>
-          <span class="breadcrumb-current">سياسة الخصوصية</span>
+          <span class="breadcrumb-current">{{ "FOOTER.PRIVACY_POLICY" | translate }}</span>
         </nav>
 
         <!-- Main Title -->

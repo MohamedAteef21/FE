@@ -62,9 +62,9 @@ import { map, catchError } from 'rxjs/operators';
               <div class="item-content">
                 <h4 class="item-name">{{ item.isArabicLang ? item.name : (item.nameEn || item.name) }}</h4>
                 <div class="item-footer">
-                  <span class="item-price">{{ item.price }} ريال</span>
+                  <span class="item-price">{{ item.price }} {{ "COMMON.RIYAL" | translate }}</span>
                   <button class="add-btn" (click)="addToCart(item)">
-                    <span>أطلب +</span>
+                    <span>{{ "COMMON.ORDER" | translate }}</span>
                   </button>
                 </div>
               </div>

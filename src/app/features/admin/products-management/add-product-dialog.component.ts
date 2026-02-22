@@ -927,7 +927,6 @@ export class AddProductDialogComponent {
         variants: variants
       };
 
-      // Call API
       const apiCall = this.isEditMode && this.productId
         ? this.productService.updateProduct(this.productId, productData)
         : this.productService.createProduct(productData);

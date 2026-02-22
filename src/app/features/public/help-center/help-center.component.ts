@@ -13,9 +13,9 @@ import { SharedModule } from '../../../shared/shared.module';
       <div class="help-center-content">
         <!-- Breadcrumb Navigation -->
         <nav class="breadcrumb-nav">
-          <a routerLink="/" class="breadcrumb-link">الرئيسية</a>
+          <a routerLink="/" class="breadcrumb-link">{{ "ITEM_DETAILS.HOME" | translate }}</a>
           <span class="breadcrumb-separator"> > </span>
-          <span class="breadcrumb-current">مركز المساعده</span>
+          <span class="breadcrumb-current">{{ "FOOTER.HELP_CENTER" | translate }}</span>
         </nav>
 
         <!-- Main Title -->

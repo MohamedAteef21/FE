@@ -89,7 +89,7 @@ import { CartDialogComponent } from './cart-dialog.component';
                 
                 <!-- Items Grid -->
                 <div class="items-grid" *ngIf="!isLoading && (menuItems$ | async) as items">
-                  <div class="item-card" *ngFor="let item of items">
+                  <div class="item-card" *ngFor="let item of items" (click)="navigateToItem(item.id)">
                     <div class="item-image-wrapper">
                       <img [src]="item.imageUrl" [alt]="item.name" class="item-image" />
                     </div>
@@ -99,9 +99,9 @@ import { CartDialogComponent } from './cart-dialog.component';
                         <span class="stars">★★★★★</span>
                       </div>
                       <div class="item-footer">
-                        <span class="item-price">{{ item.price }} ريال</span>
+                        <span class="item-price">{{ item.price }} {{ "COMMON.RIYAL" | translate }}</span>
                         <button class="order-button" (click)="addToCart(item, $event)">
-                          أطلب +
+                          {{ "COMMON.ORDER" | translate }}
                         </button>
                       </div>
                     </div>
@@ -912,6 +912,10 @@ export class MenuComponent implements OnInit {
       disableClose: false,
       data: { item: item }
     });
+  }
+
+  navigateToItem(itemId: string): void {
+    this.router.navigate(['/item', itemId]);
   }
 }
 
