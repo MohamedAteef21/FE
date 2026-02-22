@@ -41,8 +41,8 @@ import { CartDialogComponent } from './cart-dialog.component';
                 <img src="assets/Rectangle34624514.jpg" alt="Falafel Banner" class="banner-image" />
                 <div class="banner-overlay">
                   <div class="banner-content">
-                    <div class="banner-discount">خصم 15%</div>
-                    <div class="banner-text">على ساندوتش فلافل رويال ميكس</div>
+                    <div class="banner-discount">{{ 'MENU.BANNER_DISCOUNT' | translate }}</div>
+                    <div class="banner-text">{{ 'MENU.BANNER_TEXT' | translate }}</div>
                   </div>
                 </div>
               </section>

@@ -25,7 +25,9 @@
     "TITLE": "قائمتنا",
     "ADD_TO_CART": "أضف إلى السلة",
     "NOT_AVAILABLE": "غير متوفر",
-    "PRODUCT_LIST": "قائمة المنتجات"
+    "PRODUCT_LIST": "قائمة المنتجات",
+    "BANNER_DISCOUNT": "خصم 15%",
+    "BANNER_TEXT": "على ساندوتش فلافل رويال ميكس"
   },
   "CART": {
     "TITLE": "السلة",

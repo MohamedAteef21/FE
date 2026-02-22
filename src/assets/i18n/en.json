@@ -25,7 +25,9 @@
     "TITLE": "Our Menu",
     "ADD_TO_CART": "Add to Cart",
     "NOT_AVAILABLE": "Not Available",
-    "PRODUCT_LIST": "Product List"
+    "PRODUCT_LIST": "Product List",
+    "BANNER_DISCOUNT": "15% Discount",
+    "BANNER_TEXT": "On Royal Mix Falafel Sandwich"
   },
   "CART": {
     "TITLE": "Cart",

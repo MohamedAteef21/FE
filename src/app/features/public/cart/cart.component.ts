@@ -8,8 +8,8 @@ import { CartService } from '../../../core/services/cart.service';
 import { Cart, CartItem } from '../../../models/menu-item.model';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
-import { CategoryDialogComponent } from './category-dialog.component';
+import { CategoryService } from '../../../core/services/category.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-cart',
@@ -1074,6 +1074,7 @@ import { CategoryDialogComponent } from './category-dialog.component';
         height: auto;
         min-height: 303px;
         padding: 1rem;
+        overflow-x: auto;
       }
 
       .order-summary {
@@ -1092,58 +1093,16 @@ import { CategoryDialogComponent } from './category-dialog.component';
 
       .cart-table-header,
       .cart-item-row {
-        grid-template-columns: 1fr 40px;
-        gap: 0.5rem;
-      }
-
-      .header-price,
-      .header-quantity,
-      .header-total {
-        display: none;
-      }
-
-      .header-item {
-        grid-column: 1;
-      }
-
-      .item-info {
-        grid-column: 1;
-        flex-wrap: wrap;
-      }
-
-      .item-price,
-      .item-quantity,
-      .item-total {
-        grid-column: 1;
-        text-align: right;
-        margin-top: 0.5rem;
-        display: block;
-      }
-
-      .delete-btn {
-        grid-column: 2;
-        grid-row: 1;
-        align-self: flex-start;
-      }
-
-      .item-price::before {
-        content: '';
-        font-weight: normal;
-      }
-
-      .item-quantity::before {
-        content: '';
-        font-weight: normal;
-        margin-left: 0.5rem;
-      }
-
-      .item-total::before {
-        content: '';
-        font-weight: normal;
+        min-width: 580px;
       }
 
       .cart-title-section {
         margin-bottom: 1rem;
+      }
+
+      .cart-items-wrapper {
+        min-width: 0;
+        width: 100%;
       }
     }
 
@@ -1201,7 +1160,7 @@ export class CartComponent implements OnInit {
   constructor(
     private cartService: CartService,
     private router: Router,
-    private dialog: MatDialog
+    private categoryService: CategoryService
   ) { }
 
   ngOnInit(): void {
@@ -1238,11 +1197,27 @@ export class CartComponent implements OnInit {
   }
 
   goToMenu(): void {
-    const dialogRef = this.dialog.open(CategoryDialogComponent, {
-      width: '90vw',
-      maxWidth: '1200px',
-      maxHeight: '90vh',
-      panelClass: 'category-dialog-panel'
+    // Get the first active category and navigate to menu with it selected
+    this.categoryService.getCategoriesWithProducts().pipe(
+      take(1)
+    ).subscribe({
+      next: (categories) => {
+        // Filter active categories and get the first one
+        const activeCategories = categories.filter(cat => cat.isActive);
+        if (activeCategories.length > 0) {
+          const firstCategory = activeCategories[0];
+          // Navigate to menu with first category selected
+          this.router.navigate(['/menu'], { queryParams: { category: firstCategory.id } });
+        } else {
+          // If no categories, just navigate to menu
+          this.router.navigate(['/menu']);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+        // On error, just navigate to menu without category selection
+        this.router.navigate(['/menu']);
+      }
     });
   }
 
