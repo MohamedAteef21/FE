@@ -228,6 +228,13 @@ import { TranslationService } from '../../../core/services/translation.service';
       padding: 3rem 0;
     }
 
+    @media (max-width: 767px) {
+      .main-content {
+        padding-inline: 2rem;
+        padding:1rem;
+      }
+    }
+
     .item-details-layout {
       display: grid;
       grid-template-columns: 1.2fr 1fr;
@@ -1002,9 +1009,37 @@ export class ItemDetailsComponent implements OnInit, OnDestroy {
         // Fetch similar products from the same category
         this.loadSimilarProducts(product.categoryId, product.id);
 
-        // Set thumbnail images
-        this.thumbnailImages = [product.imageUrl];
-        this.selectedImage = product.imageUrl;
+        // Set thumbnail images from both imageUrl and images array
+        this.thumbnailImages = [];
+
+        // Add main imageUrl if it exists and is not empty
+        if (product.imageUrl && product.imageUrl.trim() !== '') {
+          this.thumbnailImages.push(product.imageUrl);
+        }
+
+        // Add images from images array
+        if (product.images && product.images.length > 0) {
+          // Sort images by sortOrder
+          const sortedImages = [...product.images].sort((a, b) => a.sortOrder - b.sortOrder);
+          sortedImages.forEach(img => {
+            if (img.imageUrl && img.imageUrl.trim() !== '' && !this.thumbnailImages.includes(img.imageUrl)) {
+              this.thumbnailImages.push(img.imageUrl);
+            }
+          });
+        }
+
+        // Set selected image: if imageUrl is empty/null and images.length >= 1, use first image from images array
+        if ((!product.imageUrl || product.imageUrl.trim() === '') && product.images && product.images.length >= 1) {
+          // Sort images by sortOrder and get the first one
+          const sortedImages = [...product.images].sort((a, b) => a.sortOrder - b.sortOrder);
+          this.selectedImage = sortedImages[0].imageUrl;
+        } else if (product.imageUrl && product.imageUrl.trim() !== '') {
+          this.selectedImage = product.imageUrl;
+        } else if (this.thumbnailImages.length > 0) {
+          this.selectedImage = this.thumbnailImages[0];
+        } else {
+          this.selectedImage = null;
+        }
 
         // Set default variant if variants exist
         if (product.variants && product.variants.length > 0) {

@@ -78,6 +78,9 @@ export class OrderService {
     couponCode:     string,
     orderFutureDate?: string, // ISO date string (optional)
     token?: string, // Optional token (for newly registered users)
+    customerName?:  string,  // Customer name for guest orders
+    customerEmail?: string,  // Customer email for guest orders
+    customerPhone?: string,  // Customer phone for guest orders
   ): Observable<ApiResponse<OrderResponse>> {
     const authToken = token || this.authService.getToken();
     const headers = new HttpHeaders({
@@ -105,6 +108,9 @@ export class OrderService {
       totalAmount:    finalTotal > 0 ? finalTotal : 0,
       couponCode:     couponCode || '',
       ...(orderFutureDate && { orderFutureDate }),
+      ...(customerName && { customerName }),
+      ...(customerEmail && { customerEmail }),
+      ...(customerPhone && { customerPhone }),
       items: cart.items.map(item => ({
         productId:  parseInt(item.menuItem.id, 10) || 0,
         variantId:  0,

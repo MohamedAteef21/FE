@@ -60,7 +60,10 @@
     "EMPTY_CART": "Cart is empty",
     "EXISTING_ITEMS": "Existing Items",
     "TOTAL": "Total:",
-    "ORDER_NOW": "Order Now"
+    "ORDER_NOW": "Order Now",
+    "SHOPPING_CART": "Shopping Cart",
+    "ITEM_COUNT": "item",
+    "ITEMS_COUNT": "items"
   },
   "CHECKOUT": {
     "TITLE": "Complete Order",
@@ -194,7 +197,8 @@
   },
   "LANGUAGE": {
     "ENGLISH": "English",
-    "ARABIC": "Arabic"
+    "ARABIC": "Arabic",
+    "LANGUAGE": "Language"
   },
   "DOWNLOAD": {
     "PDF": "Download PDF",
@@ -352,9 +356,12 @@
     "EMAIL_PLACEHOLDER": "Enter your email address",
     "SUBSCRIBE_NOW": "Subscribe Now",
     "NEWSLETTER_TITLE": "Subscribe to get the latest offers and exclusive discounts",
-    "NEWSLETTER_SUBTITLE": "Be the first to know everything new at Expo",
+    "NEWSLETTER_SUBTITLE": "Be the first to know everything new at EL-Bashawat",
     "POWERED_BY": "Powered by codereels",
     "ENGLISH_FLAG": "English flag",
-    "QATAR_FLAG": "Qatar flag"
+    "QATAR_FLAG": "Qatar flag",
+    "WELCOME": "Welcome",
+    "DOWNLOAD_MENU": "Download Al-Bashawat Menu",
+    "SHIPPING_POLICY": "Shipping and Cancellation & Return Policy"
   }
 }

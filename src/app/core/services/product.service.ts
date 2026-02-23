@@ -25,6 +25,13 @@ export interface ProductVariantRequest {
   price: number;
 }
 
+export interface ProductImage {
+  id: number;
+  imageUrl: string;
+  isMain: boolean;
+  sortOrder: number;
+}
+
 export interface Product {
   id: number;
   nameAr: string;
@@ -40,6 +47,13 @@ export interface Product {
   createdDate: string;
   modifiedDate?: string;
   variants: ProductVariant[];
+  images?: ProductImage[];
+}
+
+export interface AddImageRequest {
+  imageBase64: string;
+  isMain?: boolean;
+  sortOrder?: number;
 }
 
 export interface ProductVariant {
@@ -156,6 +170,65 @@ export class ProductService {
       }),
       catchError(error => {
         console.error('Error searching products:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Add an image to a product
+   * @param productId Product ID
+   * @param request Image request data
+   */
+  addProductImage(productId: number, request: AddImageRequest): Observable<ProductImage> {
+    return this.http.post<ApiResponse<ProductImage>>(`${this.API_URL}/${productId}/images`, request).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Failed to add product image');
+        }
+        return response.data;
+      }),
+      catchError(error => {
+        console.error('Error adding product image:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get all images for a product
+   * @param productId Product ID
+   */
+  getProductImages(productId: number): Observable<ProductImage[]> {
+    return this.http.get<ApiResponse<ProductImage[]>>(`${this.API_URL}/${productId}/images`).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Failed to fetch product images');
+        }
+        return response.data;
+      }),
+      catchError(error => {
+        console.error('Error fetching product images:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Delete a product image
+   * @param productId Product ID
+   * @param imageId Image ID
+   */
+  deleteProductImage(productId: number, imageId: number): Observable<boolean> {
+    return this.http.delete<ApiResponse<boolean>>(`${this.API_URL}/${productId}/images/${imageId}`).pipe(
+      map(response => {
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to delete product image');
+        }
+        return response.data ?? true;
+      }),
+      catchError(error => {
+        console.error('Error deleting product image:', error);
         return throwError(() => error);
       })
     );

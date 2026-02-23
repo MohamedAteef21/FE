@@ -7,10 +7,6 @@
   "framework": "angular",
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "http://bashwat.runasp.net/api/:path*"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

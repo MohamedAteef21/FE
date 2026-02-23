@@ -15,10 +15,10 @@ export class TranslationService {
     @Inject(DOCUMENT) private document: Document
   ) {
     // Set default language first
-    this.translate.setDefaultLang('en');
+    this.translate.setDefaultLang('ar');
     
-    // Get saved language or default to 'en'
-    const savedLanguage = localStorage.getItem(this.LANGUAGE_KEY) || 'en';
+    // Get saved language or default to 'ar'
+    const savedLanguage = localStorage.getItem(this.LANGUAGE_KEY) || 'ar';
     
     // Set direction immediately (before translations load)
     this.setDirection(savedLanguage);
@@ -41,7 +41,7 @@ export class TranslationService {
   }
 
   getCurrentLanguage(): string {
-    return this.translate.currentLang || 'en';
+    return this.translate.currentLang || 'ar';
   }
 
   private setDirection(lang: string): void {

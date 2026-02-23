@@ -35,65 +35,103 @@ import { Branch } from '../models/branch.model';
   <div class="mobile-menu-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
   
   <!-- Mobile Drawer -->
-  <div class="mobile-drawer" [class.open]="isMobileMenuOpen">
+  <div class="mobile-drawer" [class.open]="isMobileMenuOpen" [class.ltr]="currentLang === 'en'" [class.rtl]="currentLang === 'ar'">
     <div class="mobile-drawer-header">
-      <img src="assets/Bashwat-logo.png" alt="Logo" class="mobile-drawer-logo" />
       <button class="mobile-drawer-close" (click)="closeMobileMenu()">✕</button>
+      <div class="mobile-drawer-header-content">
+        <img src="assets/Bashwat-logo.png" alt="Logo" class="mobile-drawer-logo" />
+        <div class="mobile-drawer-auth-section">
+          <button *ngIf="!isAuthenticated || !currentUser" class="mobile-drawer-login-btn" (click)="onUserClick(); closeMobileMenu()">
+            {{ 'NAV.LOGIN' | translate }}
+          </button>
+          <div *ngIf="isAuthenticated && currentUser" class="mobile-drawer-welcome">
+            <span class="welcome-text">{{ 'LAYOUT.WELCOME' | translate }}</span>
+            <span class="user-name">{{ getUserDisplayName() || currentUser.email || 'User' }}</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="mobile-drawer-body">
-      <!-- User section -->
-      <div class="mobile-user-section">
-        <button mat-icon-button [matMenuTriggerFor]="userMenu" class="mobile-user-menu-btn">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2Z" fill="#333"/><path d="M21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="#333"/>
-          </svg>
-        </button>
-        <mat-menu #userMenu="matMenu">
-          <button *ngIf="currentUser" mat-menu-item disabled>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C11.0111 2 10.0444 2.29324 9.22215 2.84265C8.3999 3.39206 7.75904 4.17295 7.3806 5.08658C7.00216 6.00021 6.90315 7.00555 7.09607 7.97545C7.289 8.94536 7.7652 9.83627 8.46447 10.5355C9.16373 11.2348 10.0546 11.711 11.0245 11.9039C11.9945 12.0969 12.9998 11.9978 13.9134 11.6194C14.827 11.241 15.6079 10.6001 16.1573 9.77785C16.7068 8.95561 17 7.98891 17 7C17 5.67392 16.4732 4.40215 15.5355 3.46447C14.5979 2.52678 13.3261 2 12 2Z" fill="#666"/><path d="M21 21V20C21 18.1435 20.2625 16.363 18.9497 15.0503C17.637 13.7375 15.8565 13 14 13H10C8.14348 13 6.36301 13.7375 5.05025 15.0503C3.7375 16.363 3 18.1435 3 20V21H5V20C5 18.6739 5.52678 17.4021 6.46447 16.4645C7.40215 15.5268 8.67392 15 10 15H14C15.3261 15 16.5979 15.5268 17.5355 16.4645C18.4732 17.4021 19 18.6739 19 20V21H21Z" fill="#666"/>
+      <!-- Language Selection Header -->
+      <div class="mobile-drawer-lang-header">
+        <div class="lang-header-left" (click)="onLanguageChange(); closeMobileMenu()">
+          <span class="flag-icon" [attr.aria-label]="currentLang === 'ar' ? ('LAYOUT.ENGLISH_FLAG' | translate) : ('LAYOUT.QATAR_FLAG' | translate)">
+            <svg *ngIf="currentLang === 'en'" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#qatarFlagClipMobile)">
+                <path d="M24.888 3.88867H8.55469V24.1109H24.888C25.7131 24.1109 26.5045 23.7831 27.0879 23.1997C27.6714 22.6162 27.9991 21.8249 27.9991 20.9998V6.99978C27.9991 6.17466 27.6714 5.38334 27.0879 4.7999C26.5045 4.21645 25.7131 3.88867 24.888 3.88867Z" fill="#66001E"/>
+                <path d="M8.55556 21.8641L12.6739 20.741L8.55556 19.6171L12.6739 18.494L8.55556 17.3701L12.6739 16.247L8.55556 15.1231L12.6739 14L8.55556 12.8769L12.6739 11.7538L8.55556 10.6299L12.6739 9.50677L8.55556 8.38288L12.6739 7.259L8.55556 6.13589L12.6739 5.01277L8.55556 3.88889H3.11111C2.28599 3.88889 1.49467 4.21666 0.911223 4.80011C0.327777 5.38356 0 6.17488 0 7L0 21C0 21.8251 0.327777 22.6164 0.911223 23.1999C1.49467 23.7833 2.28599 24.1111 3.11111 24.1111H8.55556L12.6739 22.988L8.55556 21.8641Z" fill="#EEEEEE"/>
+              </g>
+              <defs>
+                <clipPath id="qatarFlagClipMobile">
+                  <rect width="28" height="28" fill="white"/>
+                </clipPath>
+              </defs>
             </svg>
-            <span>{{ currentUser.email }}</span>
-          </button>
-          <button *ngIf="!currentUser" mat-menu-item (click)="onUserClick(); closeMobileMenu()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11 7L9.6 8.4L11.17 10H2V12H11.17L9.6 13.6L11 15L15 11L11 7ZM20 19H4V5H20V7H22V3C22 2.45 21.55 2 21 2H3C2.45 2 2 2.45 2 3V21C2 21.55 2.45 22 3 22H21C21.55 22 22 21.55 22 21V17H20V19Z" fill="#666"/>
+            <svg *ngIf="currentLang === 'ar'" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24.8889 3.88889H3.11111C2.28599 3.88889 1.49467 4.21666 0.911223 4.80011C0.327777 5.38356 0 6.17488 0 7L0 21C0 21.8251 0.327777 22.6164 0.911223 23.1999C1.49467 23.7833 2.28599 24.1111 3.11111 24.1111H24.8889C25.714 24.1111 26.5053 23.7833 27.0888 23.1999C27.6722 22.6164 28 21.8251 28 21V7C28 6.17488 27.6722 5.38356 27.0888 4.80011C26.5053 4.21666 25.714 3.88889 24.8889 3.88889Z" fill="#EEEEEE"/>
+              <path d="M16.3333 3.88889H11.6667V11.6667H0V16.3333H11.6667V24.1111H16.3333V16.3333H28V11.6667H16.3333V3.88889Z" fill="#CE1124"/>
             </svg>
-            <span>{{ 'NAV.LOGIN' | translate }}</span>
-          </button>
-          <button *ngIf="currentUser" mat-menu-item (click)="onLogout(); closeMobileMenu()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.59L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#666"/>
-            </svg>
-            <span>{{ 'NAV.LOGOUT' | translate }}</span>
-          </button>
-        </mat-menu>
-      </div>
-      <!-- Location -->
-      <div class="mobile-location" (click)="openLocationDialog(); closeMobileMenu()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.3" d="M12 2C13.9891 2 15.8968 2.79018 17.3033 4.1967C18.7098 5.60322 19.5 7.51088 19.5 9.5C19.5 12.068 18.1 14.156 16.65 15.64C16.0736 16.2239 15.4542 16.7638 14.797 17.255C14.203 17.701 12.845 18.537 12.845 18.537C12.5874 18.6834 12.2963 18.7604 12 18.7604C11.7037 18.7604 11.4126 18.6834 11.155 18.537C10.4811 18.1462 9.82938 17.7182 9.203 17.255C8.5458 16.7638 7.9264 16.2239 7.35 15.64C5.9 14.156 4.5 12.068 4.5 9.5C4.5 7.51088 5.29018 5.60322 6.6967 4.1967C8.10322 2.79018 10.0109 2 12 2Z" fill="#d32f2f"/></svg>
-        <span>{{ currentLocation || ('LAYOUT.DELIVERY_TO_MY_LOCATION' | translate) }}</span>
-      </div>
-      <!-- Categories -->
-      <div class="mobile-nav-section-title">{{ 'LAYOUT.CATEGORIES' | translate }}</div>
-      <div class="mobile-categories-list">
-        <a *ngFor="let category of menuCategories" 
-           class="mobile-category-link"
-           (click)="navigateToCategory(category.id); closeMobileMenu()">
-          <img [src]="category.image" [alt]="category.nameAr" class="mobile-cat-img" />
-          <span>{{ currentLang === 'ar' ? category.nameAr : category.nameEn }}</span>
-        </a>
-      </div>
-      <!-- Language & Social -->
-      <div class="mobile-bottom-section">
-        <button class="mobile-lang-btn" (click)="onLanguageChange()">
-          <span>{{ currentLang === 'ar' ? ('LANGUAGE.ENGLISH' | translate) : ('LANGUAGE.ARABIC' | translate) }}</span>
-        </button>
-        <div class="mobile-social-icons">
-          <a href="https://web.facebook.com/bashawatqtr" target="_blank" class="mobile-social-icon"><i class="fab fa-facebook-f"></i></a>
-          <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" target="_blank" class="mobile-social-icon"><i class="fab fa-instagram"></i></a>
-          <a href="https://www.tiktok.com/@al.bashawat.resta" target="_blank" class="mobile-social-icon"><i class="fab fa-tiktok"></i></a>
+          </span>
+          <span>{{ currentLang === 'en' ? ('LANGUAGE.ARABIC' | translate) : ('LANGUAGE.ENGLISH' | translate) }}</span>
         </div>
+        <div class="lang-header-right">
+          <span>{{ 'LANGUAGE.LANGUAGE' | translate }}</span>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.9909 1.83301C5.93087 1.83301 1.83337 5.93967 1.83337 10.9997C1.83337 16.0597 5.93087 20.1663 10.9909 20.1663C16.06 20.1663 20.1667 16.0597 20.1667 10.9997C20.1667 5.93967 16.06 1.83301 10.9909 1.83301ZM17.3434 7.33301H14.6392C14.3519 6.19782 13.9271 5.10194 13.3742 4.06967C15.0463 4.64534 16.4553 5.80375 17.3434 7.33301ZM11 3.70301C11.7609 4.80301 12.3567 6.02217 12.7509 7.33301H9.24921C9.64337 6.02217 10.2392 4.80301 11 3.70301ZM3.90504 12.833C3.75837 12.2463 3.66671 11.6322 3.66671 10.9997C3.66671 10.3672 3.75837 9.75301 3.90504 9.16634H7.00337C6.93004 9.77134 6.87504 10.3763 6.87504 10.9997C6.87504 11.623 6.93004 12.228 7.00337 12.833H3.90504ZM4.65671 14.6663H7.36087C7.65421 15.8122 8.07587 16.9122 8.62587 17.9297C6.95254 17.3562 5.54289 16.1972 4.65671 14.6663ZM7.36087 7.33301H4.65671C5.54289 5.80213 6.95254 4.64315 8.62587 4.06967C8.07302 5.10194 7.64821 6.19782 7.36087 7.33301ZM11 18.2963C10.2392 17.1963 9.64337 15.9772 9.24921 14.6663H12.7509C12.3567 15.9772 11.7609 17.1963 11 18.2963ZM13.145 12.833H8.85504C8.77254 12.228 8.70837 11.623 8.70837 10.9997C8.70837 10.3763 8.77254 9.76217 8.85504 9.16634H13.145C13.2275 9.76217 13.2917 10.3763 13.2917 10.9997C13.2917 11.623 13.2275 12.228 13.145 12.833ZM13.3742 17.9297C13.9242 16.9122 14.3459 15.8122 14.6392 14.6663H17.3434C16.4553 16.1956 15.0463 17.354 13.3742 17.9297ZM14.9967 12.833C15.07 12.228 15.125 11.623 15.125 10.9997C15.125 10.3763 15.07 9.77134 14.9967 9.16634H18.095C18.2417 9.75301 18.3334 10.3672 18.3334 10.9997C18.3334 11.6322 18.2417 12.2463 18.095 12.833H14.9967Z" fill="black"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Menu Items -->
+      <div class="mobile-drawer-menu-items">
+        <!-- Download Menu -->
+        <div class="mobile-drawer-menu-item" (click)="downloadMenuPDF(); closeMobileMenu()">
+          <span class="menu-item-text">{{ 'LAYOUT.DOWNLOAD_MENU' | translate }}</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="menu-item-icon">
+            <path d="M19 9H15V3H9V9H5L12 16L19 9ZM5 18V20H19V18H5Z" fill="#666"/>
+          </svg>
+        </div>
+
+        <!-- Phone Number -->
+        <div class="mobile-drawer-menu-item" (click)="closeMobileMenu()">
+          <span class="menu-item-text">{{ getContactPhone() }}</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="menu-item-icon">
+            <path d="M6.62 10.79C8.06 13.62 10.38 15.94 13.21 17.38L15.41 15.18C15.69 14.9 16.08 14.82 16.43 14.93C17.55 15.3 18.75 15.5 20 15.5C20.55 15.5 21 15.95 21 16.5V20C21 20.55 20.55 21 20 21C10.61 21 3 13.39 3 4C3 3.45 3.45 3 4 3H7.5C8.05 3 8.5 3.45 8.5 4C8.5 5.25 8.7 6.45 9.07 7.57C9.18 7.92 9.1 8.31 8.82 8.59L6.62 10.79Z" fill="#666"/>
+          </svg>
+        </div>
+
+        <!-- Delivery Location -->
+        <div class="mobile-drawer-menu-item" (click)="openLocationDialog(); closeMobileMenu()">
+          <span class="menu-item-text">{{ currentLocation || ('LAYOUT.DELIVERY_TO_MY_LOCATION' | translate) }}</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="menu-item-icon">
+            <path opacity="0.3" d="M12 2C13.9891 2 15.8968 2.79018 17.3033 4.1967C18.7098 5.60322 19.5 7.51088 19.5 9.5C19.5 12.068 18.1 14.156 16.65 15.64C16.0736 16.2239 15.4542 16.7638 14.797 17.255C14.203 17.701 12.845 18.537 12.845 18.537C12.5874 18.6834 12.2963 18.7604 12 18.7604C11.7037 18.7604 11.4126 18.6834 11.155 18.537C10.4811 18.1462 9.82938 17.7182 9.203 17.255C8.5458 16.7638 7.9264 16.2239 7.35 15.64C5.9 14.156 4.5 12.068 4.5 9.5C4.5 7.51088 5.29018 5.60322 6.6967 4.1967C8.10322 2.79018 10.0109 2 12 2Z" fill="#d32f2f"/>
+            <path d="M12 11C13.1046 11 14 10.1046 14 9C14 7.89543 13.1046 7 12 7C10.8954 7 10 7.89543 10 9C10 10.1046 10.8954 11 12 11Z" fill="#d32f2f"/>
+          </svg>
+        </div>
+
+        <!-- Help Center -->
+        <a routerLink="/help-center" class="mobile-drawer-menu-item" (click)="closeMobileMenu()">
+          <span class="menu-item-text">{{ 'FOOTER.HELP_CENTER' | translate }} </span>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" class="menu-item-icon">
+            <path d="M20.1667 15.5848C20.1666 16.8385 19.7383 18.0546 18.9526 19.0315C18.1668 20.0084 17.071 20.6876 15.8465 20.9565L15.2616 19.202C15.7972 19.114 16.3066 18.9081 16.753 18.5993C17.1994 18.2905 17.5717 17.8865 17.843 17.4163H15.5834C15.0971 17.4163 14.6308 17.2232 14.287 16.8794C13.9432 16.5356 13.75 16.0692 13.75 15.583V11.9163C13.75 11.4301 13.9432 10.9638 14.287 10.62C14.6308 10.2762 15.0971 10.083 15.5834 10.083H18.2765C18.0528 8.31099 17.1902 6.68151 15.8505 5.50029C14.5108 4.31908 12.7861 3.66733 11 3.66733C9.21396 3.66733 7.48927 4.31908 6.14957 5.50029C4.80986 6.68151 3.94724 8.31099 3.72354 10.083H6.41671C6.90294 10.083 7.36925 10.2762 7.71307 10.62C8.05689 10.9638 8.25004 11.4301 8.25004 11.9163V15.583C8.25004 16.0692 8.05689 16.5356 7.71307 16.8794C7.36925 17.2232 6.90294 17.4163 6.41671 17.4163H3.66671C3.18048 17.4163 2.71416 17.2232 2.37034 16.8794C2.02653 16.5356 1.83337 16.0692 1.83337 15.583V10.9997C1.83337 5.93692 5.93729 1.83301 11 1.83301C16.0628 1.83301 20.1667 5.93692 20.1667 10.9997V15.5848Z" fill="#484646"/>
+          </svg>
+        </a>
+
+        <!-- About Us -->
+        <a routerLink="/about" class="mobile-drawer-menu-item" (click)="closeMobileMenu()">
+          <span class="menu-item-text">{{ 'LAYOUT.ABOUT_US' | translate }}</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="menu-item-icon">
+            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="#666"/>
+          </svg>
+        </a>
+
+        <!-- Shipping and Cancellation Policy -->
+        <a routerLink="/shipping-policy" class="mobile-drawer-menu-item" (click)="closeMobileMenu()">
+          <span class="menu-item-text">{{ 'LAYOUT.SHIPPING_POLICY' | translate }}</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="menu-item-icon">
+            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="#666"/>
+          </svg>
+        </a>
       </div>
     </div>
   </div>
@@ -1608,37 +1646,50 @@ body.rtl .menu-items-container {
 .mobile-drawer {
   position: fixed;
   top: 0;
-  right: -320px;
   width: 300px;
   height: 100%;
   background: white;
   z-index: 9999;
-  transition: right 0.3s ease;
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 20px rgba(0,0,0,0.2);
   overflow-y: auto;
 }
 
-.mobile-drawer.open {
+/* RTL (Arabic) - opens from right */
+.mobile-drawer.rtl {
+  right: -320px;
+  left: auto;
+  transition: right 0.3s ease;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+}
+
+.mobile-drawer.rtl.open {
   right: 0;
+}
+
+/* LTR (English) - opens from left */
+.mobile-drawer.ltr {
+  left: -320px;
+  right: auto;
+  transition: left 0.3s ease;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+}
+
+.mobile-drawer.ltr.open {
+  left: 0;
 }
 
 .mobile-drawer-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  position: sticky;
   padding: 16px;
   border-bottom: 1px solid #f0f0f0;
-  background: #fff;
-  position: sticky;
+  background: #FFF5CA url('../../assets/Frame36881.png') no-repeat center center;
+  background-size: cover;
+  height: 231px;
   top: 0;
   z-index: 1;
-}
-
-.mobile-drawer-logo {
-  height: 50px;
-  width: auto;
 }
 
 .mobile-drawer-close {
@@ -1655,6 +1706,87 @@ body.rtl .menu-items-container {
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s;
+  position: absolute;
+  top: 16px;
+  z-index: 2;
+}
+
+/* RTL (Arabic) - close button on left */
+.mobile-drawer.rtl .mobile-drawer-close {
+  left: 16px;
+  right: auto;
+}
+
+/* LTR (English) - close button on right */
+.mobile-drawer.ltr .mobile-drawer-close {
+  right: 16px;
+  left: auto;
+}
+
+.mobile-drawer-header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.mobile-drawer-logo {
+  height: 90px;
+  width: auto;
+  margin-bottom: 1rem;
+}
+
+.mobile-drawer-auth-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mobile-drawer-login-btn {
+  background: #F00E0C;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  font-family: 'Almarai', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.mobile-drawer-login-btn:hover {
+  background: #D00C0A;
+}
+
+.mobile-drawer-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.welcome-text {
+  font-family: 'Almarai', sans-serif;
+  font-size: 12px;
+  color: #666;
+  font-weight: 400;
+}
+
+.user-name {
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  color: #333;
+  font-weight: 700;
+}
+
+.mobile-drawer-welcome .user-name {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .mobile-drawer-close:hover {
@@ -1662,11 +1794,106 @@ body.rtl .menu-items-container {
 }
 
 .mobile-drawer-body {
-  padding: 16px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
   flex: 1;
+  background: #fff;
+}
+
+.mobile-drawer-lang-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.lang-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  color: #333;
+}
+
+.lang-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.lang-header-left:hover {
+  opacity: 0.7;
+}
+
+.qatar-flag-icon {
+  width: 20px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-lang-header .flag-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-drawer-lang-header .flag-icon svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-menu-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-drawer-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  text-decoration: none;
+  color: #333;
+  transition: background-color 0.2s;
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+}
+
+.mobile-drawer-menu-item:hover {
+  background-color: #f9f9f9;
+}
+
+.menu-item-text {
+  flex: 1;
+  text-align: right;
+  direction: rtl;
+}
+
+.menu-item-icon {
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+[dir="rtl"] .menu-item-icon {
+  margin-left: 0;
+  margin-right: 12px;
+}
+
+[dir="ltr"] .menu-item-text {
+  text-align: left;
+  direction: ltr;
 }
 
 .mobile-user-section {
@@ -1875,7 +2102,7 @@ body.rtl .menu-items-container {
     padding: 6px;
   }
   
-  .user-name {
+  .navbar .user-name {
     display: none;
   }
   
@@ -2537,7 +2764,6 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
   }
 
   isMobile(): boolean {
-    console.log(window.innerWidth);
     return window.innerWidth <= 768;
   }
 
@@ -2744,11 +2970,21 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
     if (!this.currentUser) {
       return 'User';
     }
+    // Try firstName first
     if (this.currentUser.firstName) {
+      // If lastName exists, combine them
+      if (this.currentUser.lastName) {
+        return `${this.currentUser.firstName} ${this.currentUser.lastName}`;
+      }
       return this.currentUser.firstName;
     }
+    // Try name
     if (this.currentUser.name) {
       return this.currentUser.name;
+    }
+    // Fallback to email
+    if (this.currentUser.email) {
+      return this.currentUser.email;
     }
     return 'User';
   }

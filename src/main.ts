@@ -44,7 +44,7 @@ bootstrapApplication(AppComponent, {
           useFactory: HttpLoaderFactory,
           deps: [HttpClient]
         },
-        defaultLanguage: 'en'
+        defaultLanguage: 'ar'
       })
     )
   ]

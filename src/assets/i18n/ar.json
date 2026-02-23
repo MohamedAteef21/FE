@@ -60,7 +60,10 @@
     "EMPTY_CART": "السلة فارغة",
     "EXISTING_ITEMS": "الاصناف الموجودة",
     "TOTAL": "الإجمالي:",
-    "ORDER_NOW": "أطلب الان"
+    "ORDER_NOW": "أطلب الان",
+    "SHOPPING_CART": "سله التسوق",
+    "ITEM_COUNT": "صنف",
+    "ITEMS_COUNT": "صنف"
   },
   "CHECKOUT": {
     "TITLE": "استكمال الطلب",
@@ -194,7 +197,8 @@
   },
   "LANGUAGE": {
     "ENGLISH": "الإنجليزية",
-    "ARABIC": "العربية"
+    "ARABIC": "العربية",
+    "LANGUAGE": "اللغة"
   },
   "DOWNLOAD": {
     "PDF": "تحميل PDF",
@@ -352,9 +356,12 @@
     "EMAIL_PLACEHOLDER": "ادخل عنوان بريدك الالكتروني",
     "SUBSCRIBE_NOW": "اشترك الان",
     "NEWSLETTER_TITLE": "اشترك للحصول على اجدد العروض والخصومات الحصريه",
-    "NEWSLETTER_SUBTITLE": "كن أول من يعرف كل ما هو جديد في إكسبشن",
+    "NEWSLETTER_SUBTITLE": "كن أول من يعرف كل ما هو جديد في الباشوات",
     "POWERED_BY": "Powered by codereels",
     "ENGLISH_FLAG": "علم إنجليزي",
-    "QATAR_FLAG": "علم قطر"
+    "QATAR_FLAG": "علم قطر",
+    "WELCOME": "مرحباً",
+    "DOWNLOAD_MENU": "تحميل مينيو البشوات",
+    "SHIPPING_POLICY": "الشحن وسياسة الإلغاء والاسترجاع"
   }
 }

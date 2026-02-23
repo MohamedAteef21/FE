@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject, of } from 'rxjs';
 import { map, catchError, tap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Category, CategoryWithProducts, CreateCategoryRequest } from '../../models/category.model';
+import { Category, CategoryWithProducts, CreateCategoryRequest, CategoryImage, AddImageRequest } from '../../models/category.model';
 import { ApiResponse, ApiPagedResponse, PagedResponse } from '../../models/api-response.model';
 
 @Injectable({
@@ -225,6 +225,65 @@ export class CategoryService {
       }),
       catchError(error => {
         console.error('Error deleting category:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Add an image to a category
+   * @param categoryId Category ID
+   * @param request Image request data
+   */
+  addCategoryImage(categoryId: number, request: AddImageRequest): Observable<CategoryImage> {
+    return this.http.post<ApiResponse<CategoryImage>>(`${this.API_URL}/${categoryId}/images`, request).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Failed to add category image');
+        }
+        return response.data;
+      }),
+      catchError(error => {
+        console.error('Error adding category image:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get all images for a category
+   * @param categoryId Category ID
+   */
+  getCategoryImages(categoryId: number): Observable<CategoryImage[]> {
+    return this.http.get<ApiResponse<CategoryImage[]>>(`${this.API_URL}/${categoryId}/images`).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Failed to fetch category images');
+        }
+        return response.data;
+      }),
+      catchError(error => {
+        console.error('Error fetching category images:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Delete a category image
+   * @param categoryId Category ID
+   * @param imageId Image ID
+   */
+  deleteCategoryImage(categoryId: number, imageId: number): Observable<boolean> {
+    return this.http.delete<ApiResponse<boolean>>(`${this.API_URL}/${categoryId}/images/${imageId}`).pipe(
+      map(response => {
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to delete category image');
+        }
+        return response.data ?? true;
+      }),
+      catchError(error => {
+        console.error('Error deleting category image:', error);
         return throwError(() => error);
       })
     );

@@ -51,6 +51,9 @@ export interface CreateOrderRequest {
   totalAmount:    number;
   couponCode:     string;
   orderFutureDate?: string; // ISO date string (e.g., "2026-02-18T05:34:13.760Z")
+  customerName?:  string;  // Customer name for guest orders
+  customerEmail?: string;  // Customer email for guest orders
+  customerPhone?: string;  // Customer phone for guest orders
   items:          CreateOrderItemRequest[];
 }
 

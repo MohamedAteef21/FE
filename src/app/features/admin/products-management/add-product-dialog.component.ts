@@ -1,10 +1,10 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MessageService } from 'primeng/api';
 import { SharedModule } from '../../../shared/shared.module';
-import { ProductService, CreateProductRequest } from '../../../core/services/product.service';
+import { ProductService, CreateProductRequest, ProductImage, AddImageRequest } from '../../../core/services/product.service';
 
 // Custom validator for positive numbers (including decimals)
 function positiveNumberValidator(control: AbstractControl): ValidationErrors | null {
@@ -92,11 +92,8 @@ function positiveNumberValidator(control: AbstractControl): ValidationErrors | n
                 [placeholder]="getPlaceholder('الوصف')"
                 id="description"
                 rows="3"></textarea>
-              <label for="description">الوصف<span class="required-asterisk">*</span></label>
+              <label for="description">الوصف</label>
             </div>
-            <span class="error-message" *ngIf="productForm.get('description')?.hasError('required') && productForm.get('description')?.touched">
-              الوصف مطلوب
-            </span>
           </div>
 
           <!-- Description English -->
@@ -109,11 +106,8 @@ function positiveNumberValidator(control: AbstractControl): ValidationErrors | n
                 [placeholder]="getPlaceholder('Description')"
                 id="descriptionEn"
                 rows="3"></textarea>
-              <label for="descriptionEn">الوصف (إنجليزي)<span class="required-asterisk">*</span></label>
+              <label for="descriptionEn">الوصف (إنجليزي)</label>
             </div>
-            <span class="error-message" *ngIf="productForm.get('descriptionEn')?.hasError('required') && productForm.get('descriptionEn')?.touched">
-              الوصف بالإنجليزية مطلوب
-            </span>
           </div>
 
           <!-- Quantity Determination Method -->
@@ -232,25 +226,67 @@ function positiveNumberValidator(control: AbstractControl): ValidationErrors | n
             </div>
           </div>
 
-          <!-- Product Image Upload -->
-          <div class="image-upload-area" (click)="triggerFileInput()">
+          <!-- Main Product Image Upload -->
+          <div class="form-group">
+            <label class="section-label">صورة المنتج الرئيسية<span class="required-asterisk">*</span></label>
+            <div class="image-upload-area" (click)="triggerMainFileInput()">
+              <input 
+                type="file" 
+                #mainFileInput
+                id="mainFileInput"
+                accept="image/*" 
+                (change)="onMainFileSelected($event)"
+                style="display: none;" />
+              <div class="upload-content" *ngIf="!selectedImage || selectedImage === ''">
+                <svg class="camera-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M24 18C20.6863 18 18 20.6863 18 24C18 27.3137 20.6863 30 24 30C27.3137 30 30 27.3137 30 24C30 20.6863 27.3137 18 24 18ZM24 28C21.7909 28 20 26.2091 20 24C20 21.7909 21.7909 20 24 20C26.2091 20 28 21.7909 28 24C28 26.2091 26.2091 28 24 28Z" fill="#ADB5BD"/>
+                  <path d="M16 10H14C12.8954 10 12 10.8954 12 12V14H8C5.79086 14 4 15.7909 4 18V36C4 38.2091 5.79086 40 8 40H40C42.2091 40 44 38.2091 44 36V18C44 15.7909 42.2091 14 40 14H36V12C36 10.8954 35.1046 10 34 10H32C30.8954 10 30 10.8954 30 12V14H18V12C18 10.8954 17.1046 10 16 10ZM40 36H8V18H40V36ZM24 16C28.4183 16 32 19.5817 32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16Z" fill="#ADB5BD"/>
+                </svg>
+                <svg class="plus-overlay" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 3V13M3 8H13" stroke="#ADB5BD" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span class="upload-text">صورة المنتج</span>
+              </div>
+              <img *ngIf="selectedImage && selectedImage !== ''" [src]="selectedImage" alt="Product" class="preview-image" />
+            </div>
+          </div>
+
+          <!-- Additional Images Section -->
+          <div class="form-group">
+            <label class="section-label">صور إضافية</label>
+            <div class="additional-images-container">
+              <!-- Existing Images (Edit Mode) -->
+              <div *ngFor="let image of additionalImages" class="image-thumbnail">
+                <img [src]="image.imageUrl" [alt]="'Image ' + image.id" />
+                <button type="button" class="delete-image-btn" (click)="deleteAdditionalImage(image.id)" [disabled]="isDeletingImage === image.id">
+                  <svg *ngIf="isDeletingImage !== image.id" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 10H15" stroke="#F00E0C" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span *ngIf="isDeletingImage === image.id" class="spinner"></span>
+                </button>
+              </div>
+              <!-- Uploading Images -->
+              <div *ngFor="let upload of uploadingImages" class="image-thumbnail uploading">
+                <img [src]="upload.preview" alt="Uploading" />
+                <div class="upload-overlay">
+                  <span class="spinner"></span>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="add-image-btn" (click)="triggerAdditionalFileInput()" [disabled]="isLoading">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 5V15M5 10H15" stroke="#F00E0C" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>إضافة صورة</span>
+            </button>
             <input 
               type="file" 
-              #fileInput
+              #additionalFileInput
+              id="additionalFileInput"
               accept="image/*" 
-              (change)="onFileSelected($event)"
+              multiple
+              (change)="onAdditionalFilesSelected($event)"
               style="display: none;" />
-            <div class="upload-content" *ngIf="!selectedImage">
-              <svg class="camera-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M24 18C20.6863 18 18 20.6863 18 24C18 27.3137 20.6863 30 24 30C27.3137 30 30 27.3137 30 24C30 20.6863 27.3137 18 24 18ZM24 28C21.7909 28 20 26.2091 20 24C20 21.7909 21.7909 20 24 20C26.2091 20 28 21.7909 28 24C28 26.2091 26.2091 28 24 28Z" fill="#ADB5BD"/>
-                <path d="M16 10H14C12.8954 10 12 10.8954 12 12V14H8C5.79086 14 4 15.7909 4 18V36C4 38.2091 5.79086 40 8 40H40C42.2091 40 44 38.2091 44 36V18C44 15.7909 42.2091 14 40 14H36V12C36 10.8954 35.1046 10 34 10H32C30.8954 10 30 10.8954 30 12V14H18V12C18 10.8954 17.1046 10 16 10ZM40 36H8V18H40V36ZM24 16C28.4183 16 32 19.5817 32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16Z" fill="#ADB5BD"/>
-              </svg>
-              <svg class="plus-overlay" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 3V13M3 8H13" stroke="#ADB5BD" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span class="upload-text">صورة المنتج</span>
-            </div>
-            <img *ngIf="selectedImage" [src]="selectedImage" alt="Product" class="preview-image" />
           </div>
           <!-- Save Button -->
           <div class="save-btn-container">
@@ -701,6 +737,108 @@ function positiveNumberValidator(control: AbstractControl): ValidationErrors | n
     .add-variant-btn:hover {
       background: #FFF6F6;
     }
+
+    .additional-images-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .image-thumbnail {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #E7EAEB;
+      background: white;
+    }
+
+    .image-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-thumbnail.uploading {
+      opacity: 0.7;
+    }
+
+    .delete-image-btn {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 28px;
+      height: 28px;
+      background: white;
+      border: 1px solid #F00E0C;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .delete-image-btn:hover:not(:disabled) {
+      background: #FFF6F6;
+    }
+
+    .delete-image-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .upload-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #F00E0C;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .add-image-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: white;
+      border: 1px solid #F00E0C;
+      border-radius: 8px;
+      color: #F00E0C;
+      font-family: Alexandria;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .add-image-btn:hover:not(:disabled) {
+      background: #FFF6F6;
+    }
+
+    .add-image-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   `]
 })
 export class AddProductDialogComponent {
@@ -710,6 +848,10 @@ export class AddProductDialogComponent {
   productId: number | null = null;
   categoryId: number | null = null;
   isLoading: boolean = false;
+  additionalImages: ProductImage[] = [];
+  uploadingImages: Array<{ preview: string; file: File }> = [];
+  queuedImages: Array<{ preview: string; file: File }> = [];
+  isDeletingImage: number | null = null;
 
   constructor(
     private dialogRef: MatDialogRef<AddProductDialogComponent>,
@@ -725,8 +867,8 @@ export class AddProductDialogComponent {
     this.productForm = this.fb.group({
       name: ['', [Validators.required]],
       nameEn: ['', [Validators.required]],
-      description: ['', [Validators.required]],
-      descriptionEn: ['', [Validators.required]],
+      description: [''],
+      descriptionEn: [''],
       price: [0, [Validators.min(0.01), positiveNumberValidator]],
       quantityMethod: ['piece', Validators.required],
       variants: this.fb.array([]),
@@ -744,7 +886,48 @@ export class AddProductDialogComponent {
         price: product.basePrice || 0,
         status: product.isActive
       });
-      this.selectedImage = product.imageUrl || null;
+      // Helper function to clean image URL (handle malformed URLs that combine host + data URL)
+      const cleanImageUrl = (url: string | null | undefined): string | null => {
+        if (!url || url.trim() === '') return null;
+
+        // Check if URL contains base64 data URL pattern
+        const dataUrlMatch = url.match(/data:image\/[^;]+;base64,[^"]+/);
+        if (dataUrlMatch) {
+          // Extract just the base64 data URL part
+          return dataUrlMatch[0];
+        }
+
+        // If it's a proper HTTP URL, return as is
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          return url;
+        }
+
+        // If it starts with data:, return as is (already a data URL)
+        if (url.startsWith('data:')) {
+          return url;
+        }
+
+        return url;
+      };
+
+      // Set the main image - handle both HTTP URLs (from API) and base64 data URLs
+      // First check if there's a main image in the images array, otherwise use imageUrl
+      if (product.images && product.images.length > 0) {
+        const mainImage = product.images.find((img: ProductImage) => img.isMain);
+        if (mainImage) {
+          this.selectedImage = cleanImageUrl(mainImage.imageUrl);
+        } else {
+          // Fallback to imageUrl field
+          this.selectedImage = cleanImageUrl(product.imageUrl);
+        }
+        // Filter out the main image for additional images
+        this.additionalImages = product.images.filter((img: ProductImage) => !img.isMain);
+        // Sort by sortOrder
+        this.additionalImages.sort((a, b) => a.sortOrder - b.sortOrder);
+      } else {
+        // No images array, use imageUrl field
+        this.selectedImage = cleanImageUrl(product.imageUrl);
+      }
 
       // Load variants if they exist
       if (product.variants && product.variants.length > 0) {
@@ -789,20 +972,157 @@ export class AddProductDialogComponent {
     }
   }
 
-  triggerFileInput(): void {
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fileInput?.click();
+  @ViewChild('mainFileInput') mainFileInputRef!: any;
+  @ViewChild('additionalFileInput') additionalFileInputRef!: any;
+
+  triggerMainFileInput(): void {
+    if (this.mainFileInputRef?.nativeElement) {
+      this.mainFileInputRef.nativeElement.click();
+    }
   }
 
-  onFileSelected(event: Event): void {
+  onMainFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (!file.type.startsWith('image/')) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'خطأ',
+          detail: 'يجب اختيار ملف صورة',
+          life: 3000
+        });
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.selectedImage = e.target.result;
       };
-      reader.readAsDataURL(input.files[0]);
+      reader.readAsDataURL(file);
+      // Reset input to allow selecting the same file again
+      input.value = '';
     }
+  }
+
+  triggerAdditionalFileInput(): void {
+    if (this.additionalFileInputRef?.nativeElement) {
+      this.additionalFileInputRef.nativeElement.click();
+    }
+  }
+
+  onAdditionalFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const files = Array.from(input.files);
+      const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+
+      if (invalidFiles.length > 0) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'خطأ',
+          detail: 'يجب اختيار ملفات صورة فقط',
+          life: 3000
+        });
+        input.value = '';
+        return;
+      }
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          const preview = e.target.result;
+
+          if (this.isEditMode && this.productId) {
+            // Upload immediately in edit mode
+            this.uploadImageImmediately(file, preview);
+          } else {
+            // Queue for upload after creation
+            this.queuedImages.push({ preview, file });
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Reset input
+      input.value = '';
+    }
+  }
+
+  uploadImageImmediately(file: File, preview: string): void {
+    if (!this.productId) return;
+
+    // Add to uploading list
+    this.uploadingImages.push({ preview, file });
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const imageBase64 = e.target.result as string;
+      const request: AddImageRequest = {
+        imageBase64,
+        isMain: false,
+        sortOrder: this.additionalImages.length + this.uploadingImages.length
+      };
+
+      this.productService.addProductImage(this.productId!, request).subscribe({
+        next: (image) => {
+          // Remove from uploading
+          this.uploadingImages = this.uploadingImages.filter(u => u.preview !== preview);
+          // Add to additional images
+          this.additionalImages.push(image);
+          // Sort by sortOrder
+          this.additionalImages.sort((a, b) => a.sortOrder - b.sortOrder);
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'نجح',
+            detail: 'تم إضافة الصورة بنجاح',
+            life: 3000
+          });
+        },
+        error: (error) => {
+          // Remove from uploading on error
+          this.uploadingImages = this.uploadingImages.filter(u => u.preview !== preview);
+          console.error('Error uploading image:', error);
+          const errorMessage = error?.error?.message || error?.message || 'حدث خطأ أثناء رفع الصورة';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'خطأ',
+            detail: errorMessage,
+            life: 5000
+          });
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  deleteAdditionalImage(imageId: number): void {
+    if (!this.productId || this.isDeletingImage === imageId) return;
+
+    this.isDeletingImage = imageId;
+    this.productService.deleteProductImage(this.productId, imageId).subscribe({
+      next: () => {
+        this.additionalImages = this.additionalImages.filter(img => img.id !== imageId);
+        this.isDeletingImage = null;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'نجح',
+          detail: 'تم حذف الصورة بنجاح',
+          life: 3000
+        });
+      },
+      error: (error) => {
+        this.isDeletingImage = null;
+        console.error('Error deleting image:', error);
+        const errorMessage = error?.error?.message || error?.message || 'حدث خطأ أثناء حذف الصورة';
+        this.messageService.add({
+          severity: 'error',
+          summary: 'خطأ',
+          detail: errorMessage,
+          life: 5000
+        });
+      }
+    });
   }
 
   getVariantsArray(): FormArray {
@@ -933,14 +1253,19 @@ export class AddProductDialogComponent {
 
       apiCall.subscribe({
         next: (product) => {
-          this.isLoading = false;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'نجح',
-            detail: this.isEditMode ? 'تم تحديث المنتج بنجاح' : 'تم إضافة المنتج بنجاح',
-            life: 3000
-          });
-          this.dialogRef.close({ success: true, product });
+          // In create mode, upload queued images
+          if (!this.isEditMode && this.queuedImages.length > 0) {
+            this.uploadQueuedImages(product.id);
+          } else {
+            this.isLoading = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'نجح',
+              detail: this.isEditMode ? 'تم تحديث المنتج بنجاح' : 'تم إضافة المنتج بنجاح',
+              life: 3000
+            });
+            this.dialogRef.close({ success: true, product });
+          }
         },
         error: (error) => {
           this.isLoading = false;
@@ -955,6 +1280,74 @@ export class AddProductDialogComponent {
         }
       });
     }
+  }
+
+  uploadQueuedImages(productId: number): void {
+    if (this.queuedImages.length === 0) {
+      this.isLoading = false;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'نجح',
+        detail: 'تم إضافة المنتج بنجاح',
+        life: 3000
+      });
+      this.dialogRef.close({ success: true });
+      return;
+    }
+
+    // Move queued images to uploading
+    this.uploadingImages = [...this.queuedImages];
+    const imagesToUpload = [...this.queuedImages];
+    this.queuedImages = [];
+
+    // Upload each image sequentially
+    let uploadIndex = 0;
+    const uploadNext = () => {
+      if (uploadIndex >= imagesToUpload.length) {
+        // All images uploaded
+        this.isLoading = false;
+        this.uploadingImages = [];
+        this.messageService.add({
+          severity: 'success',
+          summary: 'نجح',
+          detail: 'تم إضافة المنتج والصور بنجاح',
+          life: 3000
+        });
+        this.dialogRef.close({ success: true });
+        return;
+      }
+
+      const { file, preview } = imagesToUpload[uploadIndex];
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const imageBase64 = e.target.result as string;
+        const request: AddImageRequest = {
+          imageBase64,
+          isMain: false,
+          sortOrder: uploadIndex
+        };
+
+        this.productService.addProductImage(productId, request).subscribe({
+          next: () => {
+            uploadIndex++;
+            // Remove from uploading
+            this.uploadingImages = this.uploadingImages.filter(u => u.preview !== preview);
+            uploadNext();
+          },
+          error: (error) => {
+            // Remove from uploading on error
+            this.uploadingImages = this.uploadingImages.filter(u => u.preview !== preview);
+            console.error('Error uploading queued image:', error);
+            // Continue with next image even if this one fails
+            uploadIndex++;
+            uploadNext();
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+    };
+
+    uploadNext();
   }
 
   close(): void {
