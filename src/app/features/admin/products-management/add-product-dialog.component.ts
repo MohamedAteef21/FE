@@ -1264,7 +1264,10 @@ export class AddProductDialogComponent {
               detail: this.isEditMode ? 'تم تحديث المنتج بنجاح' : 'تم إضافة المنتج بنجاح',
               life: 3000
             });
-            this.dialogRef.close({ success: true, product });
+            // Add a small delay before closing to ensure toast is displayed
+            setTimeout(() => {
+              this.dialogRef.close({ success: true, product });
+            }, 100);
           }
         },
         error: (error) => {
@@ -1313,7 +1316,10 @@ export class AddProductDialogComponent {
           detail: 'تم إضافة المنتج والصور بنجاح',
           life: 3000
         });
-        this.dialogRef.close({ success: true });
+        // Add a small delay before closing to ensure toast is displayed
+        setTimeout(() => {
+          this.dialogRef.close({ success: true });
+        }, 100);
         return;
       }
 

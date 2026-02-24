@@ -581,6 +581,7 @@ export class MenuManagementComponent implements OnInit {
 
   // Pagination properties
   paginatedCategories: Category[] = [];
+  backendCategories: BackendCategory[] = []; // Store original backend categories
   totalRecords: number = 0;
   pageSize: number = 9; // 3 columns x 3 rows
   pageIndex: number = 0;
@@ -605,6 +606,8 @@ export class MenuManagementComponent implements OnInit {
     this.isLoading = true;
     this.categoryService.getCategoriesPaged(this.pageIndex + 1, this.pageSize).subscribe({
       next: (response: PagedResponse<BackendCategory>) => {
+        // Store original backend categories
+        this.backendCategories = response.items;
         // Map backend category to component category format
         this.paginatedCategories = response.items.map((cat: BackendCategory) => this.mapBackendCategoryToCategory(cat));
         this.totalRecords = response.totalCount;
@@ -894,12 +897,16 @@ export class MenuManagementComponent implements OnInit {
   }
 
   editCategory(category: Category): void {
+    // Find the original backend category by matching the id
+    const backendCategory = this.backendCategories.find(cat => cat.id.toString() === category.id);
+    const categoryToEdit = backendCategory || category; // Fallback to mapped category if not found
+
     const dialogRef = this.dialog.open(AddCategoryDialogComponent, {
       width: '500px',
       maxWidth: '90vw',
       disableClose: false,
       panelClass: 'add-category-dialog',
-      data: { category: category, isEdit: true }
+      data: { category: categoryToEdit, isEdit: true }
     });
 
     dialogRef.afterClosed().subscribe(result => {

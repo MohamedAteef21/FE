@@ -9,6 +9,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { CategoryService } from '../../../core/services/category.service';
 import { CategoryWithProducts } from '../../../models/category.model';
 import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 import { AddProductDialogComponent } from './add-product-dialog.component';
 
 interface Product {
@@ -38,8 +39,9 @@ interface ProductVariant {
 @Component({
   selector: 'app-products-management',
   standalone: true,
-  imports: [CommonModule, SharedModule, TranslateModule, MatSlideToggleModule, MatPaginatorModule],
+  imports: [CommonModule, SharedModule, TranslateModule, MatSlideToggleModule, MatPaginatorModule, ToastModule],
   template: `
+    <p-toast></p-toast>
     <div class="products-container">
       <!-- Header Section -->
       <div class="header-section">
@@ -904,8 +906,8 @@ export class ProductsManagementComponent implements OnInit {
     product.isActive = !product.isActive;
     this.messageService.add({
       severity: 'success',
-      summary: 'نجح',
-      detail: 'تم تحديث حالة المنتج',
+      summary: this.translate.instant('ADMIN.MENU_MANAGEMENT.CATEGORY_SAVED'),
+      detail: this.translate.instant('ADMIN.MENU_MANAGEMENT.PRODUCT_STATUS_UPDATED'),
       life: 3000
     });
   }
@@ -914,8 +916,8 @@ export class ProductsManagementComponent implements OnInit {
     if (!this.selectedCategory) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'تحذير',
-        detail: 'يرجى اختيار صنف أولاً',
+        summary: this.translate.instant('ADMIN.MENU_MANAGEMENT.ERROR_SAVING'),
+        detail: this.translate.instant('ADMIN.MENU_MANAGEMENT.SELECT_CATEGORY_FIRST'),
         life: 3000
       });
       return;
@@ -934,6 +936,13 @@ export class ProductsManagementComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
+        // Show success toast
+        this.messageService.add({
+          severity: 'success',
+          summary: this.translate.instant('ADMIN.MENU_MANAGEMENT.CATEGORY_SAVED'),
+          detail: this.translate.instant('ADMIN.MENU_MANAGEMENT.PRODUCT_ADDED'),
+          life: 3000
+        });
         // Reload products to show the new product
         this.loadCategoriesWithProducts();
       }
@@ -959,6 +968,13 @@ export class ProductsManagementComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
+        // Show success toast
+        this.messageService.add({
+          severity: 'success',
+          summary: this.translate.instant('ADMIN.MENU_MANAGEMENT.CATEGORY_SAVED'),
+          detail: this.translate.instant('ADMIN.MENU_MANAGEMENT.PRODUCT_UPDATED'),
+          life: 3000
+        });
         // Reload products to show the updated product
         this.loadCategoriesWithProducts();
       }
@@ -967,13 +983,17 @@ export class ProductsManagementComponent implements OnInit {
 
   deleteProduct(product: Product): void {
     // TODO: Implement delete product functionality
-    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+    const confirmMessage = this.translate.instant('ADMIN.MENU_MANAGEMENT.MENU_ITEM_DELETE_CONFIRM');
+    if (confirm(confirmMessage)) {
+      // TODO: Call delete API here
       this.messageService.add({
         severity: 'success',
-        summary: 'نجح',
-        detail: 'تم حذف المنتج',
+        summary: this.translate.instant('ADMIN.MENU_MANAGEMENT.CATEGORY_SAVED'),
+        detail: this.translate.instant('ADMIN.MENU_MANAGEMENT.PRODUCT_DELETED'),
         life: 3000
       });
+      // Reload products after deletion
+      this.loadCategoriesWithProducts();
     }
   }
 }
