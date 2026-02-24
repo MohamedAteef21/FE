@@ -1156,10 +1156,11 @@ export class ItemDetailsComponent implements OnInit, OnDestroy {
       imageUrl: item.imageUrl,
       categoryId: item.categoryId,
       isAvailable: item.isActive,
-      isArabicLang: this.currentLang === 'ar'
+      isArabicLang: this.currentLang === 'ar',
+      variants: this.currentProduct?.variants || []
     };
 
-    this.cartService.addItem(cartItem, this.quantity);
+    this.cartService.addItem(cartItem, this.quantity, this.selectedVariant || undefined);
     this.translate.get(['ITEM_DETAILS.ITEM_ADDED', 'COMMON.CLOSE']).subscribe(translations => {
       this.snackBar.open(translations['ITEM_DETAILS.ITEM_ADDED'] || 'تم إضافة المنتج إلى السلة', translations['COMMON.CLOSE'] || 'إغلاق', {
         duration: 2000,
@@ -1180,10 +1181,11 @@ export class ItemDetailsComponent implements OnInit, OnDestroy {
       imageUrl: item.imageUrl,
       categoryId: item.categoryId,
       isAvailable: item.isActive,
-      isArabicLang: this.currentLang === 'ar'
+      isArabicLang: this.currentLang === 'ar',
+      variants: this.currentProduct?.variants || []
     };
 
-    this.cartService.addItem(cartItem, this.quantity);
+    this.cartService.addItem(cartItem, this.quantity, this.selectedVariant || undefined);
     this.router.navigate(['/cart']);
   }
 

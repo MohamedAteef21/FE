@@ -1534,6 +1534,7 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
         padding: 1.5rem;
       }
     }
+    
   `]
 })
 export class CheckoutComponent implements OnInit, OnDestroy {
@@ -1847,11 +1848,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   formatCurrency(amount: number): string {
+    if (amount == null || isNaN(amount)) {
+      return '0';
+    }
     // Always use English numerals (en-US locale)
     const formattedNumber = amount.toLocaleString('en-US');
 
     // Get current language and set currency symbol accordingly
-    const currentLang = this.translate.currentLang || 'en';
+    const currentLang = this.translate.currentLang || 'ar';
     const currencySymbol = currentLang === 'ar' ? 'ر.ق' : 'QAR';
 
     return `${formattedNumber} ${currencySymbol}`;

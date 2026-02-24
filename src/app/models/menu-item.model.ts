@@ -1,3 +1,10 @@
+export interface ProductVariant {
+  id: number;
+  nameAr: string;
+  nameEn: string;
+  price: number;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -11,6 +18,7 @@ export interface MenuItem {
   isArabicLang?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  variants?: ProductVariant[];
 }
 
 export interface Category {
@@ -46,6 +54,7 @@ export interface CartItem {
   menuItem: MenuItem;
   quantity: number;
   subtotal: number;
+  selectedVariant?: ProductVariant;
 }
 
 export interface Cart {

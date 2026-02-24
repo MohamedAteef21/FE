@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Cart, CartItem } from '../../models/menu-item.model';
+import { Cart, CartItem, ProductVariant } from '../../models/menu-item.model';
 import { MenuItem } from '../../models/menu-item.model';
 import { AppSettings } from '../../models/settings.model';
 
@@ -19,52 +19,87 @@ export class CartService {
     this.loadCartFromStorage();
   }
 
-  addItem(menuItem: MenuItem, quantity: number = 1): void {
+  addItem(menuItem: MenuItem, quantity: number = 1, variant?: ProductVariant): void {
     const cart = this.cartSubject.value;
-    const existingItemIndex = cart.items.findIndex(
-      item => item.menuItem.id === menuItem.id
-    );
+    const itemPrice = variant ? variant.price : menuItem.price;
+    
+    // Find existing item with same menuItem and variant (if variant exists)
+    const existingItemIndex = cart.items.findIndex(item => {
+      const sameMenuItem = item.menuItem.id === menuItem.id;
+      const sameVariant = variant 
+        ? (item.selectedVariant?.id === variant.id)
+        : (!item.selectedVariant);
+      return sameMenuItem && sameVariant;
+    });
 
     if (existingItemIndex > -1) {
       cart.items[existingItemIndex].quantity += quantity;
       cart.items[existingItemIndex].subtotal = 
-        cart.items[existingItemIndex].quantity * menuItem.price;
+        cart.items[existingItemIndex].quantity * itemPrice;
     } else {
       cart.items.push({
         menuItem,
         quantity,
-        subtotal: menuItem.price * quantity
+        subtotal: itemPrice * quantity,
+        selectedVariant: variant
       });
     }
 
     this.updateCart(cart);
   }
 
-  removeItem(menuItemId: string): void {
+  removeItem(menuItemId: string, variantId?: number | null): void {
     const cart = this.cartSubject.value;
-    cart.items = cart.items.filter(item => item.menuItem.id !== menuItemId);
+    // Normalize variantId: treat null/undefined as no variant
+    const hasVariant = variantId !== undefined && variantId !== null;
+    cart.items = cart.items.filter(item => {
+      const sameMenuItem = item.menuItem.id === menuItemId;
+      if (hasVariant) {
+        // Remove item with matching menuItemId and variantId
+        return !(sameMenuItem && item.selectedVariant?.id === variantId);
+      } else {
+        // Remove item with matching menuItemId and no variant
+        return !(sameMenuItem && !item.selectedVariant);
+      }
+    });
     this.updateCart(cart);
   }
 
-  updateQuantity(menuItemId: string, quantity: number): void {
+  updateQuantity(menuItemId: string, quantity: number, variantId?: number | null): void {
     if (quantity <= 0) {
-      this.removeItem(menuItemId);
+      this.removeItem(menuItemId, variantId);
       return;
     }
 
     const cart = this.cartSubject.value;
-    const item = cart.items.find(item => item.menuItem.id === menuItemId);
+    // Normalize variantId: treat null/undefined as no variant
+    const hasVariant = variantId !== undefined && variantId !== null;
+    const item = cart.items.find(item => {
+      const sameMenuItem = item.menuItem.id === menuItemId;
+      const sameVariant = hasVariant
+        ? (item.selectedVariant?.id === variantId)
+        : (!item.selectedVariant);
+      return sameMenuItem && sameVariant;
+    });
 
     if (item) {
       item.quantity = quantity;
-      item.subtotal = item.menuItem.price * quantity;
+      const itemPrice = item.selectedVariant ? item.selectedVariant.price : item.menuItem.price;
+      item.subtotal = itemPrice * quantity;
       this.updateCart(cart);
     }
   }
 
   clearCart(): void {
     const cart = this.getInitialCart();
-    this.updateCart(cart);
+    // Remove cart from localStorage to clear cached data
+    localStorage.removeItem(this.CART_KEY);
+    // Update cart totals and notify subscribers without saving to storage
+    cart.subtotal = 0;
+    cart.tax = 0;
+    cart.deliveryFee = 0;
+    cart.total = 0;
+    this.cartSubject.next(cart);
   }
 
   getCart(): Cart {
@@ -97,7 +132,12 @@ export class CartService {
   }
 
   private saveCartToStorage(cart: Cart): void {
-    localStorage.setItem(this.CART_KEY, JSON.stringify(cart.items));
+    if (cart.items.length === 0) {
+      // Remove from localStorage when cart is empty to clear cached data
+      localStorage.removeItem(this.CART_KEY);
+    } else {
+      localStorage.setItem(this.CART_KEY, JSON.stringify(cart.items));
+    }
   }
 
   private loadCartFromStorage(): void {

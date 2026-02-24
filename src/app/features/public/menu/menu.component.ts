@@ -5,7 +5,7 @@ import { map, catchError } from 'rxjs/operators';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared/shared.module';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { Category, MenuItem, Cart } from '../../../models/menu-item.model';
+import { Category, MenuItem, Cart, ProductVariant } from '../../../models/menu-item.model';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -39,7 +39,7 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
 
         <!-- Side Panel -->
         <div id="mainPanel" style="height: 100%;width: 385px;position: fixed;top: 0;left: 0;background-color: #ffffff;overflow-x: hidden;padding-top: 30px;z-index: 1;">
-          <div class="row" style="display: flex;flex-direction: row-reverse;width: 100%;border-bottom: 2px solid #E5E5E5;padding-bottom: .5rem;align-items: center;">
+          <div class="row" style="display: flex;flex-direction: row-reverse;width: 100%;border-bottom: 2px solid #E5E5E5;padding-bottom: .5rem;align-items: center;padding-left: 1rem;padding-right: 1rem;">
             <div class="col-auto col-md-auto col-sm-auto col-lg-auto col-xl-auto col-xxl-auto" style="padding-left: 0 !important;padding-right: 0 !important;">
               <div style="color: #F00E0C;font-size: 24px;font-weight: 600;">{{ 'CART_DIALOG.SHOPPING_CART' | translate }}</div>
             </div>
@@ -47,6 +47,13 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
               class="col-auto col-md-auto col-sm-auto col-lg-auto col-xl-auto col-xxl-auto"
             >
               <div style="color:#303030 ;font-size: 20px;font-weight: 600;" *ngIf="cart$ | async as cart">{{ cart.items.length }} {{ (cart.items.length === 1 ? 'CART_DIALOG.ITEM_COUNT' : 'CART_DIALOG.ITEMS_COUNT') | translate }}</div>
+            </div>
+            <div class="col-auto col-md-auto col-sm-auto col-lg-auto col-xl-auto col-xxl-auto" style="margin-right: auto;">
+              <button (click)="isShow = false" class="panel-close-btn" style="background: transparent;border: none;cursor: pointer;padding: 8px;display: flex;align-items: center;justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -57,97 +64,49 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
           <span *ngIf="cart$ | async as cart">
           <!-- <div style="display: flex;justify-content: flex-end;color: #F00E0C;font-weight: 500;padding-top: 10px;padding-bottom: 10px;" *ngIf="cart.items.length > 0">{{ 'CART_DIALOG.EXISTING_ITEMS' | translate }}</div> -->
           <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="overflow: scroll;">
-          <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;width: 100%;align-items: center;padding: 1rem;" *ngFor="let cartItem of cart.items">
-          <div class="col-4 col-md-4 col-sm-4 col-lg-4 col-xl-4 col-xxl-4" style="min-height: 80px;">
+          <div class="cart-item-container col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;width: 100%;align-items: flex-start;padding: 1rem;" *ngFor="let cartItem of cart.items">
+          <div class="cart-item-image col-4 col-md-4 col-sm-4 col-lg-4 col-xl-4 col-xxl-4" style="min-height: 80px;">
             <img [src]="getItemImageUrl(cartItem.menuItem)" [alt]="cartItem.menuItem.name" style="width: 100%;height: 100%;min-height: 80px;object-fit: cover;border-radius: 8px;" />
           </div>
 
-                <div class="col-8 col-md-8 col-sm-8 col-lg-8 col-xl-8 col-xxl-8 row" style="gap: 7px;">
-                <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;align-items: flex-start;justify-content: space-between;">
-                <span>{{ currentLang === 'ar' ? cartItem.menuItem.name : (cartItem.menuItem.nameEn || cartItem.menuItem.name) }}</span>
-                <button (click)="removeCartItem(cartItem.menuItem.id)" style="background: transparent;border: 0px solid;cursor: pointer;"> <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <div class="cart-item-content col-8 col-md-8 col-sm-8 col-lg-8 col-xl-8 col-xxl-8 row" style="gap: 7px;">
+                <div class="cart-item-header col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;align-items: flex-start;justify-content: space-between;">
+                <div style="display: flex;flex-direction: column;gap: 0.25rem;">
+                  <span class="cart-item-name">{{ currentLang === 'ar' ? cartItem.menuItem.name : (cartItem.menuItem.nameEn || cartItem.menuItem.name) }}</span>
+                  <span *ngIf="cartItem.selectedVariant" style="color: #F00E0C;font-size: 12px;font-weight: 600;">
+                    {{ currentLang === 'ar' ? cartItem.selectedVariant.nameAr : (cartItem.selectedVariant.nameEn || cartItem.selectedVariant.nameAr) }}
+                  </span>
+                </div>
+                <button class="cart-item-delete" (click)="removeCartItem(cartItem.menuItem.id, cartItem.selectedVariant?.id); $event.stopPropagation()" style="background: transparent;border: 0px solid;cursor: pointer;z-index: 10;position: relative;"> <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" style="pointer-events: none;">
                 <path d="M7.29175 21.875C6.71884 21.875 6.22856 21.6712 5.82092 21.2635C5.41328 20.8559 5.20911 20.3653 5.20842 19.7917V6.25C4.91328 6.25 4.66606 6.15 4.46675 5.95C4.26745 5.75 4.16745 5.50278 4.16675 5.20833C4.16606 4.91389 4.26606 4.66667 4.46675 4.46667C4.66745 4.26667 4.91467 4.16667 5.20842 4.16667H9.37509C9.37509 3.87153 9.47509 3.62431 9.67509 3.425C9.87509 3.22569 10.1223 3.12569 10.4168 3.125H14.5834C14.8786 3.125 15.1261 3.225 15.3261 3.425C15.5261 3.625 15.6258 3.87222 15.6251 4.16667H19.7918C20.0869 4.16667 20.3345 4.26667 20.5345 4.46667C20.7345 4.66667 20.8341 4.91389 20.8334 5.20833C20.8327 5.50278 20.7327 5.75035 20.5334 5.95104C20.3341 6.15174 20.0869 6.25139 19.7918 6.25V19.7917C19.7918 20.3646 19.5879 20.8552 19.1803 21.2635C18.7727 21.6719 18.282 21.8757 17.7084 21.875H7.29175ZM10.4168 17.7083C10.7119 17.7083 10.9595 17.6083 11.1595 17.4083C11.3595 17.2083 11.4591 16.9611 11.4584 16.6667V9.375C11.4584 9.07986 11.3584 8.83264 11.1584 8.63333C10.9584 8.43403 10.7112 8.33403 10.4168 8.33333C10.1223 8.33264 9.87509 8.43264 9.67509 8.63333C9.47509 8.83403 9.37509 9.08125 9.37509 9.375V16.6667C9.37509 16.9618 9.47509 17.2094 9.67509 17.4094C9.87509 17.6094 10.1223 17.709 10.4168 17.7083ZM14.5834 17.7083C14.8786 17.7083 15.1261 17.6083 15.3261 17.4083C15.5261 17.2083 15.6258 16.9611 15.6251 16.6667V9.375C15.6251 9.07986 15.5251 8.83264 15.3251 8.63333C15.1251 8.43403 14.8779 8.33403 14.5834 8.33333C14.289 8.33264 14.0418 8.43264 13.8418 8.63333C13.6418 8.83403 13.5418 9.08125 13.5418 9.375V16.6667C13.5418 16.9618 13.6418 17.2094 13.8418 17.4094C14.0418 17.6094 14.289 17.709 14.5834 17.7083Z" fill="#F00E0C"/>
                 </svg>
                 </button>
                 </div>
 
-                <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;align-items: flex-start;justify-content: space-between;">
-                <span style="color:#971008;font-weight: 700;font-size: 16px;">{{ formatCurrency(cartItem.subtotal) }}</span>
-                <div style="position: relative;display: inline-block;">
+                <div class="cart-item-footer col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;align-items: flex-start;justify-content: space-between;">
+                <span class="cart-item-price" style="color:#971008;font-weight: 700;font-size: 16px;">{{ formatCurrency(cartItem.subtotal) }}</span>
+                <div class="cart-item-quantity" style="position: relative;display: inline-block;">
                 <svg width="94" height="37" viewBox="0 0 94 37" fill="none" xmlns="http://www.w3.org/2000/svg" style="pointer-events: none;">
                 <rect x="0.19" y="0.19" width="93.62" height="36.62" rx="18.31" stroke="#BEBEBE" stroke-width="0.38"/>
                 </svg>
-                <button (click)="decreaseQuantity(cartItem.menuItem.id)" [disabled]="cartItem.quantity <= 1" style="background: transparent;border: 0px solid;cursor: pointer;padding: 0;position: absolute;left: 12px;top: 50%;transform: translateY(-50%);width: 20px;height: 20px;display: flex;align-items: center;justify-content: center;" [style.opacity]="cartItem.quantity <= 1 ? '0.5' : '1'">
-                <svg width="8" height="2" viewBox="0 0 8 2" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <button (click)="decreaseQuantity(cartItem.menuItem.id, cartItem.selectedVariant?.id); $event.stopPropagation()" style="background: transparent;border: 0px solid;cursor: pointer;padding: 0;position: absolute;left: 12px;top: 50%;transform: translateY(-50%);width: 20px;height: 20px;display: flex;align-items: center;justify-content: center;z-index: 10;" [style.opacity]="cartItem.quantity <= 1 ? '0.5' : '1'">
+                <svg width="8" height="2" viewBox="0 0 8 2" fill="none" xmlns="http://www.w3.org/2000/svg" style="pointer-events: none;">
                 <path d="M0 1H8" stroke="#909090" stroke-width="1.52" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 </button>
                 <span style="color: #343538;font-weight: 600;font-size: 14px;position: absolute;left: 50%;top: 50%;transform: translate(-50%, -50%);pointer-events: none;">{{ cartItem.quantity }}</span>
-                <button (click)="increaseQuantity(cartItem.menuItem.id)" style="background: transparent;border: 0px solid;cursor: pointer;padding: 0;position: absolute;right: 12px;top: 50%;transform: translateY(-50%);width: 20px;height: 20px;display: flex;align-items: center;justify-content: center;">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <button (click)="increaseQuantity(cartItem.menuItem.id, cartItem.selectedVariant?.id); $event.stopPropagation()" style="background: transparent;border: 0px solid;cursor: pointer;padding: 0;position: absolute;right: 12px;top: 50%;transform: translateY(-50%);width: 20px;height: 20px;display: flex;align-items: center;justify-content: center;z-index: 10;">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" style="pointer-events: none;">
                 <path d="M5 2V8M2 5H8" stroke="#343538" stroke-width="1.52" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 </button>
                 </div>
                 </div>
                 </div>
-                </div>
+          </div>
 </div>
 
 </span>
-
-<span *ngIf="pendingItem">
-<div style="
-    display: flex;
-    justify-content: flex-end;
-    color: #F00E0C;
-    font-weight: 500;
-    padding-top: 10px;
-    padding-bottom: 10px;
-">{{ 'CART_DIALOG.ADD_NEW_ITEM' | translate }}
-</div>
-<div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="height: 26rem;overflow: scroll;">
-      <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;width: 100%;align-items: center;padding: 1rem;">
-          <div class="col-4 col-md-4 col-sm-4 col-lg-4 col-xl-4 col-xxl-4" style="min-height: 80px;">
-            <img [src]="getItemImageUrl(pendingItem)" [alt]="pendingItem.name" style="width: 100%;height: 100%;min-height: 80px;object-fit: cover;border-radius: 8px;" />
-          </div>
-
-                <div class="col-8 col-md-8 col-sm-8 col-lg-8 col-xl-8 col-xxl-8 row" style="gap: 7px;">
-                <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;align-items: flex-start;justify-content: space-between;">
-                <span>{{ currentLang === 'ar' ? pendingItem.name : (pendingItem.nameEn || pendingItem.name) }}</span>
-                <button (click)="removePendingItem()" style="background: transparent;border: 0px solid;cursor: pointer;"> <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.29175 21.875C6.71884 21.875 6.22856 21.6712 5.82092 21.2635C5.41328 20.8559 5.20911 20.3653 5.20842 19.7917V6.25C4.91328 6.25 4.66606 6.15 4.46675 5.95C4.26745 5.75 4.16745 5.50278 4.16675 5.20833C4.16606 4.91389 4.26606 4.66667 4.46675 4.46667C4.66745 4.26667 4.91467 4.16667 5.20842 4.16667H9.37509C9.37509 3.87153 9.47509 3.62431 9.67509 3.425C9.87509 3.22569 10.1223 3.12569 10.4168 3.125H14.5834C14.8786 3.125 15.1261 3.225 15.3261 3.425C15.5261 3.625 15.6258 3.87222 15.6251 4.16667H19.7918C20.0869 4.16667 20.3345 4.26667 20.5345 4.46667C20.7345 4.66667 20.8341 4.91389 20.8334 5.20833C20.8327 5.50278 20.7327 5.75035 20.5334 5.95104C20.3341 6.15174 20.0869 6.25139 19.7918 6.25V19.7917C19.7918 20.3646 19.5879 20.8552 19.1803 21.2635C18.7727 21.6719 18.282 21.8757 17.7084 21.875H7.29175ZM10.4168 17.7083C10.7119 17.7083 10.9595 17.6083 11.1595 17.4083C11.3595 17.2083 11.4591 16.9611 11.4584 16.6667V9.375C11.4584 9.07986 11.3584 8.83264 11.1584 8.63333C10.9584 8.43403 10.7112 8.33403 10.4168 8.33333C10.1223 8.33264 9.87509 8.43264 9.67509 8.63333C9.47509 8.83403 9.37509 9.08125 9.37509 9.375V16.6667C9.37509 16.9618 9.47509 17.2094 9.67509 17.4094C9.87509 17.6094 10.1223 17.709 10.4168 17.7083ZM14.5834 17.7083C14.8786 17.7083 15.1261 17.6083 15.3261 17.4083C15.5261 17.2083 15.6258 16.9611 15.6251 16.6667V9.375C15.6251 9.07986 15.5251 8.83264 15.3251 8.63333C15.1251 8.43403 14.8779 8.33403 14.5834 8.33333C14.289 8.33264 14.0418 8.43264 13.8418 8.63333C13.6418 8.83403 13.5418 9.08125 13.5418 9.375V16.6667C13.5418 16.9618 13.6418 17.2094 13.8418 17.4094C14.0418 17.6094 14.289 17.709 14.5834 17.7083Z" fill="#F00E0C"/>
-                </svg>
-                </button>
-                </div>
-
-                <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;align-items: flex-start;justify-content: space-between;">
-                <span style="color:#971008;font-weight: 700;font-size: 16px;">{{ formatCurrency(pendingItem.price * pendingQuantity) }}</span>
-                <div style="position: relative;display: inline-block;">
-                <svg width="94" height="37" viewBox="0 0 94 37" fill="none" xmlns="http://www.w3.org/2000/svg" style="pointer-events: none;">
-                <rect x="0.19" y="0.19" width="93.62" height="36.62" rx="18.31" stroke="#BEBEBE" stroke-width="0.38"/>
-                </svg>
-                <button (click)="decreasePendingQuantity()" [disabled]="pendingQuantity <= 1" style="background: transparent;border: 0px solid;cursor: pointer;padding: 0;position: absolute;left: 12px;top: 50%;transform: translateY(-50%);width: 20px;height: 20px;display: flex;align-items: center;justify-content: center;" [style.opacity]="pendingQuantity <= 1 ? '0.5' : '1'">
-                <svg width="8" height="2" viewBox="0 0 8 2" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 1H8" stroke="#909090" stroke-width="1.52" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                </button>
-                <span style="color: #343538;font-weight: 600;font-size: 14px;position: absolute;left: 50%;top: 50%;transform: translate(-50%, -50%);pointer-events: none;">{{ pendingQuantity }}</span>
-                <button (click)="increasePendingQuantity()" style="background: transparent;border: 0px solid;cursor: pointer;padding: 0;position: absolute;right: 12px;top: 50%;transform: translateY(-50%);width: 20px;height: 20px;display: flex;align-items: center;justify-content: center;">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 2V8M2 5H8" stroke="#343538" stroke-width="1.52" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                </button>
-                </div>
-                </div>
-
-                <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;align-items: center;justify-content: center;margin-top: 10px;">
-                <button (click)="addPendingItemToCart()" style="color:#F00E0C;background: transparent;border:1px solid #F00E0C;border-radius: 100px;width: 200px;padding: 5px;cursor: pointer;">{{ 'CART_DIALOG.ADD_TO_CART' | translate }}</button>
-                </div>
-                </div>
-                </div>
-      </div>
-        </span>
         </div>
       </div>
 
@@ -190,7 +149,7 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
 ">
 
 <button
-  style="color:#F00E0C;background: transparent;border:1px solid #F00E0C;border-radius: 100px;width: 260px;padding: 5px;margin-top: 4px;margin-bottom: 5px;cursor: pointer;"
+  style="color: #FFFFFF;background-color: #F00E0C;border:1px solid #F00E0C;border-radius: 100px;width: 260px;padding: 5px;margin-top: 4px;margin-bottom: 5px;cursor: pointer;"
   [disabled]="cart.items.length === 0"
   (click)="goToCheckout()"
 >
@@ -200,8 +159,6 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
 </div>
 
 </div>
-
-          <span (click)="isShow = false" style="position: absolute;top: 10px;right: 20px;font-size: 30px;cursor: pointer;color: #000000;"></span>
         </div>
       </div>
 
@@ -272,8 +229,25 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
                       <div class="item-rating">
                         <span class="stars">★★★★★</span>
                       </div>
+                      <!-- Variant Selection (if variants exist) -->
+                      <div class="item-variants" *ngIf="item.variants && item.variants.length > 0">
+                        <div class="variant-chips">
+                          <span 
+                            class="variant-chip" 
+                            *ngFor="let variant of item.variants"
+                            [class.active]="getSelectedVariant(item.id, item)?.id === variant.id"
+                            (click)="selectVariantForItem(item.id, variant, $event)">
+                            {{ currentLang === 'ar' ? variant.nameAr : (variant.nameEn || variant.nameAr) }}
+                          </span>
+                        </div>
+                        <div class="variant-price-range">
+                          <span *ngIf="getSelectedVariant(item.id, item)">
+                            {{ formatCurrency(getSelectedVariant(item.id, item)!.price) }}
+                          </span>
+                        </div>
+                      </div>
                       <div class="item-footer">
-                        <span class="item-price">{{ item.price }} {{ "COMMON.RIYAL" | translate }}</span>
+                        <span class="item-price" *ngIf="!item.variants || item.variants.length === 0">{{ item.price }} {{ "COMMON.RIYAL" | translate }}</span>
                         <button class="order-button" (click)="addToCart(item, $event)">
                           {{ "COMMON.ORDER" | translate }}
                         </button>
@@ -628,6 +602,44 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       color: #FFD700;
       font-size: 0.9rem;
     }
+    .item-variants {
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .variant-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .variant-chip {
+      background-color: #F5F5F5;
+      color: #666;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-family: 'Almarai', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+    .variant-chip:hover {
+      background-color: #E0E0E0;
+      color: #333;
+    }
+    .variant-chip.active {
+      background-color: #F00E0C;
+      color: #FFFFFF;
+      border-color: #F00E0C;
+    }
+    .variant-price-range {
+      font-family: 'Aref_Menna', serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #d32f2f;
+    }
     .item-footer {
       display: flex;
       justify-content: space-between;
@@ -700,6 +712,16 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       min-height: 200px;
       padding: 2rem;
     }
+    .panel-close-btn {
+      transition: all 0.2s ease;
+      border-radius: 50%;
+    }
+    .panel-close-btn:hover {
+      background-color: #f5f5f5 !important;
+    }
+    .panel-close-btn:active {
+      background-color: #e0e0e0 !important;
+    }
     /* ── Mobile chips bar: hidden on desktop ── */
     .mobile-chips-bar {
       display: none;
@@ -714,6 +736,10 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       }
     }
     @media (max-width: 768px) {
+      #mainPanel {
+        padding: 0 !important;
+      }
+
       .breadcrumb-container {
         padding: 0.75rem 1rem;
       }
@@ -858,6 +884,181 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
         font-size: 1.2rem;
       }
     }
+
+    @media (max-width: 767px) {
+      #mainPanel {
+        width: 75% !important;
+        padding: 0 !important;
+      }
+
+      #mainPanel .row {
+        padding: 1rem 0 !important;
+        padding-left: 1.25rem !important;
+      }
+
+      #mainPanel [class*="col-"] {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+      }
+
+      /* Shopping Cart Title */
+      #mainPanel div[style*="color: #F00E0C"][style*="font-size: 24px"] {
+        font-size: 18px !important;
+      }
+
+      /* Item Count */
+      #mainPanel div[style*="color:#303030"][style*="font-size: 20px"] {
+        font-size: 16px !important;
+      }
+
+      /* Cart Item Container - Restructure Layout */
+      #mainPanel .cart-item-container {
+        flex-direction: row !important;
+        align-items: flex-start !important;
+        padding: 0 !important;
+        gap: 0.75rem;
+      }
+
+      /* Image on Right */
+      #mainPanel .cart-item-image {
+        order: 2;
+        flex: 0 0 80px;
+        width: 80px !important;
+        min-height: 80px !important;
+        max-height: 80px !important;
+        padding-top: .5rem;
+      }
+
+      #mainPanel .cart-item-image img {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 80px !important;
+        object-fit: cover !important;
+        border-radius: 8px !important;
+      }
+
+      /* Content on Left */
+      #mainPanel .cart-item-content {
+        order: 1;
+        flex: 1;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        padding: 0 !important;
+      }
+
+      /* Name and Delete Button Row - Delete on Left */
+      #mainPanel .cart-item-header {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin-bottom: 0.5rem;
+      }
+
+      /* Target the div containing the name and apply order */
+      #mainPanel .cart-item-header > div:first-child {
+        order: 2;
+        flex: 1;
+      }
+
+      #mainPanel .cart-item-name {
+        font-family: 'Almarai', sans-serif;
+        font-weight: 700;
+        font-size: 14px !important;
+        color: #333;
+        text-align: right;
+        padding-right: 0.5rem;
+      }
+
+      #mainPanel .cart-item-delete {
+        flex-shrink: 0;
+        padding: 4px !important;
+        order: 1;
+      }
+
+      #mainPanel .cart-item-delete svg {
+        width: 20px !important;
+        height: 20px !important;
+      }
+
+      /* Price and Quantity Row - Quantity on Left */
+      #mainPanel .cart-item-footer {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin-top: 0.25rem;
+      }
+
+      #mainPanel .cart-item-price {
+        color: #971008 !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        font-family: 'Almarai', sans-serif;
+        order: 2;
+      }
+
+      #mainPanel .cart-item-quantity {
+        flex-shrink: 0;
+        order: 1;
+      }
+
+      #mainPanel .cart-item-quantity svg[width="94"] {
+        width: 70px !important;
+        height: 28px !important;
+      }
+
+      /* Add to Cart Button */
+      #mainPanel button[style*="width: 200px"] {
+        width: 150px !important;
+        padding: 4px !important;
+        font-size: 0.85rem !important;
+      }
+
+      /* Order Now Button */
+      #mainPanel button[style*="width: 260px"] {
+        width: 200px !important;
+        padding: 4px !important;
+        font-size: 0.85rem !important;
+      }
+
+      /* Discount and Activate sections */
+      #mainPanel div[style*="padding: .5rem"] {
+        padding: 0.4rem !important;
+        font-size: 0.8rem !important;
+      }
+
+      /* Total Price */
+      #mainPanel span[style*="font-weight: 700"][style*="font-size: 16px"] {
+        font-size: 14px !important;
+        padding-inline: 0.25rem;
+      }
+
+      /* Cart Item Padding */
+      #mainPanel div[style*="padding: 1rem"]:not(.cart-item-container) {
+        padding: 0.75rem !important;
+      }
+
+      /* Close Button */
+      #mainPanel .panel-close-btn {
+        padding: 6px !important;
+      }
+
+      #mainPanel .panel-close-btn svg {
+        width: 20px !important;
+        height: 20px !important;
+      }
+
+      /* Scrollable Areas */
+      #mainPanel div[style*="overflow: scroll"] {
+        max-height: calc(100vh - 200px) !important;
+      }
+    }
   `]
 })
 export class MenuComponent implements OnInit, OnDestroy {
@@ -876,8 +1077,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
   isLoadingCategories: boolean = false;
   isShow: boolean = false;
-  pendingItem: MenuItem | null = null;
-  pendingQuantity: number = 1;
+  selectedVariants: Map<string, ProductVariant> = new Map(); // Map<itemId, selectedVariant>
   private langChangeSubscription?: Subscription;
 
   constructor(
@@ -978,7 +1178,8 @@ export class MenuComponent implements OnInit, OnDestroy {
                 imageUrl: product.imageUrl || 'https://via.placeholder.com/300',
                 categoryId: category.id.toString(),
                 isAvailable: product.isActive,
-                images: product.images || [] // Store images array
+                images: product.images || [], // Store images array
+                variants: product.variants || [] // Store variants array
               } as any);
             }
           });
@@ -1034,6 +1235,15 @@ export class MenuComponent implements OnInit, OnDestroy {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     const paginatedItems = allFilteredItems.slice(startIndex, endIndex);
+
+    // Auto-select first variant for items that have variants (if not already selected)
+    paginatedItems.forEach(item => {
+      if (item.variants && item.variants.length > 0) {
+        if (!this.selectedVariants.has(item.id)) {
+          this.selectedVariants.set(item.id, item.variants[0]);
+        }
+      }
+    });
 
     // Add isArabicLang property to items
     this.menuItems$ = of(addLanguageProperty(paginatedItems, this.translationService));
@@ -1103,36 +1313,39 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
+  selectVariantForItem(itemId: string, variant: ProductVariant, event: Event): void {
+    event.stopPropagation();
+    // Set selected variant for this item (updates price display)
+    this.selectedVariants.set(itemId, variant);
+  }
+
+  getSelectedVariant(itemId: string, item?: MenuItem): ProductVariant | undefined {
+    const selected = this.selectedVariants.get(itemId);
+    if (selected) {
+      return selected;
+    }
+    // If no variant selected and item has variants, return first variant by default
+    if (item && item.variants && item.variants.length > 0) {
+      return item.variants[0];
+    }
+    return undefined;
+  }
+
   addToCart(item: MenuItem, event: Event): void {
     event.stopPropagation();
 
-    // Add item directly to cart
-    this.cartService.addItem(item, 1);
-
-    // Open the side panel automatically to show the cart
-    this.isShow = true;
-  }
-
-  addPendingItemToCart(): void {
-    if (this.pendingItem) {
-      this.cartService.addItem(this.pendingItem, this.pendingQuantity);
-      this.pendingItem = null;
-      this.pendingQuantity = 1;
-    }
-  }
-
-  removePendingItem(): void {
-    this.pendingItem = null;
-    this.pendingQuantity = 1;
-  }
-
-  increasePendingQuantity(): void {
-    this.pendingQuantity++;
-  }
-
-  decreasePendingQuantity(): void {
-    if (this.pendingQuantity > 1) {
-      this.pendingQuantity--;
+    // If item has variants, get selected variant (will default to first if none selected)
+    if (item.variants && item.variants.length > 0) {
+      const selectedVariant = this.getSelectedVariant(item.id, item);
+      if (selectedVariant) {
+        // Add item with selected variant directly
+        this.cartService.addItem(item, 1, selectedVariant);
+        this.isShow = true;
+      }
+    } else {
+      // Add item without variants directly to cart
+      this.cartService.addItem(item, 1);
+      this.isShow = true;
     }
   }
 
@@ -1140,28 +1353,72 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.router.navigate(['/item', itemId]);
   }
 
-  removeCartItem(itemId: string): void {
-    this.cartService.removeItem(itemId);
+  removeCartItem(itemId: string, variantId?: number | null): void {
+    // Normalize variantId: convert null/undefined to undefined
+    const normalizedVariantId = (variantId === null || variantId === undefined) ? undefined : variantId;
+    this.cartService.removeItem(itemId, normalizedVariantId);
   }
 
-  increaseQuantity(itemId: string): void {
+
+  increaseQuantity(itemId: string, variantId?: number | null): void {
+    // Normalize variantId: convert null/undefined to undefined
+    const normalizedVariantId = (variantId === null || variantId === undefined) ? undefined : variantId;
     const cart = this.cartService.getCart();
-    const item = cart.items.find(i => i.menuItem.id === itemId);
+    const item = cart.items.find(i => {
+      const sameMenuItem = i.menuItem.id === itemId;
+      const sameVariant = normalizedVariantId !== undefined
+        ? (i.selectedVariant?.id === normalizedVariantId)
+        : (!i.selectedVariant);
+      return sameMenuItem && sameVariant;
+    });
     if (item) {
-      this.cartService.updateQuantity(itemId, item.quantity + 1);
+      this.cartService.updateQuantity(itemId, item.quantity + 1, normalizedVariantId);
     }
   }
 
-  decreaseQuantity(itemId: string): void {
+  decreaseQuantity(itemId: string, variantId?: number | null): void {
+    // Normalize variantId: convert null/undefined to undefined
+    const normalizedVariantId = (variantId === null || variantId === undefined) ? undefined : variantId;
     const cart = this.cartService.getCart();
-    const item = cart.items.find(i => i.menuItem.id === itemId);
-    if (item && item.quantity > 1) {
-      this.cartService.updateQuantity(itemId, item.quantity - 1);
+    const item = cart.items.find(i => {
+      const sameMenuItem = i.menuItem.id === itemId;
+      const sameVariant = normalizedVariantId !== undefined
+        ? (i.selectedVariant?.id === normalizedVariantId)
+        : (!i.selectedVariant);
+      return sameMenuItem && sameVariant;
+    });
+    if (item) {
+      if (item.quantity > 1) {
+        this.cartService.updateQuantity(itemId, item.quantity - 1, normalizedVariantId);
+      } else {
+        // Remove item if quantity is 1
+        this.cartService.removeItem(itemId, normalizedVariantId);
+      }
     }
+  }
+
+  getMinVariantPrice(item: MenuItem): number {
+    if (item.variants && item.variants.length > 0) {
+      return Math.min(...item.variants.map(v => v.price));
+    }
+    return item.price;
+  }
+
+  getMaxVariantPrice(item: MenuItem): number {
+    if (item.variants && item.variants.length > 0) {
+      return Math.max(...item.variants.map(v => v.price));
+    }
+    return item.price;
   }
 
   formatCurrency(amount: number): string {
-    return `${amount.toFixed(2)} ر.ق`;
+    if (amount == null || isNaN(amount)) {
+      return '0';
+    }
+    const currentLang = this.translate.currentLang || 'ar';
+    const formattedNumber = amount.toLocaleString('en-US');
+    const currencySymbol = currentLang === 'ar' ? 'ر.ق' : 'QAR';
+    return `${formattedNumber} ${currencySymbol}`;
   }
 
   getTotal(cart: Cart): number {

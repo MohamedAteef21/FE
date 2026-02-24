@@ -76,7 +76,7 @@ export class OrderService {
     cart:           Cart,
     discount:       number,
     couponCode:     string,
-    orderFutureDate?: string, // ISO date string (optional)
+    orderFutureDate?: string | null, // ISO date string (optional) or null for "today"
     token?: string, // Optional token (for newly registered users)
     customerName?:  string,  // Customer name for guest orders
     customerEmail?: string,  // Customer email for guest orders
@@ -94,6 +94,15 @@ export class OrderService {
 
     const finalTotal = cart.subtotal + deliveryFees - discount;
 
+    // Get user ID if user is authenticated
+    let userId: number | undefined;
+    if (this.authService.isAuthenticated()) {
+      const currentUser = this.authService.getCurrentUser();
+      if (currentUser?.id) {
+        userId = Number(currentUser.id);
+      }
+    }
+
     const body: CreateOrderRequest = {
       branchId:       1,
       cityId,
@@ -107,18 +116,23 @@ export class OrderService {
       discountAmount: discount,
       totalAmount:    finalTotal > 0 ? finalTotal : 0,
       couponCode:     couponCode || '',
-      ...(orderFutureDate && { orderFutureDate }),
+      ...(orderFutureDate !== undefined && { orderFutureDate }),
+      ...(userId && { userId }),
       ...(customerName && { customerName }),
       ...(customerEmail && { customerEmail }),
       ...(customerPhone && { customerPhone }),
-      items: cart.items.map(item => ({
-        productId:  parseInt(item.menuItem.id, 10) || 0,
-        variantId:  0,
-        quantity:   item.quantity,
-        unitPrice:  item.menuItem.price,
-        totalPrice: item.subtotal,
-        notes:      '',
-      })),
+      items: cart.items.map(item => {
+        const variantId = item.selectedVariant?.id || 0;
+        const unitPrice = item.selectedVariant?.price || item.menuItem.price;
+        return {
+          productId:  parseInt(item.menuItem.id, 10) || 0,
+          variantId:  variantId,
+          quantity:   item.quantity,
+          unitPrice:  unitPrice,
+          totalPrice: item.subtotal,
+          notes:      '',
+        };
+      }),
     };
 
     return this.http

@@ -358,6 +358,9 @@ export class OrderDetailsDialogComponent {
   }
 
   formatCurrency(amount: number): string {
+    if (amount == null || isNaN(amount)) {
+      return '0';
+    }
     const formattedNumber = amount.toLocaleString('en-US');
     const currentLang = this.translate.currentLang || 'ar';
     const currencySymbol = currentLang === 'ar' ? 'ر.ق' : 'QAR';

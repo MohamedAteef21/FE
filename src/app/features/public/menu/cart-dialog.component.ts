@@ -2,6 +2,7 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared/shared.module';
 import { CartService } from '../../../core/services/cart.service';
 import { Cart, CartItem, MenuItem } from '../../../models/menu-item.model';
@@ -593,6 +594,7 @@ export class CartDialogComponent implements OnInit {
     private dialogRef: MatDialogRef<CartDialogComponent>,
     private cartService: CartService,
     private router: Router,
+    private translate: TranslateService,
     @Inject(MAT_DIALOG_DATA) public data: { item?: MenuItem }
   ) {
     this.pendingItem = data?.item || null;
@@ -657,7 +659,13 @@ export class CartDialogComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.ق`;
+    if (amount == null || isNaN(amount)) {
+      return '0.00';
+    }
+    const currentLang = this.translate.currentLang || 'ar';
+    const formattedNumber = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const currencySymbol = currentLang === 'ar' ? 'ر.ق' : 'QAR';
+    return `${formattedNumber} ${currencySymbol}`;
   }
 
   getTotal(cart: Cart): number {

@@ -2,10 +2,10 @@ import { Color } from './../../../../../node_modules/@kurkle/color/dist/color.d'
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared/shared.module';
 import { CartService } from '../../../core/services/cart.service';
-import { Cart, CartItem } from '../../../models/menu-item.model';
+import { Cart, CartItem, MenuItem, ProductVariant } from '../../../models/menu-item.model';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { CategoryService } from '../../../core/services/category.service';
@@ -150,11 +150,17 @@ import { take } from 'rxjs/operators';
                       <div class="cart-item-row" *ngFor="let item of cart.items" style="display: flex;">
 
                         <div class="col-1 col-md-1 col-sm-1 col-lg-1 col-xl-1 col-xxl-1">
-                          <img [src]="item.menuItem.imageUrl" [alt]="item.menuItem.name" class="item-image" />
+                          <img [src]="getItemImageUrl(item.menuItem)" [alt]="item.menuItem.name" class="item-image" />
                         </div>
                         <div class="col-3 col-md-3 col-sm-3 col-lg-3 col-xl-3 col-xxl-3">
-                        
-                        <span class="item-name">{{ item.menuItem.name }}</span>
+                        <div style="display: flex;flex-direction: column;gap: 0.25rem;">
+                          <span class="item-name">
+                            {{ item.menuItem.name }}
+                            <span *ngIf="item.selectedVariant" style="color: #F00E0C;font-weight: 600;margin-right: 0.5rem;">
+                              - {{ getVariantName(item.selectedVariant) }}
+                            </span>
+                          </span>
+                        </div>
                         </div>
 
                         <div class="col-2 col-md-2 col-sm-2 col-lg-2 col-xl-2 col-xxl-2">
@@ -164,7 +170,7 @@ import { take } from 'rxjs/operators';
     display: flex;
     align-items: center;
     justify-content: center;
-">{{ formatCurrency(item.menuItem.price) }}</div>
+">{{ formatCurrency(item.selectedVariant ? item.selectedVariant.price : item.menuItem.price) }}</div>
                         </div>
 
 <div class="col-2 col-md-2 col-sm-2 col-lg-2 col-xl-2 col-xxl-2">
@@ -176,9 +182,9 @@ import { take } from 'rxjs/operators';
 ">
                           <!-- <span class="qty-value">{{ item.quantity }}</span> -->
                                            <div class="quantity-control">
-                  <button class="qty-btn minus" (click)="decreaseQuantity(item.menuItem.id, item.quantity)" [disabled]="item.quantity <= 1">-</button>
+                  <button class="qty-btn minus" (click)="decreaseQuantity(item.menuItem.id, item.quantity, item.selectedVariant?.id)" [disabled]="item.quantity <= 1">-</button>
                   <span class="qty-value">{{ item.quantity }}</span>
-                  <button class="qty-btn plus" (click)="increaseQuantity(item.menuItem.id)">+</button>
+                  <button class="qty-btn plus" (click)="increaseQuantity(item.menuItem.id, item.selectedVariant?.id)">+</button>
                 </div>
                         </div>
                         </div>
@@ -190,7 +196,7 @@ import { take } from 'rxjs/operators';
 
                         <div class="col-2 col-md-2 col-sm-2 col-lg-2 col-xl-2 col-xxl-2">
 
-                        <button class="delete-btn" (click)="removeItem(item.menuItem.id)" mat-icon-button>
+                        <button class="delete-btn" (click)="removeItem(item.menuItem.id, item.selectedVariant?.id)" mat-icon-button>
                           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M8.16651 24.5C7.52484 24.5 6.97573 24.2717 6.51917 23.8152C6.06262 23.3586 5.83395 22.8091 5.83317 22.1667V7C5.50262 7 5.22573 6.888 5.00251 6.664C4.77929 6.44 4.66729 6.16311 4.66651 5.83333C4.66573 5.50356 4.77773 5.22667 5.00251 5.00267C5.22729 4.77867 5.50417 4.66667 5.83317 4.66667H10.4998C10.4998 4.33611 10.6118 4.05922 10.8358 3.836C11.0598 3.61278 11.3367 3.50078 11.6665 3.5H16.3332C16.6637 3.5 16.941 3.612 17.165 3.836C17.389 4.06 17.5006 4.33689 17.4998 4.66667H22.1665C22.4971 4.66667 22.7743 4.77867 22.9983 5.00267C23.2223 5.22667 23.334 5.50356 23.3332 5.83333C23.3324 6.16311 23.2204 6.44039 22.9972 6.66517C22.774 6.88994 22.4971 7.00156 22.1665 7V22.1667C22.1665 22.8083 21.9382 23.3578 21.4817 23.8152C21.0251 24.2725 20.4756 24.5008 19.8332 24.5H8.16651ZM11.6665 19.8333C11.9971 19.8333 12.2743 19.7213 12.4983 19.4973C12.7223 19.2733 12.834 18.9964 12.8332 18.6667V10.5C12.8332 10.1694 12.7212 9.89256 12.4972 9.66933C12.2732 9.44611 11.9963 9.33411 11.6665 9.33333C11.3367 9.33256 11.0598 9.44456 10.8358 9.66933C10.6118 9.89411 10.4998 10.171 10.4998 10.5V18.6667C10.4998 18.9972 10.6118 19.2745 10.8358 19.4985C11.0598 19.7225 11.3367 19.8341 11.6665 19.8333ZM16.3332 19.8333C16.6637 19.8333 16.941 19.7213 17.165 19.4973C17.389 19.2733 17.5006 18.9964 17.4998 18.6667V10.5C17.4998 10.1694 17.3878 9.89256 17.1638 9.66933C16.9398 9.44611 16.663 9.33411 16.3332 9.33333C16.0034 9.33256 15.7265 9.44456 15.5025 9.66933C15.2785 9.89411 15.1665 10.171 15.1665 10.5V18.6667C15.1665 18.9972 15.2785 19.2745 15.5025 19.4985C15.7265 19.7225 16.0034 19.8341 16.3332 19.8333Z" fill="#F00E0C"/>
 </svg>
@@ -1098,6 +1104,7 @@ import { take } from 'rxjs/operators';
 
       .cart-title-section {
         margin-bottom: 1rem;
+        padding-inline: .5rem;
       }
 
       .cart-items-wrapper {
@@ -1160,7 +1167,8 @@ export class CartComponent implements OnInit {
   constructor(
     private cartService: CartService,
     private router: Router,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private translate: TranslateService
   ) { }
 
   ngOnInit(): void {
@@ -1171,8 +1179,13 @@ export class CartComponent implements OnInit {
     this.cartService.updateQuantity(itemId, quantity);
   }
 
-  removeItem(itemId: string): void {
-    this.cartService.removeItem(itemId);
+  removeItem(itemId: string, variantId?: number): void {
+    this.cartService.removeItem(itemId, variantId);
+  }
+
+  getVariantName(variant: ProductVariant): string {
+    const currentLang = this.translate.currentLang || 'ar';
+    return currentLang === 'ar' ? variant.nameAr : (variant.nameEn || variant.nameAr);
   }
 
   applyDiscount(): void {
@@ -1184,7 +1197,13 @@ export class CartComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.ق`;
+    if (amount == null || isNaN(amount)) {
+      return '0.00';
+    }
+    const currentLang = this.translate.currentLang || 'ar';
+    const formattedNumber = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const currencySymbol = currentLang === 'ar' ? 'ر.ق' : 'QAR';
+    return `${formattedNumber} ${currencySymbol}`;
   }
 
   getFinalTotal(cart: Cart): number {
@@ -1221,18 +1240,69 @@ export class CartComponent implements OnInit {
     });
   }
 
+  getItemImageUrl(item: MenuItem & { images?: any[] }): string {
+    let imageUrl: string | null = null;
 
-  increaseQuantity(itemId: string): void {
+    // If imageUrl is empty/null and images.length >= 1, use first image from images array
+    if ((!item.imageUrl || item.imageUrl.trim() === '') && item.images && item.images.length >= 1) {
+      // Sort images by sortOrder and get the first one
+      const sortedImages = [...item.images].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      const firstImage = sortedImages[0];
+      if (firstImage && firstImage.imageUrl) {
+        imageUrl = firstImage.imageUrl;
+      }
+    } else if (item.imageUrl && item.imageUrl.trim() !== '') {
+      // Otherwise, use imageUrl if available
+      imageUrl = item.imageUrl;
+    }
+
+    // Clean the image URL to handle malformed URLs from backend (e.g., "https://localhost:44359/data:image/jpeg;base64,...")
+    const cleanedUrl = this.cleanImageUrl(imageUrl);
+    return cleanedUrl || 'https://via.placeholder.com/300';
+  }
+
+  private cleanImageUrl(url: string | null | undefined): string | null {
+    if (!url || url.trim() === '') return null;
+
+    // Check if URL contains base64 data URL pattern
+    const dataUrlMatch = url.match(/data:image\/[^;]+;base64,[^"]+/);
+    if (dataUrlMatch) {
+      // Extract just the base64 data URL part
+      return dataUrlMatch[0];
+    }
+
+    // If it's a proper HTTP URL, return as is
+    return url;
+  }
+
+
+  increaseQuantity(itemId: string, variantId?: number): void {
     const cart = this.cartService.getCart();
-    const item = cart.items.find(i => i.menuItem.id === itemId);
+    const item = cart.items.find(i => {
+      const sameMenuItem = i.menuItem.id === itemId;
+      const sameVariant = variantId !== undefined
+        ? (i.selectedVariant?.id === variantId)
+        : (!i.selectedVariant);
+      return sameMenuItem && sameVariant;
+    });
     if (item) {
-      this.cartService.updateQuantity(itemId, item.quantity + 1);
+      this.cartService.updateQuantity(itemId, item.quantity + 1, variantId);
     }
   }
 
-  decreaseQuantity(itemId: string, currentQuantity: number): void {
+  decreaseQuantity(itemId: string, currentQuantity: number, variantId?: number): void {
     if (currentQuantity > 1) {
-      this.cartService.updateQuantity(itemId, currentQuantity - 1);
+      const cart = this.cartService.getCart();
+      const item = cart.items.find(i => {
+        const sameMenuItem = i.menuItem.id === itemId;
+        const sameVariant = variantId !== undefined
+          ? (i.selectedVariant?.id === variantId)
+          : (!i.selectedVariant);
+        return sameMenuItem && sameVariant;
+      });
+      if (item) {
+        this.cartService.updateQuantity(itemId, currentQuantity - 1, variantId);
+      }
     }
     // Don't remove item if quantity is 1, just keep it at 1
   }

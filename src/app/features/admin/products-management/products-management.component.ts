@@ -155,8 +155,8 @@ interface ProductVariant {
             <div class="product-number">{{ getProductNumber(i) }}.</div>
             <div class="product-name">{{ product.nameAr }}</div>
             <div class="product-details">
-              <div class="product-price">السعر للواحدة: <span class="profit-value">{{ product.basePrice }} ر.ق</span></div>
-              <div class="product-sales">المبيعات: <span class="profit-value">{{ getProductSales(product) }} ر.ق</span></div>
+              <div class="product-price">السعر للواحدة: <span class="profit-value">{{ formatCurrency(product.basePrice) }}</span></div>
+              <div class="product-sales">المبيعات: <span class="profit-value">{{ formatCurrency(parseFloat(getProductSales(product))) }}</span></div>
               <div class="product-profit">النسبة من اجمالي الربح: <span class="profit-value">{{ getProductProfitPercentage(product) }}%</span></div>
             </div>
             <div class="product-menu">
@@ -887,6 +887,16 @@ export class ProductsManagementComponent implements OnInit {
     const seed = product.id || 0;
     const random = ((seed * 9301 + 49297) % 233280) / 233280;
     return (random * 15).toFixed(1);
+  }
+
+  formatCurrency(amount: number): string {
+    if (amount == null || isNaN(amount)) {
+      return '0';
+    }
+    const currentLang = this.translate.currentLang || 'ar';
+    const formattedNumber = amount.toLocaleString('en-US');
+    const currencySymbol = currentLang === 'ar' ? 'ر.ق' : 'QAR';
+    return `${formattedNumber} ${currencySymbol}`;
   }
 
   toggleProduct(product: Product): void {
