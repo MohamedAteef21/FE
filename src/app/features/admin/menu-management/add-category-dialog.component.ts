@@ -85,11 +85,8 @@ import { MessageService } from 'primeng/api';
                 [placeholder]="getPlaceholder('وصف بالعربي')"
                 id="description"
                 rows="3"></textarea>
-              <label for="description">وصف بالعربي<span class="required-asterisk">*</span></label>
+              <label for="description">وصف بالعربي</label>
             </div>
-            <span class="error-message" *ngIf="categoryForm.get('description')?.hasError('required') && categoryForm.get('description')?.touched">
-              الوصف بالعربي مطلوب
-            </span>
             <span class="error-message" *ngIf="categoryForm.get('description')?.hasError('arabicOnly') && categoryForm.get('description')?.touched">
               يجب إدخال نص باللغة العربية فقط
             </span>
@@ -105,11 +102,8 @@ import { MessageService } from 'primeng/api';
                 [placeholder]="getPlaceholder('الوصف بالانجليزي')"
                 id="descriptionEn"
                 rows="3"></textarea>
-              <label for="descriptionEn">الوصف بالانجليزي<span class="required-asterisk">*</span></label>
+              <label for="descriptionEn">الوصف بالانجليزي</label>
             </div>
-            <span class="error-message" *ngIf="categoryForm.get('descriptionEn')?.hasError('required') && categoryForm.get('descriptionEn')?.touched">
-              الوصف بالانجليزي مطلوب
-            </span>
             <span class="error-message" *ngIf="categoryForm.get('descriptionEn')?.hasError('arabicOrEnglish') && categoryForm.get('descriptionEn')?.touched">
               يجب إدخال نص باللغة العربية أو الإنجليزية فقط
             </span>
@@ -679,8 +673,8 @@ export class AddCategoryDialogComponent {
     this.categoryForm = this.fb.group({
       name: ['', [Validators.required, this.arabicOnlyValidator.bind(this)]],
       nameEn: ['', [Validators.required, this.arabicOrEnglishValidator.bind(this)]],
-      description: ['', [Validators.required, this.arabicOnlyValidator.bind(this)]],
-      descriptionEn: ['', [Validators.required, this.arabicOrEnglishValidator.bind(this)]],
+      description: ['', [this.arabicOnlyValidator.bind(this)]],
+      descriptionEn: ['', [this.arabicOrEnglishValidator.bind(this)]],
       status: [true, Validators.required]
     });
 
