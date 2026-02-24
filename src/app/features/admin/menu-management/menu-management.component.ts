@@ -848,43 +848,11 @@ export class MenuManagementComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // Prepare the request data
-        const categoryData = {
-          nameAr: result.name,
-          nameEn: result.nameEn,
-          descriptionAr: result.description,
-          descriptionEn: result.descriptionEn,
-          imageUrl: result.image, // The image is base64 string from file input
-          isActive: result.isActive
-        };
-
-        // Call API to create category
-        this.categoryService.createCategory(categoryData).subscribe({
-          next: (category) => {
-            this.translate.get(['ADMIN.MENU_MANAGEMENT.CATEGORY_ADDED']).subscribe(translations => {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'نجح',
-                detail: translations['ADMIN.MENU_MANAGEMENT.CATEGORY_ADDED'] || 'تم إضافة الصنف بنجاح',
-                life: 3000
-              });
-            });
-            // Reload categories on the current page
-            this.loadCategories();
-          },
-          error: (error) => {
-            console.error('Error creating category:', error);
-            this.translate.get(['ADMIN.MENU_MANAGEMENT.CATEGORY_ERROR']).subscribe(translations => {
-              this.messageService.add({
-                severity: 'error',
-                summary: 'خطأ',
-                detail: translations['ADMIN.MENU_MANAGEMENT.CATEGORY_ERROR'] || 'حدث خطأ أثناء إضافة الصنف',
-                life: 3000
-              });
-            });
-          }
-        });
+      // The dialog already handles the create internally, we just need to reload the list
+      if (result && result.success) {
+        // Reload categories on the current page
+        this.loadCategories();
+        // Toast notification is already shown by the dialog component
       }
     });
   }
@@ -910,43 +878,11 @@ export class MenuManagementComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // Prepare the request data
-        const categoryData = {
-          nameAr: result.name,
-          nameEn: result.nameEn,
-          descriptionAr: result.description,
-          descriptionEn: result.descriptionEn,
-          imageUrl: result.image, // The image is base64 string from file input
-          isActive: result.isActive
-        };
-
-        // Call API to update category
-        this.categoryService.updateCategory(Number(category.id), categoryData).subscribe({
-          next: (updatedCategory) => {
-            // Reload categories on the current page to show the updated category
-            this.loadCategories();
-            this.translate.get(['ADMIN.MENU_MANAGEMENT.CATEGORY_UPDATED']).subscribe(translations => {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'نجح',
-                detail: translations['ADMIN.MENU_MANAGEMENT.CATEGORY_UPDATED'] || 'تم تحديث الصنف بنجاح',
-                life: 3000
-              });
-            });
-          },
-          error: (error) => {
-            console.error('Error updating category:', error);
-            this.translate.get(['ADMIN.MENU_MANAGEMENT.ERROR_UPDATING_CATEGORY']).subscribe(translations => {
-              this.messageService.add({
-                severity: 'error',
-                summary: 'خطأ',
-                detail: translations['ADMIN.MENU_MANAGEMENT.ERROR_UPDATING_CATEGORY'] || 'حدث خطأ أثناء تحديث الصنف',
-                life: 3000
-              });
-            });
-          }
-        });
+      // The dialog already handles the update internally, we just need to reload the list
+      if (result && result.success) {
+        // Reload categories on the current page to show the updated category
+        this.loadCategories();
+        // Toast notification is already shown by the dialog component
       }
     });
   }

@@ -172,8 +172,7 @@ export class CategoryService {
         }
         // Clear cache to force refresh on next get
         this.categoriesCache$ = undefined;
-        // Refresh categories list
-        this.getCategories(undefined, true).subscribe();
+        // Don't automatically refresh here - let the component decide when to reload
         return response.data;
       }),
       catchError(error => {
@@ -196,8 +195,7 @@ export class CategoryService {
         }
         // Clear cache to force refresh on next get
         this.categoriesCache$ = undefined;
-        // Refresh categories list
-        this.getCategories(undefined, true).subscribe();
+        // Don't automatically refresh here - let the component decide when to reload
         return response.data;
       }),
       catchError(error => {
@@ -219,8 +217,7 @@ export class CategoryService {
         }
         // Clear cache to force refresh on next get
         this.categoriesCache$ = undefined;
-        // Refresh categories list
-        this.getCategories(undefined, true).subscribe();
+        // Don't automatically refresh here - let the component decide when to reload
         return;
       }),
       catchError(error => {
