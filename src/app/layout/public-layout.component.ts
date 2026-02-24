@@ -133,6 +133,38 @@ import { Branch } from '../models/branch.model';
           </svg>
         </a>
       </div>
+      
+      <!-- Mobile Drawer Footer -->
+      <div class="mobile-drawer-footer">
+        <div class="mobile-drawer-follow-text">
+          <span>{{ 'LAYOUT.FOLLOW_US_ON' | translate }}</span>
+        </div>
+        <div class="mobile-drawer-social-icons">
+          <a href="https://web.facebook.com/bashawatqtr" class="mobile-social-icon" target="_blank" rel="noopener noreferrer" title="Facebook">
+            <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.8335 12.3757H15.1252L16.0419 8.70898H12.8335V6.87565C12.8335 5.93148 12.8335 5.04232 14.6669 5.04232H16.0419V1.96232C15.743 1.9229 14.6146 1.83398 13.423 1.83398C10.9342 1.83398 9.16687 3.3529 9.16687 6.14232V8.70898H6.41687V12.3757H9.16687V20.1673H12.8335V12.3757Z" fill="black"/>
+            </svg>
+          </a>
+          <a href="https://www.instagram.com/bashawatqtr" class="mobile-social-icon" target="_blank" rel="noopener noreferrer" title="Instagram">
+            <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.0022 8.02051C10.2121 8.02051 9.45429 8.33438 8.89559 8.89309C8.33689 9.45179 8.02301 10.2096 8.02301 10.9997C8.02301 11.7898 8.33689 12.5476 8.89559 13.1063C9.45429 13.665 10.2121 13.9788 11.0022 13.9788C11.7923 13.9788 12.5501 13.665 13.1088 13.1063C13.6675 12.5476 13.9813 11.7898 13.9813 10.9997C13.9813 10.2096 13.6675 9.45179 13.1088 8.89309C12.5501 8.33438 11.7923 8.02051 11.0022 8.02051Z" fill="black"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M6.2071 2.82528C9.39347 2.4723 12.6091 2.4723 15.7954 2.82528C17.5362 3.01962 18.9396 4.39003 19.144 6.1372C19.5216 9.36815 19.5216 12.6321 19.144 15.863C18.9396 17.6102 17.5362 18.9806 15.7964 19.1759C12.6097 19.5289 9.39377 19.5289 6.2071 19.1759C4.46635 18.9806 3.06294 17.6102 2.85852 15.8639C2.48084 12.6327 2.48084 9.36845 2.85852 6.1372C3.06294 4.39003 4.46635 3.01962 6.2071 2.82528ZM15.5846 5.50012C15.3415 5.50012 15.1083 5.59669 14.9364 5.7686C14.7645 5.94051 14.6679 6.17367 14.6679 6.41678C14.6679 6.6599 14.7645 6.89306 14.9364 7.06496C15.1083 7.23687 15.3415 7.33345 15.5846 7.33345C15.8277 7.33345 16.0609 7.23687 16.2328 7.06496C16.4047 6.89306 16.5013 6.6599 16.5013 6.41678C16.5013 6.17367 16.4047 5.94051 16.2328 5.7686C16.0609 5.59669 15.8277 5.50012 15.5846 5.50012ZM6.6471 11.0001C6.6471 9.84532 7.10584 8.73782 7.92241 7.92126C8.73897 7.10469 9.84647 6.64595 11.0013 6.64595C12.1561 6.64595 13.2636 7.10469 14.0801 7.92126C14.8967 8.73782 15.3554 9.84532 15.3554 11.0001C15.3554 12.1549 14.8967 13.2624 14.0801 14.079C13.2636 14.8955 12.1561 15.3543 11.0013 15.3543C9.84647 15.3543 8.73897 14.8955 7.92241 14.079C7.10584 13.2624 6.6471 12.1549 6.6471 11.0001Z" fill="black"/>
+            </svg>
+          </a>
+          <a href="https://www.tiktok.com/@bashawatqtr" class="mobile-social-icon" target="_blank" rel="noopener noreferrer" title="TikTok">
+            <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#clip0_425_76459)">
+                <path d="M14.9963 5.63352C14.4028 4.95574 14.0757 4.08547 14.0757 3.18457H11.3923V13.953C11.3721 14.5359 11.1262 15.0881 10.7065 15.4931C10.2869 15.8982 9.72634 16.1244 9.14312 16.124C7.90996 16.124 6.88522 15.1167 6.88522 13.8661C6.88522 12.3725 8.3268 11.2522 9.8118 11.7125V8.96825C6.81575 8.56878 4.19312 10.8961 4.19312 13.8661C4.19312 16.758 6.58996 18.8161 9.13443 18.8161C11.8613 18.8161 14.0757 16.6017 14.0757 13.8661V8.40378C15.1639 9.18523 16.4703 9.6045 17.81 9.6022V6.91878C17.81 6.91878 16.1773 6.99694 14.9963 5.63352Z" fill="black"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_425_76459">
+                  <rect width="22" height="22" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1799,6 +1831,7 @@ body.rtl .menu-items-container {
   flex-direction: column;
   flex: 1;
   background: #fff;
+  overflow-y: auto;
 }
 
 .mobile-drawer-lang-header {
@@ -1855,6 +1888,61 @@ body.rtl .menu-items-container {
 .mobile-drawer-menu-items {
   display: flex;
   flex-direction: column;
+  flex: 1;
+}
+
+.mobile-drawer-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+  background: white;
+  margin-top: auto;
+}
+
+.mobile-drawer-social-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: #000;
+  text-decoration: none;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.mobile-social-icon:hover {
+  background-color: #f9f9f9;
+}
+
+.mobile-social-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-drawer-follow-text {
+  font-family: 'Almarai', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #F00E0C;
+}
+
+.mobile-drawer.rtl .mobile-drawer-footer {
+  flex-direction: row-reverse;
+}
+
+.mobile-drawer.ltr .mobile-drawer-footer {
+  flex-direction: row;
 }
 
 .mobile-drawer-menu-item {
@@ -2142,9 +2230,9 @@ body.rtl .menu-items-container {
     display: flex;
   }
   
-  .menu-items-container {
-    display: none;
-  }
+  // .menu-items-container {
+  //   display: none;
+  // }
   
   .menu-toggle-label {
     font-size: 13px;
@@ -2196,6 +2284,17 @@ body.rtl .menu-items-container {
 }
 
 @media (max-width: 480px) {
+  .top-bar-hide-mobile {
+    display: none;
+  }
+  
+  .navbar-content {
+    padding: 0 8px;
+  }
+}
+
+/* Ensure screens less than 400px use the same styles as 400px */
+@media (max-width: 400px) {
   .top-bar-hide-mobile {
     display: none;
   }
@@ -2487,6 +2586,22 @@ html[dir="rtl"] .footer-bottom-content {
   }
 }
 
+/* Ensure screens less than 400px use the same styles as 400px */
+@media (max-width: 400px) {
+  .footer-content-wrapper {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .footer-categories-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .footer-social-icons {
+    justify-content: flex-start;
+  }
+}
+
 /* Newsletter Section */
 .newsletter-section {
   padding: 1.5rem;
@@ -2660,6 +2775,25 @@ html[dir="rtl"] .footer-bottom-content {
 }
 
 @media (max-width: 480px) {
+  .newsletter-input {
+    padding-left: 130px;
+    font-size: 0.8rem;
+    height: 55px;
+  }
+  
+  .newsletter-button {
+    width: 120px;
+    font-size: 0.78rem;
+    left: 6px;
+  }
+  
+  .newsletter-title {
+    font-size: 1rem;
+  }
+}
+
+/* Ensure screens less than 400px use the same styles as 400px */
+@media (max-width: 400px) {
   .newsletter-input {
     padding-left: 130px;
     font-size: 0.8rem;
