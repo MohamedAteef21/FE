@@ -156,7 +156,7 @@ interface ProductVariant {
             <div class="product-name">{{ product.nameAr }}</div>
             <div class="product-details">
               <div class="product-price">السعر للواحدة: <span class="profit-value">{{ formatCurrency(product.basePrice) }}</span></div>
-              <div class="product-sales">المبيعات: <span class="profit-value">{{ formatCurrency(parseFloat(getProductSales(product))) }}</span></div>
+              <div class="product-sales">المبيعات: <span class="profit-value">{{ formatCurrency(getProductSales(product)) }}</span></div>
               <div class="product-profit">النسبة من اجمالي الربح: <span class="profit-value">{{ getProductProfitPercentage(product) }}%</span></div>
             </div>
             <div class="product-menu">
@@ -876,9 +876,9 @@ export class ProductsManagementComponent implements OnInit {
     return (this.pageIndex * this.pageSize) + index + 1;
   }
 
-  getProductSales(product: Product): string {
+  getProductSales(product: Product): number {
     // Mock sales calculation - replace with actual calculation
-    return (product.basePrice * 1000).toLocaleString();
+    return product.basePrice * 1000;
   }
 
   getProductProfitPercentage(product: Product): string {
