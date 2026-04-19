@@ -184,11 +184,14 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
       </section>
     </div>
     <section class="vision-section">
-      <img
-        src="assets/BashwatVision.png"
-        alt="Bashwat Vision"
-        class="vision-image"
-      />
+      <picture>
+        <source media="(max-width: 767px)" srcset="assets/FrameForMob.png" />
+        <img
+          src="assets/BashwatVision.png"
+          alt="Bashwat Vision"
+          class="vision-image"
+        />
+      </picture>
     </section>
   `,
   styles: [
@@ -513,6 +516,10 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
         width: 100%;
         padding: 0;
         margin: 0;
+      }
+      .vision-section picture {
+        display: block;
+        width: 100%;
       }
       .vision-image {
         width: 100%;
