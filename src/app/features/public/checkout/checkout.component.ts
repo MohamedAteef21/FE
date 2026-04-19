@@ -16,6 +16,23 @@ import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../models/auth.model';
 import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
 
+/** Unicode letters only; words separated by a single space. No digits or special characters. */
+const CHECKOUT_NAME_PATTERN = /^[\p{L}]+(?: [\p{L}]+)*$/u;
+
+const CHECKOUT_NAME_VALIDATORS = [
+  Validators.required,
+  Validators.pattern(CHECKOUT_NAME_PATTERN),
+];
+
+/** Digits only (phone may start with 0); at least 7 digits. */
+const CHECKOUT_PHONE_PATTERN = /^\d+$/;
+const CHECKOUT_PHONE_MIN_LENGTH = 7;
+const CHECKOUT_PHONE_VALIDATORS = [
+  Validators.required,
+  Validators.pattern(CHECKOUT_PHONE_PATTERN),
+  Validators.minLength(CHECKOUT_PHONE_MIN_LENGTH),
+];
+
 @Component({
   selector: 'app-checkout',
   standalone: true,
@@ -140,10 +157,10 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                       <h3 class="section-title">{{ 'CHECKOUT.DELIVERY_DATE' | translate }}</h3>
                       <div class="radio-group">
                         <mat-radio-group formControlName="deliveryDateOption">
-                          <mat-radio-button value="today" class="radio-option radio-option-transparent">
+                          <mat-radio-button value="today" class="radio-option">
                             {{ 'CHECKOUT.TODAY_90_MINUTES' | translate }}
                           </mat-radio-button>
-                          <mat-radio-button value="choose" class="radio-option radio-option-transparent">
+                          <mat-radio-button value="choose" class="radio-option">
                             {{ 'CHECKOUT.CHOOSE_DATE' | translate }}
                             <span style="padding-inline: .5rem;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="calendar-icon">
@@ -161,12 +178,18 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                           </mat-radio-button>
                         </mat-radio-group>
                       </div>
-                      <input 
-                        *ngIf="checkoutForm.get('deliveryDateOption')?.value === 'choose'" 
+                      <div class="form-group full-width" *ngIf="checkoutForm.get('deliveryDateOption')?.value === 'choose'">
+                        <input 
                         type="date" 
                         formControlName="selectedDate"
                         class="date-input"
-                        [min]="minDate" />
+                        [class.field-invalid-input]="shouldShowFieldError('selectedDate')"
+                        [min]="minDate"
+                        id="selectedDate" />
+                        <div class="field-error" *ngIf="shouldShowFieldError('selectedDate') && checkoutForm.get('selectedDate')?.errors?.['required']">
+                          {{ 'CHECKOUT.SELECTED_DATE_REQUIRED' | translate }}
+                        </div>
+                      </div>
                     </div>
 
                     <!-- Customer Details -->
@@ -174,7 +197,7 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                       <h3 class="section-title">{{ 'CHECKOUT.CUSTOMER_DETAILS' | translate }}</h3>
                       <div class="form-row">
                         <div class="form-group">
-                          <div class="float-label-wrapper">
+                          <div class="float-label-wrapper" [class.field-invalid]="shouldShowFieldError('firstName')">
                             <input 
                               type="text" 
                               formControlName="firstName" 
@@ -183,9 +206,13 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                               id="firstName" />
                             <label for="firstName">{{ 'CHECKOUT.FIRST_NAME' | translate }}<span class="required-asterisk">*</span></label>
                           </div>
+                          <div class="field-error" *ngIf="shouldShowFieldError('firstName')">
+                            <span *ngIf="checkoutForm.get('firstName')?.errors?.['required']">{{ 'CHECKOUT.FIRST_NAME_REQUIRED' | translate }}</span>
+                            <span *ngIf="checkoutForm.get('firstName')?.errors?.['pattern'] && !checkoutForm.get('firstName')?.errors?.['required']">{{ 'CHECKOUT.NAME_LETTERS_ONLY' | translate }}</span>
+                          </div>
                         </div>
                         <div class="form-group">
-                          <div class="float-label-wrapper">
+                          <div class="float-label-wrapper" [class.field-invalid]="shouldShowFieldError('lastName')">
                             <input 
                               type="text" 
                               formControlName="lastName" 
@@ -194,24 +221,34 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                               id="lastName" />
                             <label for="lastName">{{ 'CHECKOUT.LAST_NAME' | translate }}<span class="required-asterisk">*</span></label>
                           </div>
-                        </div>
-                      </div>
-                      <div class="form-row">
-                        <div class="form-group full-width">
-                          <div class="float-label-wrapper">
-                            <input 
-                              type="tel" 
-                              formControlName="phone" 
-                              class="form-input" 
-                              [placeholder]="getPlaceholder('CHECKOUT.PHONE' | translate)"
-                              id="phone" />
-                            <label for="phone">{{ 'CHECKOUT.PHONE' | translate }}<span class="required-asterisk">*</span></label>
+                          <div class="field-error" *ngIf="shouldShowFieldError('lastName')">
+                            <span *ngIf="checkoutForm.get('lastName')?.errors?.['required']">{{ 'CHECKOUT.LAST_NAME_REQUIRED' | translate }}</span>
+                            <span *ngIf="checkoutForm.get('lastName')?.errors?.['pattern'] && !checkoutForm.get('lastName')?.errors?.['required']">{{ 'CHECKOUT.NAME_LETTERS_ONLY' | translate }}</span>
                           </div>
                         </div>
                       </div>
                       <div class="form-row">
                         <div class="form-group full-width">
-                          <div class="float-label-wrapper">
+                          <div class="float-label-wrapper" [class.field-invalid]="shouldShowFieldError('phone')">
+                            <input 
+                              type="tel" 
+                              formControlName="phone" 
+                              inputmode="numeric"
+                              autocomplete="tel-national"
+                              class="form-input" 
+                              [placeholder]="getPlaceholder('CHECKOUT.PHONE' | translate)"
+                              id="phone" />
+                            <label for="phone">{{ 'CHECKOUT.PHONE' | translate }}<span class="required-asterisk">*</span></label>
+                          </div>
+                          <div class="field-error" *ngIf="shouldShowFieldError('phone')">
+                            <span *ngIf="checkoutForm.get('phone')?.errors?.['required']">{{ 'CHECKOUT.PHONE_REQUIRED' | translate }}</span>
+                            <span *ngIf="!checkoutForm.get('phone')?.errors?.['required'] && (checkoutForm.get('phone')?.errors?.['pattern'] || checkoutForm.get('phone')?.errors?.['minlength'])">{{ 'CHECKOUT.PHONE_POSITIVE_DIGITS_ONLY' | translate }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group full-width">
+                          <div class="float-label-wrapper" [class.field-invalid]="shouldShowFieldError('email')">
                             <input 
                               type="email" 
                               formControlName="email" 
@@ -219,6 +256,10 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                               [placeholder]="getPlaceholder('CHECKOUT.EMAIL' | translate)"
                               id="email" />
                             <label for="email">{{ 'CHECKOUT.EMAIL' | translate }}<span class="required-asterisk">*</span></label>
+                          </div>
+                          <div class="field-error" *ngIf="shouldShowFieldError('email')">
+                            <span *ngIf="checkoutForm.get('email')?.errors?.['required']">{{ 'CHECKOUT.EMAIL_REQUIRED' | translate }}</span>
+                            <span *ngIf="checkoutForm.get('email')?.errors?.['email'] && !checkoutForm.get('email')?.errors?.['required']">{{ 'CHECKOUT.EMAIL_INVALID' | translate }}</span>
                           </div>
                         </div>
                       </div>
@@ -228,9 +269,10 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                     <div class="form-section" *ngIf="!isAuthenticated">
                       <div class="create-account-section">
                         <div *ngIf="!createAccount" class="create-account-unchecked" (click)="toggleCreateAccount()">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="terms-checkmark">
-                            <path d="M20 12V18C20 18.5304 19.7893 19.0391 19.4142 19.4142C19.0391 19.7893 18.5304 20 18 20H6C5.46957 20 4.96086 19.7893 4.58579 19.4142C4.21071 19.0391 4 18.5304 4 18V6C4 5.46957 4.21071 4.96086 4.58579 4.58579C4.96086 4.21071 5.46957 4 6 4H15" stroke="#808080" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
+
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20 12V18C20 18.5304 19.7893 19.0391 19.4142 19.4142C19.0391 19.7893 18.5304 20 18 20H6C5.46957 20 4.96086 19.7893 4.58579 19.4142C4.21071 19.0391 4 18.5304 4 18V6C4 5.46957 4.21071 4.96086 4.58579 4.58579C4.96086 4.21071 5.46957 4 6 4H15" stroke="#808080" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
                           <span class="terms-label">{{ 'CHECKOUT.CREATE_ACCOUNT' | translate }}</span>
                         </div>
                         <div *ngIf="createAccount" class="create-account-checked" (click)="toggleCreateAccount()">
@@ -244,7 +286,7 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                       </div>
                       <div *ngIf="createAccount" class="form-row">
                         <div class="form-group full-width">
-                          <div class="float-label-wrapper">
+                          <div class="float-label-wrapper" [class.field-invalid]="shouldShowFieldError('password')">
                             <input 
                               type="password" 
                               formControlName="password" 
@@ -252,6 +294,9 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                               [placeholder]="getPlaceholder('CHECKOUT.PASSWORD' | translate)"
                               id="password" />
                             <label for="password">{{ 'CHECKOUT.PASSWORD' | translate }}<span class="required-asterisk">*</span></label>
+                          </div>
+                          <div class="field-error" *ngIf="shouldShowFieldError('password') && checkoutForm.get('password')?.errors?.['required']">
+                            {{ 'CHECKOUT.PASSWORD_REQUIRED' | translate }}
                           </div>
                         </div>
                       </div>
@@ -263,7 +308,7 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                       <!-- City -->
                       <div class="form-row">
                         <div class="form-group full-width">
-                          <div class="float-label-wrapper">
+                          <div class="float-label-wrapper" [class.field-invalid]="shouldShowFieldError('city')">
                             <select formControlName="city" class="form-input form-select" id="city"
                               [class.has-value]="checkoutForm.get('city')?.value"
                               [disabled]="citiesLoading">
@@ -276,12 +321,15 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                             </select>
                             <label for="city">{{ 'CHECKOUT.CITY' | translate }}<span class="required-asterisk">*</span></label>
                           </div>
+                          <div class="field-error" *ngIf="shouldShowFieldError('city') && checkoutForm.get('city')?.errors?.['required']">
+                            {{ 'CHECKOUT.CITY_REQUIRED' | translate }}
+                          </div>
                         </div>
                       </div>
                       <!-- District (populated after city is chosen) -->
                       <div class="form-row">
                         <div class="form-group full-width">
-                          <div class="float-label-wrapper">
+                          <div class="float-label-wrapper" [class.field-invalid]="shouldShowFieldError('district')">
                             <select formControlName="district" class="form-input form-select" id="district"
                               [class.has-value]="checkoutForm.get('district')?.value"
                               [disabled]="!filteredDistricts.length">
@@ -291,6 +339,9 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
                               </option>
                             </select>
                             <label for="district">{{ 'CHECKOUT.DISTRICT' | translate }}<span class="required-asterisk">*</span></label>
+                          </div>
+                          <div class="field-error" *ngIf="shouldShowFieldError('district') && checkoutForm.get('district')?.errors?.['required']">
+                            {{ 'CHECKOUT.DISTRICT_REQUIRED' | translate }}
                           </div>
                         </div>
                       </div>
@@ -1190,6 +1241,25 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
       padding-left: 40px;
     }
 
+    .field-error {
+      font-family: 'Almarai', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: #c62828;
+      margin-top: 0.25rem;
+      padding-inline: 4px;
+      line-height: 1.35;
+    }
+
+    .float-label-wrapper.field-invalid .form-input,
+    .float-label-wrapper.field-invalid .form-select {
+      border-color: #c62828;
+    }
+
+    .date-input.field-invalid-input {
+      border-color: #c62828;
+    }
+
     .validation-messages {
       margin-top: 1rem;
       margin-bottom: 0.5rem;
@@ -1439,7 +1509,7 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto;
+      margin: 1rem auto;
     }
 
     .success-title {
@@ -1447,7 +1517,7 @@ import { AuthRequiredDialogComponent } from './auth-required-dialog.component';
       font-weight: 700;
       font-size: 1.5rem;
       color: #F00E0C;
-      margin: 0;
+      margin: 1rem;
       text-align: center;
     }
 
@@ -1549,6 +1619,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   checkoutForm!: FormGroup;
   isAuthenticated: boolean = false;
   isSubmitting: boolean = false;
+  /** After submit attempt, show field errors even before blur. */
+  checkoutSubmitAttempted = false;
   currentUser: User | null = null;
   private authSubscription?: Subscription;
   private langChangeSubscription?: Subscription;
@@ -1585,9 +1657,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       deliveryMethod: ['home', Validators.required],
       deliveryDateOption: ['today', Validators.required],
       selectedDate: [''],
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      phone: ['', Validators.required],
+      firstName: ['', CHECKOUT_NAME_VALIDATORS],
+      lastName: ['', CHECKOUT_NAME_VALIDATORS],
+      phone: ['', CHECKOUT_PHONE_VALIDATORS],
       email: ['', [Validators.required, Validators.email]],
       city: ['', Validators.required],
       district: ['', Validators.required],
@@ -1737,9 +1809,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       emailControl?.clearValidators();
     } else {
       // Add validators for non-logged-in users
-      firstNameControl?.setValidators([Validators.required]);
-      lastNameControl?.setValidators([Validators.required]);
-      phoneControl?.setValidators([Validators.required]);
+      firstNameControl?.setValidators(CHECKOUT_NAME_VALIDATORS);
+      lastNameControl?.setValidators(CHECKOUT_NAME_VALIDATORS);
+      phoneControl?.setValidators(CHECKOUT_PHONE_VALIDATORS);
       emailControl?.setValidators([Validators.required, Validators.email]);
     }
 
@@ -1865,12 +1937,25 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return `${key} *`;
   }
 
+  shouldShowFieldError(controlName: string): boolean {
+    const c = this.checkoutForm.get(controlName);
+    if (!c || !c.invalid) {
+      return false;
+    }
+    return !!(c.touched || c.dirty || this.checkoutSubmitAttempted);
+  }
+
   getFinalTotal(cart: Cart): number {
     return cart.subtotal + this.deliveryFees - this.appliedDiscount;
   }
 
   submitOrder(): void {
-    if (!this.checkoutForm.valid || !this.termsAccepted || this.isSubmitting) {
+    if (this.isSubmitting) {
+      return;
+    }
+    if (!this.checkoutForm.valid || !this.termsAccepted) {
+      this.checkoutSubmitAttempted = true;
+      this.checkoutForm.markAllAsTouched();
       return;
     }
 
@@ -2080,43 +2165,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       messages.push(this.translate.instant('CHECKOUT.DELIVERY_DATE_REQUIRED'));
     }
 
-    // Check selected date if "choose" is selected
-    if (form.get('deliveryDateOption')?.value === 'choose' && !form.get('selectedDate')?.value) {
-      messages.push(this.translate.instant('CHECKOUT.SELECTED_DATE_REQUIRED'));
-    }
-
-    // Check customer details for non-authenticated users
-    if (!this.isAuthenticated) {
-      if (form.get('firstName')?.invalid) {
-        messages.push(this.translate.instant('CHECKOUT.FIRST_NAME_REQUIRED'));
-      }
-      if (form.get('lastName')?.invalid) {
-        messages.push(this.translate.instant('CHECKOUT.LAST_NAME_REQUIRED'));
-      }
-      if (form.get('phone')?.invalid) {
-        messages.push(this.translate.instant('CHECKOUT.PHONE_REQUIRED'));
-      }
-      if (form.get('email')?.invalid) {
-        if (form.get('email')?.errors?.['required']) {
-          messages.push(this.translate.instant('CHECKOUT.EMAIL_REQUIRED'));
-        } else if (form.get('email')?.errors?.['email']) {
-          messages.push(this.translate.instant('CHECKOUT.EMAIL_INVALID'));
-        }
-      }
-      if (this.createAccount && form.get('password')?.invalid) {
-        messages.push(this.translate.instant('CHECKOUT.PASSWORD_REQUIRED'));
-      }
-    }
-
-    // Check delivery address (only for home delivery)
-    if (form.get('deliveryMethod')?.value === 'home') {
-      if (form.get('city')?.invalid) {
-        messages.push(this.translate.instant('CHECKOUT.CITY_REQUIRED'));
-      }
-      if (form.get('district')?.invalid) {
-        messages.push(this.translate.instant('CHECKOUT.DISTRICT_REQUIRED'));
-      }
-    }
+    /* Selected date, customer fields, city/district: errors shown under each control */
 
     // Check payment method
     if (!form.get('paymentMethod')?.value) {

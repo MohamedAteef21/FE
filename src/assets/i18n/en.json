@@ -29,6 +29,21 @@
     "BANNER_DISCOUNT": "15% Discount",
     "BANNER_TEXT": "On Royal Mix Falafel Sandwich"
   },
+  "ABOUT": {
+    "BANNER_TITLE": "About Us",
+    "BANNER_ALT": "Al Bashawat Restaurant",
+    "BRAND_TITLE": "Al Bashawat",
+    "INTRO_P1": "Since 1995 in Doha, Al Bashawat has pursued success and excellence in dining. We are committed to serving the finest authentic Eastern and Egyptian cuisine, with a focus on quality and genuine flavor in every meal we serve.",
+    "INTRO_P2": "We aim to be your first choice for families on occasions and gatherings. We offer a varied menu of delicious dishes, using the freshest ingredients and special offers to suit every taste.",
+    "INTRO_P3": "We pay attention to the smallest details in preparation and presentation to give you an unforgettable dining experience. Al Bashawat—taste worthy of the occasion.",
+    "VALUES_TITLE": "Our Values",
+    "VALUE_QUALITY": "Quality",
+    "VALUE_TRUST": "Trust",
+    "VALUE_TASTE": "Taste",
+    "GOAL_TITLE": "Our Goal",
+    "GOAL_TEXT": "To serve the finest authentic Eastern and Egyptian cuisine—every cuisine has its roots, and Al Bashawat is the heart of Eastern dining in Qatar. We care about every detail to bring you an authentically Eastern experience from breakfast through lunch and dinner, for all your gatherings and celebrations.",
+    "GOAL_IMAGE_ALT": "Al Bashawat dishes"
+  },
   "CART": {
     "TITLE": "Cart",
     "EMPTY_CART": "Your cart is empty",
@@ -102,7 +117,9 @@
     "SELECTED_DATE_REQUIRED": "Please select a delivery date.",
     "FIRST_NAME_REQUIRED": "First name is required.",
     "LAST_NAME_REQUIRED": "Last name is required.",
+    "NAME_LETTERS_ONLY": "Names may contain letters only. Numbers and special characters are not allowed.",
     "PHONE_REQUIRED": "Phone number is required.",
+    "PHONE_POSITIVE_DIGITS_ONLY": "Enter digits only, at least 7 digits (no spaces or symbols). Phone numbers may start with 0.",
     "EMAIL_REQUIRED": "Email is required.",
     "EMAIL_INVALID": "Please enter a valid email address.",
     "PASSWORD_REQUIRED": "Password is required.",
@@ -143,12 +160,6 @@
     "AL_WUKAIR": "Al Wukair",
     "AL_WAKRA": "Al Wakra"
   },
-  "ABOUT": {
-    "TITLE": "About Us",
-    "DESCRIPTION_1": "Welcome to our restaurant! We are passionate about serving delicious, high-quality food made with fresh ingredients and traditional recipes.",
-    "DESCRIPTION_2": "Our mission is to provide an exceptional dining experience that combines great food, excellent service, and a warm, welcoming atmosphere.",
-    "DESCRIPTION_3": "Founded in 2020, we have been serving our community with dedication and love for food."
-  },
   "CONTACT": {
     "TITLE": "Contact Us",
     "GET_IN_TOUCH": "Get in Touch",
@@ -177,7 +188,7 @@
     "FOLLOW_US": "Follow Us",
     "ABOUT_COMPANY": "About the Company",
     "HELP_CENTER": "Help Center",
-    "SHIPPING_DELIVERY": "Shipping and Delivery",
+    "SHIPPING_DELIVERY": "Shipping, Cancellation and Return Policy",
     "CATEGORIES": "Categories",
     "CATEGORY_EGYPTIAN_CASSEROLES": "Egyptian Casseroles",
     "CATEGORY_SOUP": "Soup",

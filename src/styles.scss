@@ -233,10 +233,15 @@ html {
 
 
 
-.newsletter-content{
-  flex-direction: column-reverse !important;
-        text-align: center !important;
-        display: flex !important;
+.newsletter-content {
+  text-align: center !important;
+  display: flex !important;
+}
+
+@media (max-width: 767px) {
+  .newsletter-content {
+    flex-direction: column-reverse !important;
+  }
 }
 nav.breadcrumb-nav{
       display: flex !important;
@@ -279,14 +284,6 @@ section.newsletter-section.ng-star-inserted{
 
 
  // responsive media query
-@media (min-width: 0px) and (max-width: 992px) { 
-.footer-logo-1{
-  display: none !important;
-}
-
-}
-
-
 @media (min-width: 100px) and (max-width: 768px) { 
   .navbar-right{
     display: flex !important;
@@ -310,34 +307,41 @@ section.newsletter-section.ng-star-inserted{
  .menu-toggle{
   display:flex !important;
  }
- .footer-column.footer-contact ,.footer-contact-info,.footer-column.footer-social,.footer-column.footer-categories,.footer-column.footer-about{
-    display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        align-content: center !important;
-        width: 100% !important;
-        font-weight: 600;
+ .footer-main-content{
+  padding-top: 65px;
  }
- .footer-categories-grid{
+ .footer-layout-mobile .footer-logo-1 {
+  display: none !important;
+ }
+ .footer-layout-mobile .footer-column.footer-contact,
+ .footer-layout-mobile .footer-contact-info,
+ .footer-layout-mobile .footer-column.footer-social,
+ .footer-layout-mobile .footer-column.footer-categories,
+ .footer-layout-mobile .footer-column.footer-about {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    align-content: center !important;
+    width: 100% !important;
+    font-weight: 600;
+ }
+ .footer-layout-mobile .footer-categories-grid {
     display: flex !important;
     flex-direction: column;
     align-items: center;
     align-content: center;
     justify-content: center;
  }
- .footer-links{
+ .footer-layout-mobile .footer-links {
   display: flex !important;
   align-items: center !important;
-    justify-content: center !important;
+  justify-content: center !important;
  }
- .footer-main-content{
-  padding-top: 65px;
- }
- .footer-logo img{
+ .footer-layout-mobile .footer-logo img {
       width: 200px !important;
     height: 230px !important;
  }
- .footer-logo{
+ .footer-layout-mobile .footer-logo {
   margin-bottom: 0 !important;
  }
 
@@ -348,71 +352,6 @@ section.newsletter-section.ng-star-inserted{
  }
  }
 
- @media (min-width: 769px) and (max-width: 992px) {
-   .footer-column.footer-contact ,.footer-contact-info,.footer-column.footer-social,.footer-column.footer-categories,.footer-column.footer-about{
-    display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        align-content: center !important;
-        width: 100% !important;
-        font-weight: 600;
- }
- .footer-categories-grid{
-    display: flex !important;
-    flex-direction: column;
-    align-items: center;
-    align-content: center;
-    justify-content: center;
- }
- .footer-links{
-  display: flex !important;
-  align-items: center !important;
-    justify-content: center !important;
- }
- }
-
-
-
-@media (min-width: 992px) and (max-width: 3000px) {
-.footer-logo {
-    display: none !important;
-}
-.footer-logo-1{
-  width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.footer-logo-1 img{
-    width: 190px;
-}
-.footer-column.footer-about {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-.footer-column.footer-categories{
-      display: flex !important;
-    align-items: center !important; 
-    justify-content: center !important;
-}
-.footer-column.footer-social{
-        display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-.footer-column.footer-contact{
-          display: flex !important; 
-    align-items: center !important;
-    justify-content: center !important;
-}
-.footer-contact-info {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-}
 
 
  @media (min-width: 769px) and (max-width: 2000px) { 

@@ -19,8 +19,13 @@ import { Router } from '@angular/router';
       <div class="dialog-header row">
 
         <div class="header-content col-10 co-sm-10 col-md-10 col-lg-10 col-xl-10 col-xxl-10" style="display: flex;align-items: flex-start;justify-content: flex-start;flex-direction: column;">
-          <h2 class="dialog-title">سله التسوق</h2>
-          <span class="item-count">{{ (cart$ | async)?.items?.length || 0 }} صنف</span>
+          <h2 class="dialog-title">{{ 'CART_DIALOG.SHOPPING_CART' | translate }}</h2>
+          <ng-container *ngIf="cart$ | async as cart">
+            <span class="item-count">
+              {{ cart?.items?.length || 0 }}
+              {{ ((cart?.items?.length || 0) === 1 ? 'CART_DIALOG.ITEM_COUNT' : 'CART_DIALOG.ITEMS_COUNT') | translate }}
+            </span>
+          </ng-container>
         </div>
 
         <button class="col-2 co-sm-2 col-md-2 col-lg-2 col-xl-2 col-xxl-2" mat-icon-button class="close-btn" (click)="close()" >
@@ -123,7 +128,10 @@ import { Router } from '@angular/router';
           </div>
         </div>
       </div>
+      </div>
 
+      <!-- Sticky footer: discount, total, checkout (stays visible while list scrolls) -->
+      <div class="cart-dialog-footer">
       <!-- Discount Code Section -->
       <div class="discount-section">
         <div class="discount-input-group">
@@ -164,6 +172,7 @@ import { Router } from '@angular/router';
       width: 100%;
       max-width: 500px;
       max-height: 90vh;
+      min-height: 0;
       background: white;
       border-radius: 15px;
       display: flex;
@@ -173,11 +182,20 @@ import { Router } from '@angular/router';
     }
 
     .dialog-scrollable-content {
-      flex: 1;
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
+    }
+
+    .cart-dialog-footer {
+      flex-shrink: 0;
+      background: #ffffff;
+      border-top: 1px solid #e0e0e0;
+      box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.06);
+      z-index: 2;
     }
 
     .dialog-scrollable-content::-webkit-scrollbar {
@@ -446,7 +464,6 @@ import { Router } from '@angular/router';
 
     .discount-section {
       padding: 1rem;
-      border-top: 1px solid #E0E0E0;
       border-bottom: 1px solid #E0E0E0;
     }
 

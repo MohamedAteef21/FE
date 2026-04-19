@@ -176,6 +176,7 @@ import { Branch } from '../models/branch.model';
           <i class="fas fa-headset"></i>
           {{ 'LAYOUT.CONTACT_US' | translate }} {{ getContactPhone() }}
         </span>
+        <span class="divider top-bar-hide-mobile">| |</span>
         <span class="top-bar-hide-mobile">{{ 'LAYOUT.FAQ' | translate }}</span>
         <span class="divider top-bar-hide-mobile">| |</span>
         <span class="top-bar-hide-mobile">{{ 'LAYOUT.BLOGS' | translate }}</span>
@@ -485,22 +486,26 @@ import { Branch } from '../models/branch.model';
       </div>
     </section>
         
-        <!-- Main Content Area -->
+        <!-- Main Content Area: desktop grid ≥768px, legacy Bootstrap stack <768px -->
         <div class="footer-main-content">
-      <div class="footer-logo-1">
-                <img src="assets/Bashwat-logo.png" alt="Al Bashawat Logo" />
+          <div class="footer-layout-desktop">
+          <div class="footer-content-wrapper">
+            <div class="footer-column footer-social">
+              <h3 class="footer-heading">{{ 'FOOTER.FOLLOW_US' | translate }}</h3>
+              <div class="footer-social-icons">
+                <a href="https://web.facebook.com/bashawatqtr" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Facebook" (click)="openSocialLink('https://web.facebook.com/bashawatqtr', $event)">
+                  <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Instagram" (click)="openSocialLink('https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu', $event)">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://www.tiktok.com/@al.bashawat.resta" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="TikTok" (click)="openSocialLink('https://www.tiktok.com/@al.bashawat.resta', $event)">
+                  <i class="fab fa-tiktok"></i>
+                </a>
               </div>
-
-          <div class="row">
-
-
-<div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
+            </div>
 
             <div class="footer-column footer-about">
-      <div class="footer-logo">
-                <img src="assets/Bashwat-logo.png" alt="Al Bashawat Logo" />
-              </div>
-
               <h3 class="footer-heading">{{ 'FOOTER.ABOUT_COMPANY' | translate }}</h3>
               <ul class="footer-links">
                 <li><a routerLink="/about">{{ 'NAV.ABOUT' | translate }}</a></li>
@@ -509,12 +514,11 @@ import { Branch } from '../models/branch.model';
                 <li><a routerLink="/shipping-policy">{{ 'FOOTER.SHIPPING_DELIVERY' | translate }}</a></li>
               </ul>
             </div>
-</div>
-<div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6" style="padding-bottom: 1.5rem !important;">
+
             <div class="footer-column footer-categories">
               <h3 class="footer-heading">{{ 'FOOTER.CATEGORIES' | translate }}</h3>
               <div class="footer-categories-grid">
-                            <ul class="footer-links">
+                <ul class="footer-links">
                   <li *ngFor="let category of getSecondHalfCategories()">
                     <a (click)="navigateToCategory(category.id, $event)" style="cursor: pointer;">
                       <span *ngIf="currentLang === 'ar'">{{ category.nameAr }}</span>
@@ -532,43 +536,29 @@ import { Branch } from '../models/branch.model';
                 </ul>
               </div>
             </div>
-</div>
-<div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
-            <div class="footer-column footer-social">
-              <h3 class="footer-heading">{{ 'FOOTER.FOLLOW_US' | translate }}</h3>
-              <div class="footer-social-icons">
-                <a href="https://web.facebook.com/bashawatqtr" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Facebook" (click)="openSocialLink('https://web.facebook.com/bashawatqtr', $event)">
-                  <i class="fab fa-facebook-f"></i>
-                </a>
-                <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Instagram" (click)="openSocialLink('https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu', $event)">
-                  <i class="fab fa-instagram"></i>
-                </a>
-                <a href="https://www.tiktok.com/@al.bashawat.resta" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="TikTok" (click)="openSocialLink('https://www.tiktok.com/@al.bashawat.resta', $event)">
-                  <i class="fab fa-tiktok"></i>
-                </a>
-              </div>
-            </div>
-</div>
 
-<div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
             <div class="footer-column footer-contact">
-        
+              <div class="footer-contact-brand">
+                <img src="assets/Bashwat-logo.png" alt="Al Bashawat Logo" />
+              </div>
               <div class="footer-contact-info">
                 <div class="footer-contact-item">
                   <i class="fas fa-map-marker-alt"></i>
                   <span>{{ getBranchAddress() }}</span>
                 </div>
-                <div class="footer-contact-item" *ngIf="currentBranch">
-                  <i class="fas fa-phone"></i>
-                  <span>{{ getBranchPhone() }}</span>
-                </div>
-                <div class="footer-contact-item" *ngIf="!currentBranch">
-                  <i class="fas fa-phone"></i>
-                  <span>{{ 'FOOTER.PHONE_1' | translate }}</span>
-                </div>
-                <div class="footer-contact-item" *ngIf="!currentBranch">
-                  <i class="fas fa-phone"></i>
-                  <span>{{ 'FOOTER.PHONE_2' | translate }}</span>
+                <div class="footer-phone-grid">
+                  <div class="footer-contact-item" *ngIf="currentBranch">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ getBranchPhone() }}</span>
+                  </div>
+                  <div class="footer-contact-item" *ngIf="!currentBranch">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ 'FOOTER.PHONE_1' | translate }}</span>
+                  </div>
+                  <div class="footer-contact-item" *ngIf="!currentBranch">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ 'FOOTER.PHONE_2' | translate }}</span>
+                  </div>
                 </div>
                 <div class="footer-working-hours">
                   {{ getBranchWorkingHours() }}
@@ -576,16 +566,16 @@ import { Branch } from '../models/branch.model';
                 <div class="footer-payment-methods">
                   <h4 class="footer-payment-heading">{{ 'FOOTER.PAYMENT_METHODS' | translate }}</h4>
                   <div class="footer-payment-icons">
-<svg width="36" height="24" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_172_8545)">
-<path d="M33.6 24H2.4C1.76348 24 1.15303 23.7471 0.702944 23.2971C0.252856 22.847 0 22.2365 0 21.6L0 2.4C0 1.76348 0.252856 1.15303 0.702944 0.702944C1.15303 0.252856 1.76348 0 2.4 0L33.6 0C34.2365 0 34.847 0.252856 35.2971 0.702944C35.7471 1.15303 36 1.76348 36 2.4V21.6C36 22.2365 35.7471 22.847 35.2971 23.2971C34.847 23.7471 34.2365 24 33.6 24ZM17.84 14.762L17.481 17.012C18.3981 17.3994 19.3891 17.5806 20.384 17.543H20.373C21.5387 17.6108 22.693 17.2819 23.648 16.61L23.631 16.621C24.0206 16.3342 24.3374 15.9599 24.5559 15.5283C24.7744 15.0967 24.8885 14.6198 24.889 14.136V14.121C24.889 13.021 24.153 12.108 22.702 11.402C22.3062 11.2107 21.9275 10.9859 21.57 10.73L21.593 10.746C21.493 10.6816 21.4097 10.5943 21.3501 10.4914C21.2904 10.3885 21.2561 10.2728 21.25 10.154V10.152C21.2578 10.0282 21.2967 9.90844 21.3629 9.8036C21.4291 9.69876 21.5206 9.61225 21.629 9.552L21.633 9.55C21.9686 9.35613 22.3543 9.26666 22.741 9.293H22.735H22.815L22.892 9.292C23.536 9.292 24.147 9.431 24.698 9.68L24.67 9.669L24.904 9.794L25.263 7.623C24.5372 7.34058 23.7648 7.19741 22.986 7.201H22.937H22.94C21.8133 7.1519 20.7024 7.47986 19.783 8.133L19.799 8.122C19.4168 8.39157 19.1049 8.74901 18.8897 9.16422C18.6744 9.57944 18.562 10.0403 18.562 10.508V10.513C18.552 11.571 19.314 12.485 20.828 13.233C21.228 13.408 21.573 13.622 21.882 13.879L21.875 13.873C21.964 13.9482 22.0363 14.0411 22.0874 14.1458C22.1386 14.2504 22.1674 14.3646 22.172 14.481V14.485C22.172 14.804 21.982 15.078 21.708 15.201L21.703 15.203C21.403 15.361 21.047 15.453 20.669 15.453H20.623H20.625H20.55C19.693 15.453 18.881 15.263 18.153 14.923L18.188 14.938L17.845 14.766L17.84 14.762ZM27.965 15.903H31.28C31.3333 16.1317 31.4377 16.6317 31.593 17.403H34L31.906 7.372H29.906C29.62 7.34601 29.3332 7.4133 29.0886 7.56381C28.844 7.71432 28.6547 7.93996 28.549 8.207L28.546 8.216L24.706 17.403H27.426L27.972 15.904L27.965 15.903ZM14.891 7.372L13.265 17.403H15.859L17.484 7.372H14.891ZM4.922 9.419L7.032 17.387H9.766L13.841 7.372H11.095L8.561 14.216L8.295 12.825L7.391 8.216C7.34301 7.94992 7.19328 7.713 6.97356 7.55544C6.75385 7.39789 6.48141 7.33209 6.214 7.372L6.22 7.371H2.033L2.002 7.574C5.226 8.393 7.344 10.16 8.298 12.824C8.00594 12.0622 7.55376 11.372 6.972 10.8L6.971 10.799C6.40047 10.2131 5.71794 9.74785 4.964 9.431L4.924 9.416L4.922 9.419ZM30.859 13.84H28.699C28.845 13.4547 29.189 12.5213 29.731 11.04L29.777 10.899L29.937 10.493C30.0017 10.3263 30.0483 10.191 30.077 10.087L30.265 10.946L30.858 13.836L30.859 13.84Z" fill="black"/>
-</g>
-<defs>
-<clipPath id="clip0_172_8545">
-<rect width="36" height="24" fill="white"/>
-</clipPath>
-</defs>
-</svg>
+                    <svg width="36" height="24" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <g clip-path="url(#clipFooterDeskVisa)">
+                        <path d="M33.6 24H2.4C1.76348 24 1.15303 23.7471 0.702944 23.2971C0.252856 22.847 0 22.2365 0 21.6L0 2.4C0 1.76348 0.252856 1.15303 0.702944 0.702944C1.15303 0.252856 1.76348 0 2.4 0L33.6 0C34.2365 0 34.847 0.252856 35.2971 0.702944C35.7471 1.15303 36 1.76348 36 2.4V21.6C36 22.2365 35.7471 22.847 35.2971 23.2971C34.847 23.7471 34.2365 24 33.6 24ZM17.84 14.762L17.481 17.012C18.3981 17.3994 19.3891 17.5806 20.384 17.543H20.373C21.5387 17.6108 22.693 17.2819 23.648 16.61L23.631 16.621C24.0206 16.3342 24.3374 15.9599 24.5559 15.5283C24.7744 15.0967 24.8885 14.6198 24.889 14.136V14.121C24.889 13.021 24.153 12.108 22.702 11.402C22.3062 11.2107 21.9275 10.9859 21.57 10.73L21.593 10.746C21.493 10.6816 21.4097 10.5943 21.3501 10.4914C21.2904 10.3885 21.2561 10.2728 21.25 10.154V10.152C21.2578 10.0282 21.2967 9.90844 21.3629 9.8036C21.4291 9.69876 21.5206 9.61225 21.629 9.552L21.633 9.55C21.9686 9.35613 22.3543 9.26666 22.741 9.293H22.735H22.815L22.892 9.292C23.536 9.292 24.147 9.431 24.698 9.68L24.67 9.669L24.904 9.794L25.263 7.623C24.5372 7.34058 23.7648 7.19741 22.986 7.201H22.937H22.94C21.8133 7.1519 20.7024 7.47986 19.783 8.133L19.799 8.122C19.4168 8.39157 19.1049 8.74901 18.8897 9.16422C18.6744 9.57944 18.562 10.0403 18.562 10.508V10.513C18.552 11.571 19.314 12.485 20.828 13.233C21.228 13.408 21.573 13.622 21.882 13.879L21.875 13.873C21.964 13.9482 22.0363 14.0411 22.0874 14.1458C22.1386 14.2504 22.1674 14.3646 22.172 14.481V14.485C22.172 14.804 21.982 15.078 21.708 15.201L21.703 15.203C21.403 15.361 21.047 15.453 20.669 15.453H20.623H20.625H20.55C19.693 15.453 18.881 15.263 18.153 14.923L18.188 14.938L17.845 14.766L17.84 14.762ZM27.965 15.903H31.28C31.3333 16.1317 31.4377 16.6317 31.593 17.403H34L31.906 7.372H29.906C29.62 7.34601 29.3332 7.4133 29.0886 7.56381C28.844 7.71432 28.6547 7.93996 28.549 8.207L28.546 8.216L24.706 17.403H27.426L27.972 15.904L27.965 15.903ZM14.891 7.372L13.265 17.403H15.859L17.484 7.372H14.891ZM4.922 9.419L7.032 17.387H9.766L13.841 7.372H11.095L8.561 14.216L8.295 12.825L7.391 8.216C7.34301 7.94992 7.19328 7.713 6.97356 7.55544C6.75385 7.39789 6.48141 7.33209 6.214 7.372L6.22 7.371H2.033L2.002 7.574C5.226 8.393 7.344 10.16 8.298 12.824C8.00594 12.0622 7.55376 11.372 6.972 10.8L6.971 10.799C6.40047 10.2131 5.71794 9.74785 4.964 9.431L4.924 9.416L4.922 9.419ZM30.859 13.84H28.699C28.845 13.4547 29.189 12.5213 29.731 11.04L29.777 10.899L29.937 10.493C30.0017 10.3263 30.0483 10.191 30.077 10.087L30.265 10.946L30.858 13.836L30.859 13.84Z" fill="black"/>
+                      </g>
+                      <defs>
+                        <clipPath id="clipFooterDeskVisa">
+                          <rect width="36" height="24" fill="white"/>
+                        </clipPath>
+                      </defs>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -593,7 +583,106 @@ import { Branch } from '../models/branch.model';
           </div>
           </div>
 
-
+          <div class="footer-layout-mobile">
+            <div class="footer-logo-1">
+              <img src="assets/Bashwat-logo.png" alt="Al Bashawat Logo" />
+            </div>
+            <div class="row">
+              <div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
+                <div class="footer-column footer-about">
+                  <div class="footer-logo">
+                    <img src="assets/Bashwat-logo.png" alt="Al Bashawat Logo" />
+                  </div>
+                  <h3 class="footer-heading">{{ 'FOOTER.ABOUT_COMPANY' | translate }}</h3>
+                  <ul class="footer-links">
+                    <li><a routerLink="/about">{{ 'NAV.ABOUT' | translate }}</a></li>
+                    <li><a routerLink="/privacy-policy">{{ 'FOOTER.PRIVACY_POLICY' | translate }}</a></li>
+                    <li><a routerLink="/help-center">{{ 'FOOTER.HELP_CENTER' | translate }}</a></li>
+                    <li><a routerLink="/shipping-policy">{{ 'FOOTER.SHIPPING_DELIVERY' | translate }}</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6" style="padding-bottom: 1.5rem !important;">
+                <div class="footer-column footer-categories">
+                  <h3 class="footer-heading">{{ 'FOOTER.CATEGORIES' | translate }}</h3>
+                  <div class="footer-categories-grid">
+                    <ul class="footer-links">
+                      <li *ngFor="let category of getSecondHalfCategories()">
+                        <a (click)="navigateToCategory(category.id, $event)" style="cursor: pointer;">
+                          <span *ngIf="currentLang === 'ar'">{{ category.nameAr }}</span>
+                          <span *ngIf="currentLang === 'en'">{{ category.nameEn }}</span>
+                        </a>
+                      </li>
+                    </ul>
+                    <ul class="footer-links">
+                      <li *ngFor="let category of getFirstHalfCategories()">
+                        <a (click)="navigateToCategory(category.id, $event)" style="cursor: pointer;">
+                          <span *ngIf="currentLang === 'ar'">{{ category.nameAr }}</span>
+                          <span *ngIf="currentLang === 'en'">{{ category.nameEn }}</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
+                <div class="footer-column footer-social">
+                  <h3 class="footer-heading">{{ 'FOOTER.FOLLOW_US' | translate }}</h3>
+                  <div class="footer-social-icons">
+                    <a href="https://web.facebook.com/bashawatqtr" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Facebook" (click)="openSocialLink('https://web.facebook.com/bashawatqtr', $event)">
+                      <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="Instagram" (click)="openSocialLink('https://www.instagram.com/bashawatqtr?igsh=amEzdWk1Mnc0OWNu', $event)">
+                      <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="https://www.tiktok.com/@al.bashawat.resta" class="footer-social-icon" target="_blank" rel="noopener noreferrer" title="TikTok" (click)="openSocialLink('https://www.tiktok.com/@al.bashawat.resta', $event)">
+                      <i class="fab fa-tiktok"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-12 col-sm-12 col-lg-6 col-xl-6 col-xxl-6">
+                <div class="footer-column footer-contact">
+                  <div class="footer-contact-info">
+                    <div class="footer-contact-item">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <span>{{ getBranchAddress() }}</span>
+                    </div>
+                    <div class="footer-contact-item" *ngIf="currentBranch">
+                      <i class="fas fa-phone"></i>
+                      <span>{{ getBranchPhone() }}</span>
+                    </div>
+                    <div class="footer-contact-item" *ngIf="!currentBranch">
+                      <i class="fas fa-phone"></i>
+                      <span>{{ 'FOOTER.PHONE_1' | translate }}</span>
+                    </div>
+                    <div class="footer-contact-item" *ngIf="!currentBranch">
+                      <i class="fas fa-phone"></i>
+                      <span>{{ 'FOOTER.PHONE_2' | translate }}</span>
+                    </div>
+                    <div class="footer-working-hours">
+                      {{ getBranchWorkingHours() }}
+                    </div>
+                    <div class="footer-payment-methods">
+                      <h4 class="footer-payment-heading">{{ 'FOOTER.PAYMENT_METHODS' | translate }}</h4>
+                      <div class="footer-payment-icons">
+                        <svg width="36" height="24" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <g clip-path="url(#clipFooterMobileVisa)">
+                            <path d="M33.6 24H2.4C1.76348 24 1.15303 23.7471 0.702944 23.2971C0.252856 22.847 0 22.2365 0 21.6L0 2.4C0 1.76348 0.252856 1.15303 0.702944 0.702944C1.15303 0.252856 1.76348 0 2.4 0L33.6 0C34.2365 0 34.847 0.252856 35.2971 0.702944C35.7471 1.15303 36 1.76348 36 2.4V21.6C36 22.2365 35.7471 22.847 35.2971 23.2971C34.847 23.7471 34.2365 24 33.6 24ZM17.84 14.762L17.481 17.012C18.3981 17.3994 19.3891 17.5806 20.384 17.543H20.373C21.5387 17.6108 22.693 17.2819 23.648 16.61L23.631 16.621C24.0206 16.3342 24.3374 15.9599 24.5559 15.5283C24.7744 15.0967 24.8885 14.6198 24.889 14.136V14.121C24.889 13.021 24.153 12.108 22.702 11.402C22.3062 11.2107 21.9275 10.9859 21.57 10.73L21.593 10.746C21.493 10.6816 21.4097 10.5943 21.3501 10.4914C21.2904 10.3885 21.2561 10.2728 21.25 10.154V10.152C21.2578 10.0282 21.2967 9.90844 21.3629 9.8036C21.4291 9.69876 21.5206 9.61225 21.629 9.552L21.633 9.55C21.9686 9.35613 22.3543 9.26666 22.741 9.293H22.735H22.815L22.892 9.292C23.536 9.292 24.147 9.431 24.698 9.68L24.67 9.669L24.904 9.794L25.263 7.623C24.5372 7.34058 23.7648 7.19741 22.986 7.201H22.937H22.94C21.8133 7.1519 20.7024 7.47986 19.783 8.133L19.799 8.122C19.4168 8.39157 19.1049 8.74901 18.8897 9.16422C18.6744 9.57944 18.562 10.0403 18.562 10.508V10.513C18.552 11.571 19.314 12.485 20.828 13.233C21.228 13.408 21.573 13.622 21.882 13.879L21.875 13.873C21.964 13.9482 22.0363 14.0411 22.0874 14.1458C22.1386 14.2504 22.1674 14.3646 22.172 14.481V14.485C22.172 14.804 21.982 15.078 21.708 15.201L21.703 15.203C21.403 15.361 21.047 15.453 20.669 15.453H20.623H20.625H20.55C19.693 15.453 18.881 15.263 18.153 14.923L18.188 14.938L17.845 14.766L17.84 14.762ZM27.965 15.903H31.28C31.3333 16.1317 31.4377 16.6317 31.593 17.403H34L31.906 7.372H29.906C29.62 7.34601 29.3332 7.4133 29.0886 7.56381C28.844 7.71432 28.6547 7.93996 28.549 8.207L28.546 8.216L24.706 17.403H27.426L27.972 15.904L27.965 15.903ZM14.891 7.372L13.265 17.403H15.859L17.484 7.372H14.891ZM4.922 9.419L7.032 17.387H9.766L13.841 7.372H11.095L8.561 14.216L8.295 12.825L7.391 8.216C7.34301 7.94992 7.19328 7.713 6.97356 7.55544C6.75385 7.39789 6.48141 7.33209 6.214 7.372L6.22 7.371H2.033L2.002 7.574C5.226 8.393 7.344 10.16 8.298 12.824C8.00594 12.0622 7.55376 11.372 6.972 10.8L6.971 10.799C6.40047 10.2131 5.71794 9.74785 4.964 9.431L4.924 9.416L4.922 9.419ZM30.859 13.84H28.699C28.845 13.4547 29.189 12.5213 29.731 11.04L29.777 10.899L29.937 10.493C30.0017 10.3263 30.0483 10.191 30.077 10.087L30.265 10.946L30.858 13.836L30.859 13.84Z" fill="black"/>
+                          </g>
+                          <defs>
+                            <clipPath id="clipFooterMobileVisa">
+                              <rect width="36" height="24" fill="white"/>
+                            </clipPath>
+                          </defs>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <!-- Bottom Dark Red Bar -->
         <div class="footer-bottom-bar">
@@ -2316,20 +2405,94 @@ body.rtl .menu-items-container {
 }
 
 .footer-main-content {
-  background-image: url('../../assets/Frame_1321315894.png');
+  background: #FFF5CA url('../../assets/Frame36881Footer.png') no-repeat center center;
   background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   padding: 40px 20px;
 }
 
+/* Desktop (≥768px): 4-column grid; mobile (<768px): legacy Bootstrap stack */
+.footer-layout-mobile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .footer-layout-desktop {
+    display: none !important;
+  }
+
+  .footer-layout-mobile {
+    display: block !important;
+  }
+}
+
 .footer-content-wrapper {
-  max-width: 1400px;
-  margin: 0 auto;
+  // max-width: 1400px;
+  margin: 0 65px;
   display: grid;
   grid-template-columns: 1fr 1fr 1.5fr 2fr;
   gap: 40px;
   align-items: start;
+  /* Keep column order Social → Contact matching the design; text stays RTL via body */
+  direction: ltr;
+}
+
+html[dir="rtl"] .footer-content-wrapper .footer-column,
+body.rtl .footer-content-wrapper .footer-column {
+  direction: rtl;
+}
+
+html[dir="ltr"] .footer-content-wrapper .footer-column,
+body.ltr .footer-content-wrapper .footer-column {
+  direction: ltr;
+}
+
+.footer-layout-mobile .footer-logo {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.footer-layout-mobile .footer-logo img {
+  width: 100px;
+  height: 93px;
+  object-fit: contain;
+  border-radius: 50%;
+  padding: 8px;
+  display: block;
+}
+
+.footer-contact-brand {
+  display: flex;
+  justify-content: center;
+  // margin-bottom: 16px;
+}
+
+.footer-contact-brand img {
+  width: 130px;
+  height: 130px;
+  // object-fit: contain;
+  border-radius: 50%;
+  // padding: 8px;
+  // display: block;
+  position: relative;
+  left:15%
+}
+
+.footer-phone-grid {
+  display: grid;
+  // grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  width: 100%;
+}
+
+.footer-phone-grid .footer-contact-item {
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .footer-phone-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .footer-column {
@@ -2402,20 +2565,6 @@ body.rtl .menu-items-container {
   text-align: right;
 }
 
-.footer-logo {
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.footer-logo img {
-  width: 100px;
-  height: 93px;
-  object-fit: contain;
-  border-radius: 50%;
-  padding: 8px;
-  display: block;
-}
 
 .footer-contact-info {
   display: flex;
@@ -2514,91 +2663,49 @@ body.rtl .menu-items-container {
   font-weight: 400;
 }
 
-/* RTL Support for Footer */
-body.rtl .footer-content-wrapper,
-html[dir="rtl"] .footer-content-wrapper {
-  direction: rtl;
-}
+/* Footer grid column order is fixed via .footer-content-wrapper { direction: ltr } */
 
 body.rtl .footer-bottom-content,
 html[dir="rtl"] .footer-bottom-content {
   flex-direction: row-reverse;
 }
 
-/* Responsive Footer */
+/* Responsive Footer — desktop grid only */
 @media (max-width: 1200px) {
-  .footer-content-wrapper {
+  .footer-layout-desktop .footer-content-wrapper {
     grid-template-columns: 1fr 1fr;
     gap: 30px;
   }
-  
-  .footer-contact {
+
+  .footer-layout-desktop .footer-contact {
     grid-column: 1 / -1;
   }
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) and (max-width: 1200px) {
   .footer-main-content {
     padding: 24px 16px;
   }
-  
-  .footer-content-wrapper {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+}
+
+@media (max-width: 767px) {
+  .footer-main-content {
+    padding: 24px 16px;
   }
-  
-  .footer-contact {
-    grid-column: 1 / -1;
-  }
-  
-  .footer-categories-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  
+
   .footer-bottom-content {
     flex-direction: column;
     gap: 8px;
     text-align: center;
   }
-  
+
   .footer-heading {
     font-size: 15px;
     margin-bottom: 12px;
   }
-  
+
   .footer-links a {
     font-size: 13px;
-  }
-}
-
-@media (max-width: 480px) {
-  .footer-content-wrapper {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .footer-categories-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .footer-social-icons {
-    justify-content: flex-start;
-  }
-}
-
-/* Ensure screens less than 400px use the same styles as 400px */
-@media (max-width: 400px) {
-  .footer-content-wrapper {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .footer-categories-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .footer-social-icons {
-    justify-content: flex-start;
   }
 }
 
@@ -2931,7 +3038,6 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
 
       // Transform API data to match the current structure
       this.menuCategories = activeCategories.map(category => {
-        // Transform products to menuItems format
         const menuItems = (category.products || []).map((product: any) => ({
           labelAr: product.nameAr || '',
           labelEn: product.nameEn || '',
@@ -2943,7 +3049,7 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
           nameAr: category.nameAr || '',
           nameEn: category.nameEn || '',
           image: category.imageUrl || `assets/itmes/${category.nameAr || category.nameEn || 'default'}.png`,
-          menuItems: menuItems
+          menuItems
         };
       });
 

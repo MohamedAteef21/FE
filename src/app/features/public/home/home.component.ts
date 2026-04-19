@@ -80,7 +80,7 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
       <section class="categories-section py-5">
         <div class="" style="margin-left: 15px;margin-right: 15px;">
           <div class="section-header">
-          <span style="display: flex;align-items: center;">
+          <span class="home-section-view-all-wrap">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 8.00048L9.147 11.8545L9.854 11.1475L6.707 8.00048L9.854 4.85448L9.147 4.14648L5.293 8.00048Z" fill="black"/>
 </svg>
@@ -109,23 +109,17 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
     <div class="container-fluid px-0">
       <section class="we-chose-section py-5">
         <div class="" style="margin-left: 1rem;margin-right: 1rem;">
-          <div class="section-header row" style="display: flex;justify-items: center;align-items: center;justify-content: flex-start;flex-direction: row;width: 100%;margin-right: 1rem;margin-left: 1rem;flex-wrap: nowrap;">
-<div class="col-4 col-md-4 col-sm4 col-lg-4 col-xl-4 col-xxl-4">
-<span style="display: flex;align-items: center;flex-direction: row-reverse;font-weight: 600;justify-content: flex-end;">
-            <span style="display: flex;align-items: center;flex-direction: row-reverse;">{{ "HOME.VIEW_ALL" | translate }}<span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 8.00048L9.147 11.8545L9.854 11.1475L6.707 8.00048L9.854 4.85448L9.147 4.14648L5.293 8.00048Z" fill="black"/>
-</svg>
-</span>
-            </span>
-</span>
-</div>
-<div class="col-4 col-md-4 col-sm4 col-lg-4 col-xl-4 col-xxl-4">
-       <span style="margin-bottom: 0;">
-            <h2 class="section-title">{{ "HOME.WE_CHOSE_FOR_YOU" | translate }}</h2>
-            </span>
-</div>
-    <div class="col-4 col-md-4 col-sm4 col-lg-4 col-xl-4 col-xxl-4"></div>
+          <div class="section-header">
+          <span class="home-section-view-all-wrap">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 8.00048L9.147 11.8545L9.854 11.1475L6.707 8.00048L9.854 4.85448L9.147 4.14648L5.293 8.00048Z" fill="black"/>
+          </svg>
+
+          <a (click)="navigateToMenu()"class="view-all-link" style="cursor: pointer;font-weight: 700;height: fit-content;display: flex;align-items: center;">{{ "HOME.VIEW_ALL" | translate }}</a>
+          </span>
+            <div class="section-header" style="margin-bottom: 0;">
+              <h2 class="section-title">{{ "HOME.WE_CHOSE_FOR_YOU" | translate }}</h2>
+            </div>
           </div>
 
           <div class="we-chose-cards" #weChoseCarousel>
@@ -591,12 +585,21 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
       }
       .we-chose-section .section-header {
         display: grid;
-        grid-template-columns: auto 1fr;
+        grid-template-columns: 1fr auto 1fr;
         align-items: center;
-        gap: 1rem;
+        margin-bottom: 2rem;
+        position: relative;
+      }
+      .we-chose-section .section-header > .home-section-view-all-wrap {
+        grid-column: 1;
+        justify-self: start;
+      }
+      .we-chose-section .section-header > .section-header {
+        grid-column: 2;
+        justify-self: center;
+        margin-bottom: 0;
       }
       .we-chose-section .section-title {
-        grid-column: 2;
         justify-self: center;
       }
       .carousel-nav {
@@ -617,7 +620,19 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
         transition: all 0.3s ease;
         font-size: 1.2rem;
         color: #666;
+          position: relative;   /* add this */
       }
+
+
+.carousel-btn span {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  color: #666;
+  line-height: 1;
+}
       .carousel-btn:hover {
         background-color: #d32f2f;
         color: white;
@@ -774,6 +789,26 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
         background-color: #ffffff;
         padding: 3rem 0;
       }
+      .home-section-view-all-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-inline: 2rem;
+      }
+      @media (max-width: 767px) {
+        .home-section-view-all-wrap {
+          margin-inline: 0;
+        }
+      }
+      .categories-section .section-header > .home-section-view-all-wrap {
+        grid-column: 1;
+        justify-self: start;
+      }
+      .categories-section .section-header > .section-header {
+        grid-column: 2;
+        justify-self: center;
+        margin-bottom: 0;
+      }
       .section-header {
         display: grid;
         grid-template-columns: 1fr auto 1fr;
@@ -790,10 +825,6 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
         grid-column: 2;
         position: relative;
         padding-bottom: 0.5rem;
-      }
-      .categories-section .section-header .view-all-link {
-        grid-column: 1;
-        justify-self: start;
       }
       .section-title::after {
         content: "";
@@ -989,12 +1020,7 @@ import { addLanguageProperty } from '../../../core/utils/item-translation.util';
           align-self: flex-end;
         }
         .we-chose-section .section-header {
-          grid-template-columns: 1fr;
-          justify-items: center;
-        }
-        .we-chose-section .section-title {
-          grid-column: 1;
-          justify-self: center;
+          grid-template-columns: 1fr auto 1fr;
         }
         .carousel-nav {
           grid-column: 1;

@@ -38,8 +38,8 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
         ></div>
 
         <!-- Side Panel -->
-        <div id="mainPanel" style="height: 100%;width: 385px;position: fixed;top: 0;left: 0;background-color: #ffffff;overflow-x: hidden;padding-top: 30px;z-index: 1;">
-          <div class="row" style="display: flex;flex-direction: row-reverse;width: 100%;border-bottom: 2px solid #E5E5E5;padding-bottom: .5rem;align-items: center;padding-left: 1rem;padding-right: 1rem;">
+        <div id="mainPanel" class="main-cart-panel" style="width: 425px;position: fixed;top: 0;left: 0;background-color: #ffffff;padding-top: 30px;z-index: 1;">
+          <div class="row main-cart-panel-header" style="display: flex;flex-direction: row-reverse;width: 100%;border-bottom: 2px solid #E5E5E5;padding-bottom: .5rem;align-items: center;padding-left: 1rem;padding-right: 1rem;flex-shrink: 0;">
             <div class="col-auto col-md-auto col-sm-auto col-lg-auto col-xl-auto col-xxl-auto" style="padding-left: 0 !important;padding-right: 0 !important;">
               <div style="color: #F00E0C;font-size: 24px;font-weight: 600;">{{ 'CART_DIALOG.SHOPPING_CART' | translate }}</div>
             </div>
@@ -57,13 +57,10 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
             </div>
           </div>
 
- 
- 
-          <div class="row" style="display: flex;flex-direction: row-reverse;width: 100%;padding-bottom: .5rem;align-items: center;height: 90%;align-content: space-between;">
-          <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12">
-          <span *ngIf="cart$ | async as cart">
+          <ng-container *ngIf="cart$ | async as cart">
+          <div class="main-cart-panel-body">
+          <div class="main-cart-panel-scroll">
           <!-- <div style="display: flex;justify-content: flex-end;color: #F00E0C;font-weight: 500;padding-top: 10px;padding-bottom: 10px;" *ngIf="cart.items.length > 0">{{ 'CART_DIALOG.EXISTING_ITEMS' | translate }}</div> -->
-          <div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="overflow: scroll;">
           <div class="cart-item-container col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: row-reverse;width: 100%;align-items: flex-start;padding: 1rem;" *ngFor="let cartItem of cart.items">
           <div class="cart-item-image col-4 col-md-4 col-sm-4 col-lg-4 col-xl-4 col-xxl-4" style="min-height: 80px;">
             <img [src]="getItemImageUrl(cartItem.menuItem)" [alt]="cartItem.menuItem.name" style="width: 100%;height: 100%;min-height: 80px;object-fit: cover;border-radius: 8px;" />
@@ -104,15 +101,13 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
                 </div>
                 </div>
           </div>
-</div>
+          <div class="main-cart-panel-empty" *ngIf="cart.items.length === 0">
+            <p>{{ 'CART_DIALOG.EMPTY_CART' | translate }}</p>
+          </div>
+          </div>
 
-</span>
-        </div>
-      </div>
-
-
-
-<div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: column;width: 100%;align-items: center;padding: 1rem;border-top: 1.5px solid #E5E5E5;" *ngIf="cart$ | async as cart">
+          <div class="main-cart-panel-footer">
+<div class="col-12 col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12" style="display: flex;flex-direction: column;width: 100%;align-items: center;padding: 1rem;">
   <div style="width: 100%;display: flex;align-items: center;flex-direction: row-reverse;justify-content: space-between;background: #F3F2F2;padding: .5rem;border-radius: 9px;padding: 0;">
   <span style="
     padding: .5rem;
@@ -159,6 +154,9 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
 </div>
 
 </div>
+          </div>
+          </div>
+          </ng-container>
         </div>
       </div>
 
@@ -727,6 +725,53 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       display: none;
     }
 
+    /* Side cart panel: list scrolls, discount / total / checkout stay at bottom */
+    #mainPanel.main-cart-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-height: 100dvh;
+      min-height: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+      overflow-x: hidden;
+    }
+
+    #mainPanel .main-cart-panel-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #mainPanel .main-cart-panel-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #mainPanel .main-cart-panel-footer {
+      flex-shrink: 0;
+      background: #ffffff;
+      border-top: 1.5px solid #e5e5e5;
+      box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.06);
+      z-index: 2;
+    }
+
+    #mainPanel .main-cart-panel-empty {
+      padding: 1.5rem 1rem;
+      text-align: center;
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    #mainPanel .main-cart-panel-empty p {
+      margin: 0;
+    }
+
     @media (max-width: 992px) {
       .sidebar-wrapper {
         width: 220px;
@@ -885,6 +930,14 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       }
     }
 
+      #mainPanel .cart-item-name {
+            padding-inline: 10px;
+      }
+
+      #mainPanel .cart-item-price {
+            padding-inline: 10px;
+      }
+
     @media (max-width: 767px) {
       #mainPanel {
         width: 75% !important;
@@ -915,7 +968,7 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
       #mainPanel .cart-item-container {
         flex-direction: row !important;
         align-items: flex-start !important;
-        padding: 0 !important;
+        padding: 1.5rem !important;
         gap: 0.75rem;
       }
 
@@ -1054,9 +1107,9 @@ import { addLanguageProperty, getDisplayName, getDisplayDescription } from '../.
         height: 20px !important;
       }
 
-      /* Scrollable Areas */
-      #mainPanel div[style*="overflow: scroll"] {
-        max-height: calc(100vh - 200px) !important;
+      /* Scrollable list uses flex; no fixed max-height needed */
+      #mainPanel .main-cart-panel-scroll {
+        min-height: 0;
       }
     }
   `]
@@ -1068,6 +1121,8 @@ export class MenuComponent implements OnInit, OnDestroy {
   cart$!: Observable<Cart>;
   selectedCategoryId: number | null = null;
   selectedCategoryName: string | null = null;
+  /** From `?product=` — that item is shown first in the current category (menu page only) */
+  highlightProductId: number | null = null;
   allMenuItems: MenuItem[] = [];
   allCategoriesWithProducts: CategoryWithProducts[] = [];
   currentPage: number = 1;
@@ -1117,8 +1172,16 @@ export class MenuComponent implements OnInit, OnDestroy {
     // Load categories with products from API
     this.loadCategoriesWithProducts();
 
-    // Check for category query parameter (now expects ID)
+    // Category + optional product (product controls sort order on this page only)
     this.route.queryParams.subscribe(params => {
+      const rawProduct = params['product'];
+      if (rawProduct != null && String(rawProduct).trim() !== '') {
+        const pid = Number(rawProduct);
+        this.highlightProductId = Number.isFinite(pid) ? pid : null;
+      } else {
+        this.highlightProductId = null;
+      }
+
       if (params['category']) {
         const categoryId = parseInt(params['category'], 10);
         if (!isNaN(categoryId)) {
@@ -1201,8 +1264,11 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
     this.currentPage = 1;
     this.loadMenuItems();
-    // Update URL with category ID
-    this.router.navigate(['/menu'], { queryParams: { category: categoryId } });
+    // Update URL; merge keeps `product` when deep-linking ?category=&product=
+    this.router.navigate(['/menu'], {
+      queryParams: { category: categoryId },
+      queryParamsHandling: 'merge'
+    });
   }
 
   selectCategoryByName(categoryName: string): void {
@@ -1221,6 +1287,17 @@ export class MenuComponent implements OnInit, OnDestroy {
       allFilteredItems = this.allMenuItems.filter(item => item.categoryId === this.selectedCategoryId!.toString());
     } else {
       allFilteredItems = this.allMenuItems;
+    }
+
+    const hp = this.highlightProductId;
+    if (hp !== null && allFilteredItems.length > 0) {
+      allFilteredItems = [...allFilteredItems].sort((a, b) => {
+        const aid = Number(a.id);
+        const bid = Number(b.id);
+        if (aid === hp) return -1;
+        if (bid === hp) return 1;
+        return 0;
+      });
     }
 
     // Calculate total pages
